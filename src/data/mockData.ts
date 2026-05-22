@@ -91,6 +91,23 @@ export type ActiveOffer = {
   colors: readonly [string, string];
 };
 
+export type EventFeature = {
+  id: string;
+  title: string;
+  category: 'Restaurants' | 'Hiking' | 'Party' | 'Culture';
+  venue: string;
+  date: string;
+  description: string;
+  colors: readonly [string, string];
+};
+
+export type KosovoHighlight = {
+  id: string;
+  title: string;
+  description: string;
+  accentColor: string;
+};
+
 export type MapPin = {
   id: string;
   restaurantId: string;
@@ -730,6 +747,78 @@ export const activeOffers: ActiveOffer[] = [
     venue: 'Cafe Renaissance',
     schedule: 'Sat & Sun 10:00 - 14:00',
     colors: ['#FF7A00', '#FF2F51'],
+  },
+];
+
+export const eventHighlights: EventFeature[] = [
+  {
+    id: 'event-party-duplex',
+    title: 'Duplex Night Market',
+    category: 'Party',
+    venue: 'Duplex Bar, Prishtina',
+    date: 'Fri • 22:00',
+    description: 'A vibrant night with live DJs, local cocktails, and a lively crowd that speaks the city’s energy.',
+    colors: ['#A43AFF', '#F52698'],
+  },
+  {
+    id: 'event-hike-rugova',
+    title: 'Rugova Canyon Sunrise Hike',
+    category: 'Hiking',
+    venue: 'Rugova Canyon, Peje',
+    date: 'Sat • 06:30',
+    description: 'Guided trail through limestone cliffs, waterfalls, and Kosovo’s most dramatic nature views.',
+    colors: ['#1FCA65', '#64D98A'],
+  },
+  {
+    id: 'event-culture-prizren',
+    title: 'Prizren Heritage Walk',
+    category: 'Culture',
+    venue: 'Old Stone Bridge, Prizren',
+    date: 'Sun • 11:00',
+    description: 'A storytelling tour across Ottoman streets, historic mosques, and local artisan markets.',
+    colors: ['#316CFF', '#74A8FF'],
+  },
+  {
+    id: 'event-restaurant-tradition',
+    title: 'Kosovo Flavors Dinner',
+    category: 'Restaurants',
+    venue: 'Pishat Restaurant, Prishtina',
+    date: 'Wed • 19:00',
+    description: 'Enjoy authentic dishes with live traditional music and warm hospitality from Kosovo hosts.',
+    colors: ['#FF6A2F', '#FF9A54'],
+  },
+];
+
+export const kosovoHighlights: KosovoHighlight[] = [
+  {
+    id: 'kosovo-economy',
+    title: 'Economy in Motion',
+    description: 'A fast-growing entrepreneurial scene, local tech hubs, and lively markets that welcome tourists and locals alike.',
+    accentColor: '#FFC92C',
+  },
+  {
+    id: 'kosovo-nature',
+    title: 'Nature & Adventure',
+    description: 'Rugged canyons, mountain lakes, and hiking trails make Kosovo a natural playground for active travelers.',
+    accentColor: '#1FCA65',
+  },
+  {
+    id: 'kosovo-party',
+    title: 'Nightlife & Events',
+    description: 'From rooftop lounges to underground parties, Kosovo’s music scene keeps your nights memorable.',
+    accentColor: '#A537FF',
+  },
+  {
+    id: 'kosovo-culture',
+    title: 'Culture & Heritage',
+    description: 'Traditional festivals, historic architecture, and warm hospitality show the heart of Kosovo culture.',
+    accentColor: '#316CFF',
+  },
+  {
+    id: 'kosovo-study',
+    title: 'Study & Creativity',
+    description: 'A young student community, modern campuses, and inspiring events for learning and collaboration.',
+    accentColor: '#FF6A2F',
   },
 ];
 

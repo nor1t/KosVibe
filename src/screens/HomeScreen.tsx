@@ -2,23 +2,18 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useDeferredValue, useMemo, useState } from 'react';
 import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    useWindowDimensions,
+    View,
 } from 'react-native';
 
-import {
-  filterFeaturedItemsByDiscovery,
-  filterOffersByDiscovery,
-  filterRestaurantsByDiscovery,
-  nearbyRestaurants,
-  restaurants,
-} from '../data/mockData';
+import { EventCard } from '../components/cards/EventCard';
 import { FeaturedMenuCard } from '../components/cards/FeaturedMenuCard';
+import { InfoHighlightCard } from '../components/cards/InfoHighlightCard';
 import { OfferGradientCard } from '../components/cards/OfferGradientCard';
 import { RestaurantListCard } from '../components/cards/RestaurantListCard';
 import { IconCircleButton } from '../components/common/IconCircleButton';
@@ -26,6 +21,15 @@ import { LocationPickerModal } from '../components/common/LocationPickerModal';
 import { SectionTitle } from '../components/common/SectionTitle';
 import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
 import { Screen } from '../components/layout/Screen';
+import {
+    eventHighlights,
+    filterFeaturedItemsByDiscovery,
+    filterOffersByDiscovery,
+    filterRestaurantsByDiscovery,
+    kosovoHighlights,
+    nearbyRestaurants,
+    restaurants,
+} from '../data/mockData';
 import { useDiscovery } from '../lib/discovery-state';
 import { theme } from '../theme';
 
@@ -66,6 +70,36 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   );
   const hasSearch = deferredQuery.trim().length > 0;
 
+  const experienceCategories = [
+    {
+      id: 'restaurants',
+      label: 'Restaurants',
+      color: theme.colors.orange,
+      icon: 'restaurant-outline',
+    },
+    {
+      id: 'hiking',
+      label: 'Hiking',
+      color: theme.colors.nature,
+      icon: 'leaf-outline',
+    },
+    {
+      id: 'party',
+      label: 'Parties',
+      color: theme.colors.party,
+      icon: 'sparkles-outline',
+    },
+    {
+      id: 'culture',
+      label: 'Culture',
+      color: theme.colors.culture,
+      icon: 'book-outline',
+    },
+  ];
+
+  const eventItems = eventHighlights;
+  const highlightItems = kosovoHighlights;
+
   return (
     <View style={styles.container}>
       <Screen contentContainerStyle={styles.content}>
@@ -92,7 +126,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Kerko restorante..."
+              placeholder="Search restaurants, events, hikes..."
               placeholderTextColor={theme.colors.mutedText}
               style={styles.searchInput}
             />
@@ -103,6 +137,15 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             ) : null}
           </View>
         </GradientHeaderShell>
+
+        <View style={styles.categoryRow}>
+          {experienceCategories.map((category) => (
+            <View key={category.id} style={[styles.categoryPill, { backgroundColor: category.color }]}> 
+              <Ionicons name={category.icon as any} size={18} color={theme.colors.surface} />
+              <Text style={styles.categoryLabel}>{category.label}</Text>
+            </View>
+          ))}
+        </View>
 
         {hasSearch ? (
           <View style={styles.section}>
@@ -168,6 +211,37 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
               <OfferGradientCard key={offer.id} offer={offer} />
             ))}
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle
+            title="Events & Experiences"
+            actionLabel="See all"
+            icon={<Feather name="coffee" size={22} color={theme.colors.accent} />}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.eventRow}>
+            {eventItems.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </ScrollView>
+        </View>
+
+        <View style={styles.section}>
+          <SectionTitle
+            title="Discover Kosovo"
+            icon={<Feather name="globe" size={22} color={theme.colors.culture} />}
+          />
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.highlightRow}>
+            {highlightItems.map((highlight) => (
+              <InfoHighlightCard key={highlight.id} highlight={highlight} />
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.section}>
@@ -265,11 +339,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.heading,
   },
+  categoryRow: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    flexWrap: 'wrap',
+    paddingHorizontal: theme.spacing.xxl,
+    marginTop: theme.spacing.lg,
+  },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.radius.round,
+  },
+  categoryLabel: {
+    color: theme.colors.surface,
+    fontSize: theme.typography.sizes.body,
+    fontWeight: '700',
+  },
   section: {
     gap: theme.spacing.xl,
     paddingHorizontal: theme.spacing.xxl,
   },
   featuredRow: {
+    gap: theme.spacing.lg,
+    paddingRight: theme.spacing.xxl,
+  },
+  eventRow: {
+    gap: theme.spacing.lg,
+    paddingRight: theme.spacing.xxl,
+  },
+  highlightRow: {
     gap: theme.spacing.lg,
     paddingRight: theme.spacing.xxl,
   },
