@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -64,12 +65,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                 <Text style={styles.location}>{selectedLocation.label}</Text>
               </View>
 
-              <Pressable
-                accessibilityLabel={copy.settingsLabel}
-                style={styles.headerAction}
-                onPress={() => navigation.navigate('Settings')}>
-                <Ionicons name="settings-outline" size={22} color={theme.colors.surface} />
-              </Pressable>
+              <WeatherSettingsButton navigation={navigation} />
             </View>
 
             <View style={styles.heroCopy}>
@@ -183,16 +179,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 13,
     fontWeight: '600',
-  },
-  headerAction: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   heroCopy: {
     maxWidth: 360,

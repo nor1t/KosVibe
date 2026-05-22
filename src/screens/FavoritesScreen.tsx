@@ -2,122 +2,137 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useStories, type StoryItem } from '../lib/stories-state';
 import { theme } from '../theme';
 
 type FavoritesScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-const storyItems = {
-  en: [
-    {
-      id: 'story-1',
-      title: 'Midnight in Prizren',
-      author: '@streetvibes.xk',
-      subtitle: 'A cinematic walk through river lights, food spots, and late-night chatter.',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 'story-2',
-      title: 'Kosovo Coffee Trails',
-      author: '@beansandbridges',
-      subtitle: 'Warm cafes, gold-hour corners, and local stories behind every cup.',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 'story-3',
-      title: 'Icons After Rain',
-      author: '@culturepulse',
-      subtitle: 'How monuments, mist, and city sounds collide into one proud moodboard.',
-      image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
-    },
-  ],
-  sq: [
-    {
-      id: 'story-1',
-      title: 'Mesnate ne Prizren',
-      author: '@streetvibes.xk',
-      subtitle: 'Nje ecje kinematike mes dritave te lumit, ushqimit dhe bisedave te vona.',
-      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 'story-2',
-      title: 'Shtigjet e kafes ne Kosove',
-      author: '@beansandbridges',
-      subtitle: 'Kafene te ngrohta, qoshe me drite te arte dhe histori lokale pas cdo filxhani.',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 'story-3',
-      title: 'Ikonat pas shiut',
-      author: '@culturepulse',
-      subtitle: 'Monumente, mjegull dhe tinguj qyteti qe bashkohen ne nje atmosfere krenare.',
-      image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
-    },
-  ],
-} as const;
+function StoryMeta({ story }: { story: StoryItem }) {
+  return (
+    <View style={styles.metaRow}>
+      <Text style={styles.storyAuthor}>{story.author}</Text>
+      <View style={styles.metaDot} />
+      <Text style={styles.metaText}>{story.readTime}</Text>
+      <View style={styles.metaDot} />
+      <Text style={styles.metaText}>{story.location}</Text>
+    </View>
+  );
+}
 
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const stories = storyItems[language];
+  const { getStories } = useStories();
+  const stories = getStories(language);
+  const featuredStory = stories[0];
+  const latestStories = stories.slice(1);
+
+  const openStory = (storyId: string) => {
+    navigation.navigate('StoryDetail', { storyId });
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
-        <Text style={styles.title}>{copy.title}</Text>
-        <Text style={styles.subtitle}>
-          {copy.subtitle}
-        </Text>
-      </View>
-
-      <Pressable style={styles.heroCard}>
-        <ImageBackground source={{ uri: stories[0].image }} style={styles.heroImage}>
-          <View style={styles.heroOverlay} />
-          <View style={styles.heroContent}>
-            <View style={styles.liveBadge}>
-              <Ionicons name="sparkles-outline" size={14} color={theme.colors.surface} />
-              <Text style={styles.liveLabel}>{copy.trending}</Text>
-            </View>
-            <Text style={styles.heroTitle}>{stories[0].title}</Text>
-            <Text style={styles.heroAuthor}>{stories[0].author}</Text>
-            <Text style={styles.heroSubtitle}>{stories[0].subtitle}</Text>
+    <View style={styles.screen}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <WeatherSettingsButton navigation={navigation} compact />
           </View>
-        </ImageBackground>
-      </Pressable>
+          <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
+          <Text style={styles.title}>{copy.title}</Text>
+          <Text style={styles.subtitle}>{copy.subtitle}</Text>
+        </View>
 
-      <Text style={styles.sectionHeading}>{copy.latest}</Text>
-      <View style={styles.storyList}>
-        {stories.slice(1).map((story, index) => (
-          <Pressable key={story.id} style={styles.storyCard}>
-            <ImageBackground source={{ uri: story.image }} style={styles.storyThumb} />
-            <View style={styles.storyCopy}>
-              <Text style={styles.storyTitle}>{story.title}</Text>
-              <Text style={styles.storyAuthor}>{story.author}</Text>
-              <Text style={styles.storySubtitle}>{story.subtitle}</Text>
+        <Pressable style={styles.heroCard} onPress={() => openStory(featuredStory.id)}>
+          <ImageBackground source={{ uri: featuredStory.image }} style={styles.heroImage}>
+            <View style={styles.heroOverlay} />
+            <View style={styles.heroContent}>
+              <View style={styles.featuredBadge}>
+                <Ionicons name="sparkles-outline" size={14} color={theme.colors.surface} />
+                <Text style={styles.featuredLabel}>{copy.featured}</Text>
+              </View>
+              <Text style={styles.heroTitle}>{featuredStory.title}</Text>
+              <StoryMeta story={featuredStory} />
+              <Text style={styles.heroSubtitle}>{featuredStory.subtitle}</Text>
+              <View style={styles.openRow}>
+                <Text style={styles.openLabel}>{copy.openStory}</Text>
+                <Ionicons name="arrow-forward" size={18} color={theme.colors.surface} />
+              </View>
             </View>
-            <View style={[styles.storyDot, index === 0 ? styles.storyDotGold : styles.storyDotRed]} />
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={styles.ctaPanel}>
-        <Text style={styles.ctaTitle}>{copy.ctaTitle}</Text>
-        <Text style={styles.ctaText}>
-          {copy.ctaText}
-        </Text>
-        <Pressable style={styles.ctaButton} onPress={() => navigation.getParent()?.navigate('TavolinaTab')}>
-          <Text style={styles.ctaButtonText}>{copy.ctaButton}</Text>
+          </ImageBackground>
         </Pressable>
-      </View>
-    </ScrollView>
+
+        <View style={styles.statsStrip}>
+          <View style={styles.statBlock}>
+            <Text style={styles.statValue}>{stories.length}</Text>
+            <Text style={styles.statLabel}>{copy.latest}</Text>
+          </View>
+          <View style={styles.statBlock}>
+            <Text style={styles.statValue}>
+              {Math.round(stories.reduce((total, story) => total + story.views, 0) / 100) / 10}k
+            </Text>
+            <Text style={styles.statLabel}>{copy.views}</Text>
+          </View>
+          <View style={styles.statBlock}>
+            <Text style={styles.statValue}>
+              {stories.reduce((total, story) => total + story.likes, 0)}
+            </Text>
+            <Text style={styles.statLabel}>{copy.likes}</Text>
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionHeading}>{copy.latest}</Text>
+        </View>
+
+        <View style={styles.storyList}>
+          {latestStories.map((story) => (
+            <Pressable key={story.id} style={styles.storyCard} onPress={() => openStory(story.id)}>
+              <ImageBackground source={{ uri: story.image }} style={styles.storyThumb}>
+                <View style={styles.thumbOverlay} />
+                <Text style={styles.thumbCategory}>{story.category}</Text>
+              </ImageBackground>
+              <View style={styles.storyCopy}>
+                <View style={styles.storyTitleRow}>
+                  <Text style={styles.storyTitle}>{story.title}</Text>
+                  {story.isUserStory ? (
+                    <View style={styles.userBadge}>
+                      <Text style={styles.userBadgeText}>{copy.yourStory}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <StoryMeta story={story} />
+                <Text style={styles.storySubtitle}>{story.subtitle}</Text>
+                <View style={styles.storyStatsRow}>
+                  <Text style={styles.storyStat}>{story.likes} {copy.likes}</Text>
+                  <Text style={styles.storyStat}>{story.views} {copy.views}</Text>
+                </View>
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+
+      <Pressable
+        accessibilityLabel={copy.ctaButton}
+        style={styles.createFab}
+        onPress={() => navigation.navigate('CreateStory')}>
+        <Ionicons name="add" size={28} color={theme.colors.surface} />
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -130,6 +145,12 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginBottom: 22,
+  },
   eyebrow: {
     color: theme.colors.secondary,
     fontSize: 13,
@@ -141,34 +162,45 @@ const styles = StyleSheet.create({
     marginTop: 12,
     color: theme.colors.heading,
     fontSize: 42,
-    lineHeight: 40,
+    lineHeight: 42,
     fontWeight: '900',
-    letterSpacing: -1.5,
-    maxWidth: 300,
+    width: '100%',
   },
   subtitle: {
     marginTop: 12,
     color: theme.colors.mutedText,
     fontSize: 16,
     lineHeight: 24,
-    maxWidth: 330,
+    maxWidth: 340,
+  },
+  createFab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 104,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadow.glow,
   },
   heroCard: {
     borderRadius: 30,
     overflow: 'hidden',
   },
   heroImage: {
-    height: 360,
+    height: 380,
     justifyContent: 'flex-end',
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(6,7,13,0.42)',
+    backgroundColor: 'rgba(6,7,13,0.44)',
   },
   heroContent: {
     padding: 22,
   },
-  liveBadge: {
+  featuredBadge: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,33 +211,93 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,31,61,0.78)',
     marginBottom: 14,
   },
-  liveLabel: {
+  featuredLabel: {
     color: theme.colors.surface,
     fontWeight: '800',
     fontSize: 12,
   },
   heroTitle: {
     color: theme.colors.heading,
-    fontSize: 30,
-    lineHeight: 32,
+    fontSize: 32,
+    lineHeight: 34,
     fontWeight: '900',
-  },
-  heroAuthor: {
-    marginTop: 8,
-    color: '#F9D08D',
-    fontSize: 14,
-    fontWeight: '700',
   },
   heroSubtitle: {
     marginTop: 10,
     color: '#E3E7F2',
     fontSize: 15,
     lineHeight: 22,
-    maxWidth: 290,
+    maxWidth: 310,
   },
-  sectionHeading: {
+  openRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  openLabel: {
+    color: theme.colors.surface,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  metaRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 7,
+  },
+  storyAuthor: {
+    color: '#F9D08D',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  metaDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  metaText: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  statsStrip: {
+    marginTop: 18,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statBlock: {
+    flex: 1,
+    minHeight: 76,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  statValue: {
+    color: theme.colors.heading,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  statLabel: {
+    marginTop: 2,
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionHeader: {
     marginTop: 28,
     marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.lg,
+  },
+  sectionHeading: {
     color: theme.colors.heading,
     fontSize: 24,
     fontWeight: '900',
@@ -215,7 +307,6 @@ const styles = StyleSheet.create({
   },
   storyCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 14,
     padding: 14,
     borderRadius: 24,
@@ -224,24 +315,47 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.06)',
   },
   storyThumb: {
-    width: 96,
-    height: 110,
+    width: 104,
+    minHeight: 138,
     borderRadius: 20,
     overflow: 'hidden',
+    justifyContent: 'flex-end',
+    padding: 10,
+  },
+  thumbOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(7,8,16,0.28)',
+  },
+  thumbCategory: {
+    color: theme.colors.surface,
+    fontSize: 11,
+    fontWeight: '900',
   },
   storyCopy: {
     flex: 1,
+    justifyContent: 'center',
+  },
+  storyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   storyTitle: {
+    flex: 1,
     color: theme.colors.heading,
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
   },
-  storyAuthor: {
-    marginTop: 6,
-    color: theme.colors.secondary,
-    fontSize: 13,
-    fontWeight: '700',
+  userBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,31,61,0.18)',
+  },
+  userBadgeText: {
+    color: theme.colors.primary,
+    fontSize: 11,
+    fontWeight: '900',
   },
   storySubtitle: {
     marginTop: 8,
@@ -249,48 +363,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
-  storyDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  storyStatsRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    gap: 12,
   },
-  storyDotGold: {
-    backgroundColor: theme.colors.secondary,
-  },
-  storyDotRed: {
-    backgroundColor: theme.colors.primary,
-  },
-  ctaPanel: {
-    marginTop: 28,
-    padding: 20,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  ctaTitle: {
-    color: theme.colors.heading,
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  ctaText: {
-    marginTop: 8,
-    color: theme.colors.mutedText,
-    fontSize: 15,
-    lineHeight: 23,
-  },
-  ctaButton: {
-    marginTop: 16,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,179,0,0.18)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,179,0,0.3)',
-  },
-  ctaButtonText: {
-    color: '#FFD787',
-    fontWeight: '800',
+  storyStat: {
+    color: theme.colors.subtle,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

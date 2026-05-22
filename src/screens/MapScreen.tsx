@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { ExploreMap, type ExploreMapMarker } from '../components/map/ExploreMap';
 import {
     filterRestaurantsByDiscovery,
@@ -15,6 +16,7 @@ import {
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
+import { openDirectionsToPlace } from '../lib/maps';
 import { theme } from '../theme';
 
 type MapScreenProps = {
@@ -204,7 +206,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'Architecture and student energy',
     city: 'Prishtina',
     distance: '0.8 km',
-    coordinate: { latitude: 42.6484, longitude: 21.1683 },
+    coordinate: { latitude: 42.6575, longitude: 21.162297 },
     color: '#5DA7FF',
     accentLabel: 'Creative district',
   },
@@ -237,7 +239,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'Easy access to forest paths',
     city: 'Prishtina',
     distance: '2.1 km',
-    coordinate: { latitude: 42.6649, longitude: 21.1997 },
+    coordinate: { latitude: 42.66887, longitude: 21.15345 },
     color: '#42D98C',
     accentLabel: 'Morning reset',
   },
@@ -248,7 +250,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'Mountain air with a wide valley view',
     city: 'Prizren',
     distance: '3.3 km',
-    coordinate: { latitude: 42.1808, longitude: 20.7396 },
+    coordinate: { latitude: 42.1744, longitude: 20.9614 },
     color: '#42D98C',
     accentLabel: 'Scenic drive',
   },
@@ -259,7 +261,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'Gateway to the most dramatic outdoor route nearby',
     city: 'Peje',
     distance: '4.5 km',
-    coordinate: { latitude: 42.6903, longitude: 20.2852 },
+    coordinate: { latitude: 42.692222, longitude: 20.168611 },
     color: '#42D98C',
     accentLabel: 'Weekend adventure',
   },
@@ -303,7 +305,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'The city’s most recognizable landmark',
     city: 'Prishtina',
     distance: '1.0 km',
-    coordinate: { latitude: 42.6582, longitude: 21.1608 },
+    coordinate: { latitude: 42.6607, longitude: 21.1583 },
     color: '#FFD166',
     accentLabel: 'Must-see icon',
   },
@@ -314,7 +316,7 @@ const exploreSpots: ExploreSpot[] = [
     subtitle: 'Classic old-town crossing and photo stop',
     city: 'Prizren',
     distance: '0.5 km',
-    coordinate: { latitude: 42.2095, longitude: 20.7414 },
+    coordinate: { latitude: 42.20965, longitude: 20.74034 },
     color: '#FFD166',
     accentLabel: 'Old-town favorite',
   },
@@ -559,8 +561,13 @@ export function MapScreen({ navigation }: MapScreenProps) {
       />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{copy.title}</Text>
-        <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerCopy}>
+            <Text style={styles.headerTitle}>{copy.title}</Text>
+            <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
+          </View>
+          <WeatherSettingsButton navigation={navigation} compact />
+        </View>
       </View>
 
       <View style={styles.controls}>
@@ -664,10 +671,22 @@ export function MapScreen({ navigation }: MapScreenProps) {
                     }}>
                     <View style={styles.placeCardTop}>
                       <View style={[styles.placeDot, { backgroundColor: item.color }]} />
-                      <Text style={styles.placeDistance}>{item.distance}</Text>
+                      <Pressable
+                        accessibilityLabel={`Get directions to ${item.title}`}
+                        style={styles.placeDirectionButton}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          void openDirectionsToPlace({
+                            label: item.title,
+                            coordinate: item.coordinate,
+                          });
+                        }}>
+                        <Ionicons name="navigate-outline" size={16} color={theme.colors.surface} />
+                      </Pressable>
                     </View>
                     <Text style={styles.placeName}>{item.title}</Text>
                     <Text style={styles.placeMeta}>{item.subtitle}</Text>
+                    <Text style={styles.placeDistance}>{item.distance}</Text>
                     <Text style={[styles.placeAccent, { color: item.color }]}>{item.accentLabel}</Text>
                   </Pressable>
                 );
@@ -700,6 +719,15 @@ const styles = StyleSheet.create({
     top: 62,
     left: 20,
     right: 20,
+  },
+  headerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  headerCopy: {
+    flex: 1,
   },
   headerTitle: {
     color: theme.colors.heading,
@@ -891,7 +919,16 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 999,
   },
+  placeDirectionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,31,61,0.86)',
+  },
   placeDistance: {
+    marginTop: 8,
     color: theme.colors.mutedText,
     fontSize: 12,
     fontWeight: '700',

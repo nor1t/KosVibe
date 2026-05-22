@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,11 +12,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { z } from 'zod';
 
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { GradientHeaderShell } from '../../components/layout/GradientHeaderShell';
 import { Screen } from '../../components/layout/Screen';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { getAuthErrorMessage } from '../../features/auth/errors';
+import { createSignInSchema } from '../../features/auth/validation';
+import { useI18n } from '../../i18n/I18nProvider';
 import type { AuthStackParamList } from '../../navigation/types';
 import { theme } from '../../theme';
 
@@ -25,16 +28,13 @@ type SignInValues = {
   password: string;
 };
 
-const schema = z.object({
-  email: z.string().trim().email('Enter a valid email address.'),
-  password: z.string().min(6, 'Password must be at least 6 characters.'),
-});
-
 type Navigation = NativeStackNavigationProp<AuthStackParamList, 'SignIn'>;
 
 export function SignInScreen() {
   const navigation = useNavigation<Navigation>();
   const { signInWithPassword } = useAuth();
+  const { messages } = useI18n();
+  const schema = useMemo(() => createSignInSchema(messages.auth), [messages.auth]);
   const [errorMessage, setErrorMessage] = useState('');
   const {
     handleSubmit,
@@ -60,28 +60,33 @@ export function SignInScreen() {
         password: formValues.password,
       });
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to sign in.');
+      setErrorMessage(
+        getAuthErrorMessage(error, messages.auth, messages.auth.signInErrorFallback)
+      );
     }
   });
 
   return (
     <Screen contentContainerStyle={styles.authContent}>
       <GradientHeaderShell style={styles.authHeader}>
+        <View style={styles.languageSwitchWrap}>
+          <LanguageSwitcher />
+        </View>
         <Text style={styles.authBrand}>YUMMY KOSOVA</Text>
-        <Text style={styles.authTitle}>Welcome back</Text>
+        <Text style={styles.authTitle}>{messages.auth.signInTitle}</Text>
         <Text style={styles.authSubtitle}>
-          Sign in to keep your bookings, favorites, and profile synced.
+          {messages.auth.signInSubtitle}
         </Text>
       </GradientHeaderShell>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.authCard}>
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Email</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.email}</Text>
             <TextInput
               value={values.email}
               onChangeText={(text) => setValue('email', text, { shouldValidate: true })}
-              placeholder="you@example.com"
+              placeholder={messages.auth.emailPlaceholder}
               placeholderTextColor={theme.colors.subtle}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -91,11 +96,11 @@ export function SignInScreen() {
           </View>
 
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Password</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.password}</Text>
             <TextInput
               value={values.password}
               onChangeText={(text) => setValue('password', text, { shouldValidate: true })}
-              placeholder="Enter your password"
+              placeholder={messages.auth.passwordPlaceholder}
               placeholderTextColor={theme.colors.subtle}
               secureTextEntry
               autoCapitalize="none"
@@ -109,13 +114,15 @@ export function SignInScreen() {
           {errorMessage ? <Text style={styles.errorBanner}>{errorMessage}</Text> : null}
 
           <Pressable style={styles.primaryCta} onPress={onSubmit} disabled={isSubmitting}>
-            <Text style={styles.primaryCtaText}>{isSubmitting ? 'Signing in...' : 'Sign In'}</Text>
+            <Text style={styles.primaryCtaText}>
+              {isSubmitting ? messages.auth.signInPending : messages.auth.signInCta}
+            </Text>
           </Pressable>
 
           <View style={styles.authFooterRow}>
-            <Text style={styles.authFooterText}>Do not have an account?</Text>
+            <Text style={styles.authFooterText}>{messages.auth.noAccount}</Text>
             <Pressable onPress={() => navigation.navigate('SignUp')}>
-              <Text style={styles.authLink}>Create one</Text>
+              <Text style={styles.authLink}>{messages.auth.createAccountCta}</Text>
             </Pressable>
           </View>
         </View>
@@ -130,6 +137,10 @@ const styles = StyleSheet.create({
   },
   authHeader: {
     paddingBottom: theme.spacing.xxxl,
+  },
+  languageSwitchWrap: {
+    alignSelf: 'flex-end',
+    marginBottom: theme.spacing.xl,
   },
   authBrand: {
     color: theme.colors.surface,

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,11 +12,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { z } from 'zod';
 
+import { LanguageSwitcher } from '../../components/LanguageSwitcher';
 import { GradientHeaderShell } from '../../components/layout/GradientHeaderShell';
 import { Screen } from '../../components/layout/Screen';
 import { useAuth } from '../../features/auth/AuthProvider';
+import { getAuthErrorMessage } from '../../features/auth/errors';
+import { createSignUpSchema } from '../../features/auth/validation';
+import { useI18n } from '../../i18n/I18nProvider';
 import type { AuthStackParamList } from '../../navigation/types';
 import { theme } from '../../theme';
 
@@ -27,23 +30,13 @@ type SignUpValues = {
   confirmPassword: string;
 };
 
-const schema = z
-  .object({
-    fullName: z.string().trim().min(2, 'Enter your full name.'),
-    email: z.string().trim().email('Enter a valid email address.'),
-    password: z.string().min(6, 'Password must be at least 6 characters.'),
-    confirmPassword: z.string().min(6, 'Confirm your password.'),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    message: 'Passwords do not match.',
-    path: ['confirmPassword'],
-  });
-
 type Navigation = NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
 
 export function SignUpScreen() {
   const navigation = useNavigation<Navigation>();
   const { signUpWithPassword } = useAuth();
+  const { messages } = useI18n();
+  const schema = useMemo(() => createSignUpSchema(messages.auth), [messages.auth]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const {
@@ -75,31 +68,36 @@ export function SignUpScreen() {
       });
 
       if (!session) {
-        setSuccessMessage('Your account was created. Check your email if confirmation is enabled.');
+        setSuccessMessage(messages.auth.signUpSuccess);
       }
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Unable to create account.');
+      setErrorMessage(
+        getAuthErrorMessage(error, messages.auth, messages.auth.signUpErrorFallback)
+      );
     }
   });
 
   return (
     <Screen contentContainerStyle={styles.authContent}>
       <GradientHeaderShell style={styles.authHeader}>
+        <View style={styles.languageSwitchWrap}>
+          <LanguageSwitcher />
+        </View>
         <Text style={styles.authBrand}>YUMMY KOSOVA</Text>
-        <Text style={styles.authTitle}>Create your account</Text>
+        <Text style={styles.authTitle}>{messages.auth.createAccountTitle}</Text>
         <Text style={styles.authSubtitle}>
-          Sign up to save restaurants, manage reservations, and unlock your profile features.
+          {messages.auth.createAccountSubtitle}
         </Text>
       </GradientHeaderShell>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.authCard}>
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Full Name</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.fullName}</Text>
             <TextInput
               value={values.fullName}
               onChangeText={(text) => setValue('fullName', text, { shouldValidate: true })}
-              placeholder="Your full name"
+              placeholder={messages.auth.fullNamePlaceholder}
               placeholderTextColor={theme.colors.subtle}
               style={styles.input}
             />
@@ -107,11 +105,11 @@ export function SignUpScreen() {
           </View>
 
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Email</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.email}</Text>
             <TextInput
               value={values.email}
               onChangeText={(text) => setValue('email', text, { shouldValidate: true })}
-              placeholder="you@example.com"
+              placeholder={messages.auth.emailPlaceholder}
               placeholderTextColor={theme.colors.subtle}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -121,11 +119,11 @@ export function SignUpScreen() {
           </View>
 
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Password</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.password}</Text>
             <TextInput
               value={values.password}
               onChangeText={(text) => setValue('password', text, { shouldValidate: true })}
-              placeholder="Create a password"
+              placeholder={messages.auth.passwordPlaceholder}
               placeholderTextColor={theme.colors.subtle}
               secureTextEntry
               autoCapitalize="none"
@@ -135,11 +133,11 @@ export function SignUpScreen() {
           </View>
 
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Confirm Password</Text>
+            <Text style={styles.fieldLabel}>{messages.auth.confirmPassword}</Text>
             <TextInput
               value={values.confirmPassword}
               onChangeText={(text) => setValue('confirmPassword', text, { shouldValidate: true })}
-              placeholder="Repeat your password"
+              placeholder={messages.auth.confirmPasswordPlaceholder}
               placeholderTextColor={theme.colors.subtle}
               secureTextEntry
               autoCapitalize="none"
@@ -154,13 +152,15 @@ export function SignUpScreen() {
           {successMessage ? <Text style={styles.successBanner}>{successMessage}</Text> : null}
 
           <Pressable style={styles.primaryCta} onPress={onSubmit} disabled={isSubmitting}>
-            <Text style={styles.primaryCtaText}>{isSubmitting ? 'Creating...' : 'Create Account'}</Text>
+            <Text style={styles.primaryCtaText}>
+              {isSubmitting ? messages.auth.createProfilePending : messages.auth.createProfileCta}
+            </Text>
           </Pressable>
 
           <View style={styles.authFooterRow}>
-            <Text style={styles.authFooterText}>Already have an account?</Text>
+            <Text style={styles.authFooterText}>{messages.auth.haveAccount}</Text>
             <Pressable onPress={() => navigation.goBack()}>
-              <Text style={styles.authLink}>Sign in</Text>
+              <Text style={styles.authLink}>{messages.auth.signInCta}</Text>
             </Pressable>
           </View>
         </View>
@@ -175,6 +175,10 @@ const styles = StyleSheet.create({
   },
   authHeader: {
     paddingBottom: theme.spacing.xxxl,
+  },
+  languageSwitchWrap: {
+    alignSelf: 'flex-end',
+    marginBottom: theme.spacing.xl,
   },
   authBrand: {
     color: theme.colors.surface,

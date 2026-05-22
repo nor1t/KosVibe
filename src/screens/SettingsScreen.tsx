@@ -9,6 +9,7 @@ import {
   type QuickLink,
 } from '../data/mockData';
 import { OptionListCard } from '../components/cards/OptionListCard';
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { IconCircleButton } from '../components/common/IconCircleButton';
 import { SectionTitle } from '../components/common/SectionTitle';
 import { ToggleSwitch } from '../components/common/ToggleSwitch';
@@ -32,6 +33,7 @@ const settingsCopy: Record<
     accountTitle: string;
     versionLabel: string;
     footerNote: string;
+    selectedLabel: string;
     signOutErrorTitle: string;
     signOutErrorFallback: string;
     languages: LanguageOption[];
@@ -45,12 +47,14 @@ const settingsCopy: Record<
     notificationsTitle: 'Notifications',
     accountTitle: 'Account',
     versionLabel: 'Version 1.0.0',
-    footerNote: 'Copyright 2026 Yummy Kosova. All rights reserved.',
+    
+    footerNote: 'Copyright 2026 KosVibe. All rights reserved.',
+    selectedLabel: 'Selected',
     signOutErrorTitle: 'Sign out failed',
     signOutErrorFallback: 'Unable to sign out.',
     languages: [
-      { id: 'en', flag: '🇬🇧', label: 'English', selected: true },
-      { id: 'sq', flag: '🇽🇰', label: 'Albanian', selected: false },
+      { id: 'en', flag: 'EN', label: 'English', selected: true },
+      { id: 'sq', flag: 'SQ', label: 'Albanian', selected: false },
     ],
     notifications: [
       {
@@ -87,11 +91,12 @@ const settingsCopy: Record<
     accountTitle: 'Llogaria',
     versionLabel: 'Versioni 1.0.0',
     footerNote: 'Copyright 2026 Yummy Kosova. Te gjitha te drejtat e rezervuara.',
+    selectedLabel: 'E zgjedhur',
     signOutErrorTitle: 'Dalja deshtoi',
     signOutErrorFallback: 'Nuk mund te dilni nga llogaria.',
     languages: [
-      { id: 'en', flag: '🇬🇧', label: 'Anglisht', selected: false },
-      { id: 'sq', flag: '🇽🇰', label: 'Shqip', selected: true },
+      { id: 'en', flag: 'EN', label: 'Anglisht', selected: false },
+      { id: 'sq', flag: 'SQ', label: 'Shqip', selected: true },
     ],
     notifications: [
       {
@@ -137,26 +142,36 @@ function getLanguagesForSelection(selectedLanguage: SupportedLanguage, languages
 function LanguageCard({
   languages,
   onSelect,
+  selectedLabel,
 }: {
   languages: LanguageOption[];
   onSelect: (languageId: string) => void;
+  selectedLabel: string;
 }) {
   return (
-    <View style={styles.card}>
-      {languages.map((language, index) => (
+    <View style={styles.languageList}>
+      {languages.map((language) => (
         <Pressable
           key={language.id}
+          accessibilityRole="button"
+          accessibilityState={{ selected: language.selected }}
           onPress={() => onSelect(language.id)}
           style={[
-            styles.languageRow,
-            index < languages.length - 1 && styles.rowBorder,
+            styles.languageCard,
             language.selected && styles.selectedRow,
           ]}>
           <View style={styles.languageLeft}>
-            <Text style={styles.flag}>{language.flag}</Text>
-            <Text style={[styles.languageLabel, language.selected && styles.selectedLanguageLabel]}>
-              {language.label}
-            </Text>
+            <View style={[styles.languageBadge, language.selected && styles.selectedLanguageBadge]}>
+              <Text style={[styles.flag, language.selected && styles.selectedFlag]}>
+                {language.flag}
+              </Text>
+            </View>
+            <View style={styles.languageCopy}>
+              <Text style={[styles.languageLabel, language.selected && styles.selectedLanguageLabel]}>
+                {language.label}
+              </Text>
+              {language.selected ? <Text style={styles.selectedHint}>{selectedLabel}</Text> : null}
+            </View>
           </View>
 
           <ToggleSwitch value={language.selected} onValueChange={() => onSelect(language.id)} />
@@ -236,13 +251,13 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
       <GradientHeaderShell
         bottomRadius={theme.radius.lg}
         contentStyle={styles.headerContent}
-        topPadding={theme.spacing.sm}>
+        topPadding={0}>
         <View style={styles.headerRow}>
           <IconCircleButton onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back-outline" size={24} color={theme.colors.surface} />
           </IconCircleButton>
           <Text style={styles.headerTitle}>{copy.title}</Text>
-          <View style={styles.headerSpacer} />
+          <WeatherSettingsButton navigation={navigation} showSettings={false} compact />
         </View>
       </GradientHeaderShell>
 
@@ -254,6 +269,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
         <LanguageCard
           languages={languages}
           onSelect={handleLanguageSelect}
+          selectedLabel={copy.selectedLabel}
         />
       </View>
 
@@ -310,9 +326,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: theme.spacing.lg,
   },
-  headerSpacer: {
-    width: 48,
-  },
   section: {
     gap: theme.spacing.xl,
     paddingHorizontal: theme.spacing.xxl,
@@ -325,35 +338,79 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.06)',
     ...theme.shadow.card,
   },
-  languageRow: {
-    minHeight: 82,
-    paddingHorizontal: theme.spacing.xxl,
+  languageList: {
+    gap: theme.spacing.lg,
+  },
+  languageCard: {
+    minHeight: 86,
+    paddingHorizontal: theme.spacing.xl,
+    paddingVertical: theme.spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.spacing.lg,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    ...theme.shadow.card,
   },
   selectedRow: {
-    backgroundColor: 'rgba(255,179,0,0.12)',
+    backgroundColor: 'rgba(255,179,0,0.18)',
+    borderColor: 'rgba(255,179,0,0.34)',
   },
   rowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   languageLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.lg,
   },
+  languageBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  selectedLanguageBadge: {
+    backgroundColor: 'rgba(255,31,61,0.72)',
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
   flag: {
-    fontSize: 22,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '900',
+    color: theme.colors.mutedText,
+  },
+  selectedFlag: {
+    color: theme.colors.surface,
+  },
+  languageCopy: {
+    flex: 1,
+    gap: 3,
   },
   languageLabel: {
     fontSize: 17,
     lineHeight: 22,
+    fontWeight: '700',
     color: theme.colors.heading,
   },
   selectedLanguageLabel: {
     color: '#FFD787',
+  },
+  selectedHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    color: theme.colors.secondary,
+    textTransform: 'uppercase',
   },
   notificationRow: {
     minHeight: 100,

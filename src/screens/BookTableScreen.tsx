@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -33,6 +34,7 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{restaurant?.name ?? copy.fallbackRestaurant}</Text>
         </View>
+        <WeatherSettingsButton navigation={navigation} compact />
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.2)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>

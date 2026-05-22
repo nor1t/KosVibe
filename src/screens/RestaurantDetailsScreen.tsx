@@ -4,7 +4,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { getRestaurantById } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
+import { openDirectionsToPlace } from '../lib/maps';
 import { theme } from '../theme';
 
 type RestaurantDetailsRoute = RouteProp<
@@ -18,6 +22,8 @@ type RestaurantDetailsScreenProps = {
 };
 
 export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetailsScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].restaurantDetails;
   const restaurant = getRestaurantById(route.params.restaurantId);
   const [saved, setSaved] = useState(false);
 
@@ -34,14 +40,19 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
               <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
             </Pressable>
 
-            <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
-              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
-            </Pressable>
+            <View style={styles.heroActionGroup}>
+              <WeatherSettingsButton navigation={navigation} compact />
+              <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
+                <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
+              </Pressable>
+            </View>
           </View>
 
           <View style={styles.heroCopy}>
             <View style={styles.statusChip}>
-              <Text style={styles.statusLabel}>{restaurant.isOpen ? 'Open Now' : 'Closed'}</Text>
+              <Text style={styles.statusLabel}>
+                {restaurant.isOpen ? copy.openNow : copy.closed}
+              </Text>
             </View>
             <Text style={styles.restaurantName}>{restaurant.name}</Text>
             <Text style={styles.restaurantTagline}>{restaurant.tagline}</Text>
@@ -53,12 +64,21 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
         <View style={styles.metaRow}>
           <View style={styles.metaCard}>
             <Ionicons name="star" size={18} color={theme.colors.secondary} />
-            <Text style={styles.metaCardLabel}>{restaurant.rating.toFixed(1)} rating</Text>
+            <Text style={styles.metaCardLabel}>
+              {restaurant.rating.toFixed(1)} {copy.ratingSuffix}
+            </Text>
           </View>
-          <View style={styles.metaCard}>
+          <Pressable
+            style={styles.metaCard}
+            onPress={() =>
+              void openDirectionsToPlace({
+                label: restaurant.name,
+                coordinate: restaurant.coordinates,
+              })
+            }>
             <Ionicons name="location-outline" size={18} color={theme.colors.secondary} />
             <Text style={styles.metaCardLabel}>{restaurant.distance}</Text>
-          </View>
+          </Pressable>
           <View style={styles.metaCard}>
             <Ionicons name="cash-outline" size={18} color={theme.colors.secondary} />
             <Text style={styles.metaCardLabel}>{restaurant.priceRange}</Text>
@@ -66,7 +86,7 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
         </View>
 
         <LinearGradient colors={['rgba(255,31,61,0.22)', 'rgba(255,179,0,0.08)']} style={styles.specialCard}>
-          <Text style={styles.specialEyebrow}>Today&apos;s Special</Text>
+          <Text style={styles.specialEyebrow}>{copy.todaySpecial}</Text>
           <Text style={styles.specialTitle}>{restaurant.todaySpecial.name}</Text>
           <Text style={styles.specialText}>{restaurant.todaySpecial.description}</Text>
           <Text style={styles.specialPrice}>
@@ -75,20 +95,32 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
         </LinearGradient>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>About</Text>
-          <Text style={styles.detailLine}>{restaurant.address}</Text>
+          <Text style={styles.sectionHeading}>{copy.about}</Text>
+          <Pressable
+            style={styles.addressRow}
+            onPress={() =>
+              void openDirectionsToPlace({
+                label: restaurant.name,
+                coordinate: restaurant.coordinates,
+              })
+            }>
+            <Ionicons name="navigate-outline" size={18} color={theme.colors.secondary} />
+            <Text style={styles.addressText}>{restaurant.address}</Text>
+          </Pressable>
           <Text style={styles.detailLine}>{restaurant.phone}</Text>
-          <Text style={styles.detailLine}>Open daily: {restaurant.hours}</Text>
+          <Text style={styles.detailLine}>
+            {copy.openDailyPrefix}: {restaurant.hours}
+          </Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Menu highlights</Text>
+          <Text style={styles.sectionHeading}>{copy.menuHighlights}</Text>
           <View style={styles.list}>
             {restaurant.menuSections.map((section) => (
               <View key={section.id} style={styles.infoCard}>
                 <Text style={styles.infoTitle}>{section.title}</Text>
                 <Text style={styles.infoText}>
-                  {section.items[0]?.name ?? 'Seasonal selection'} • {section.items[0]?.price ?? ''}
+                  {section.items[0]?.name ?? copy.seasonalSelection} - {section.items[0]?.price ?? ''}
                 </Text>
               </View>
             ))}
@@ -96,7 +128,7 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionHeading}>Reviews</Text>
+          <Text style={styles.sectionHeading}>{copy.reviews}</Text>
           <View style={styles.list}>
             {restaurant.reviews.map((review) => (
               <View key={review.id} style={styles.reviewCard}>
@@ -112,7 +144,7 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
 
         <Pressable style={styles.bookButton} onPress={() => navigation.navigate('BookTable', { restaurantId: restaurant.id })}>
           <LinearGradient colors={theme.gradients.primary} style={styles.bookButtonFill}>
-            <Text style={styles.bookButtonLabel}>Book a Table</Text>
+            <Text style={styles.bookButtonLabel}>{copy.bookTable}</Text>
           </LinearGradient>
         </Pressable>
       </View>
@@ -141,6 +173,13 @@ const styles = StyleSheet.create({
   heroActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  heroActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   iconButton: {
     width: 46,
@@ -253,6 +292,18 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedText,
     fontSize: 15,
     lineHeight: 23,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  addressText: {
+    flex: 1,
+    color: theme.colors.heading,
+    fontSize: 15,
+    lineHeight: 23,
+    fontWeight: '800',
   },
   list: {
     gap: 12,

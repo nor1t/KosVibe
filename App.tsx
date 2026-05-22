@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './src/features/auth/AuthProvider';
 import { I18nProvider } from './src/i18n/I18nProvider';
 import { DiscoveryProvider } from './src/lib/discovery-state';
+import { StoriesProvider } from './src/lib/stories-state';
 import { AppNavigator } from './src/navigation/AppNavigator';
 
 export default function App() {
@@ -17,8 +18,10 @@ export default function App() {
         <I18nProvider>
           <AuthProvider>
             <DiscoveryProvider>
-              <StatusBar style="light" translucent backgroundColor="transparent" />
-              <AppNavigator />
+              <StoriesProvider>
+                <StatusBar style="light" translucent backgroundColor="transparent" />
+                <AppNavigator />
+              </StoriesProvider>
             </DiscoveryProvider>
           </AuthProvider>
         </I18nProvider>

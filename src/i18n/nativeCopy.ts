@@ -35,6 +35,26 @@ export const nativeCopy: Record<
       ctaTitle: string;
       ctaText: string;
       ctaButton: string;
+      featured: string;
+      openStory: string;
+      createTitle: string;
+      creatorEyebrow: string;
+      titleLabel: string;
+      titlePlaceholder: string;
+      subtitleLabel: string;
+      subtitlePlaceholder: string;
+      locationLabel: string;
+      locationPlaceholder: string;
+      categoryLabel: string;
+      categoryPlaceholder: string;
+      bodyLabel: string;
+      bodyPlaceholder: string;
+      publishButton: string;
+      notFound: string;
+      likes: string;
+      views: string;
+      yourStory: string;
+      justNow: string;
     };
     profile: {
       title: string;
@@ -56,11 +76,11 @@ export const nativeCopy: Record<
       title: string;
       subtitle: string;
       moods: string[];
-      creatorOptions: Array<{
+      creatorOptions: {
         id: string;
         title: string;
         subtitle: string;
-      }>;
+      }[];
       launchTitle: string;
       launchText: string;
       launchButton: string;
@@ -102,6 +122,18 @@ export const nativeCopy: Record<
       timeSlots: string;
       confirm: string;
     };
+    restaurantDetails: {
+      openNow: string;
+      closed: string;
+      ratingSuffix: string;
+      todaySpecial: string;
+      about: string;
+      openDailyPrefix: string;
+      menuHighlights: string;
+      seasonalSelection: string;
+      reviews: string;
+      bookTable: string;
+    };
   }
 > = {
   en: {
@@ -120,7 +152,7 @@ export const nativeCopy: Record<
       cta: 'Explore Now',
       categories: {
         restaurants: 'Restaurants',
-        monuments: 'Monuments',
+        monuments: 'Monuments & Nature',
         events: 'Events',
         stories: 'Stories',
       },
@@ -139,6 +171,26 @@ export const nativeCopy: Record<
       ctaText:
         'Post a story from your favorite restaurant, event, or hidden Kosovo corner and inspire the next route.',
       ctaButton: 'Create a Story',
+      featured: 'Featured',
+      openStory: 'Open story',
+      createTitle: 'Create a story',
+      creatorEyebrow: 'Story Studio',
+      titleLabel: 'Title',
+      titlePlaceholder: 'Give your story a strong title',
+      subtitleLabel: 'Short description',
+      subtitlePlaceholder: 'What should people expect?',
+      locationLabel: 'Location',
+      locationPlaceholder: 'Prishtina',
+      categoryLabel: 'Category',
+      categoryPlaceholder: 'Food, culture...',
+      bodyLabel: 'Story',
+      bodyPlaceholder: 'Write the route, mood, people, food, and little details that made it worth sharing.',
+      publishButton: 'Publish Story',
+      notFound: 'Story not found',
+      likes: 'likes',
+      views: 'views',
+      yourStory: 'You',
+      justNow: 'Just now',
     },
     profile: {
       title: 'Profile',
@@ -181,8 +233,8 @@ export const nativeCopy: Record<
     },
     category: {
       filters: ['All', 'Traditional', 'Cafe', 'Street Food', 'Fine Dining'],
-      cultureTitle: 'Kosovo Icons',
-      cultureSubtitle: 'Monuments Explorer',
+      cultureTitle: 'Monuments & Nature',
+      cultureSubtitle: 'Historic landmarks and wild escapes',
       restaurantTitle: 'Find your next favorite spot.',
       restaurantSubtitle: 'Search restaurants, cuisines, vibes and community-approved places.',
       searchPlaceholder: 'Search restaurants, cuisines, vibes...',
@@ -250,6 +302,18 @@ export const nativeCopy: Record<
       timeSlots: 'Time slots',
       confirm: 'Confirm Booking',
     },
+    restaurantDetails: {
+      openNow: 'Open Now',
+      closed: 'Closed',
+      ratingSuffix: 'rating',
+      todaySpecial: "Today's Special",
+      about: 'About',
+      openDailyPrefix: 'Open daily',
+      menuHighlights: 'Menu highlights',
+      seasonalSelection: 'Seasonal selection',
+      reviews: 'Reviews',
+      bookTable: 'Book a Table',
+    },
   },
   sq: {
     tabs: {
@@ -268,7 +332,7 @@ export const nativeCopy: Record<
       cta: 'Eksploro Tani',
       categories: {
         restaurants: 'Restorante',
-        monuments: 'Monumente',
+        monuments: 'Monumente & Natyre',
         events: 'Evente',
         stories: 'Storje',
       },
@@ -287,6 +351,26 @@ export const nativeCopy: Record<
       ctaText:
         'Posto nje storje nga restoranti, eventi ose cepi yt i preferuar ne Kosove.',
       ctaButton: 'Krijo storje',
+      featured: 'E vecuar',
+      openStory: 'Hap storjen',
+      createTitle: 'Krijo storje',
+      creatorEyebrow: 'Studio storjesh',
+      titleLabel: 'Titulli',
+      titlePlaceholder: 'Jepi storjes nje titull te forte',
+      subtitleLabel: 'Pershkrim i shkurter',
+      subtitlePlaceholder: 'Cfare duhet te presin njerezit?',
+      locationLabel: 'Lokacioni',
+      locationPlaceholder: 'Prishtine',
+      categoryLabel: 'Kategoria',
+      categoryPlaceholder: 'Ushqim, kulture...',
+      bodyLabel: 'Storja',
+      bodyPlaceholder: 'Shkruaj rrugen, atmosferen, njerezit, ushqimin dhe detajet qe ia vlejne te ndahen.',
+      publishButton: 'Publiko storjen',
+      notFound: 'Storja nuk u gjet',
+      likes: 'pelqime',
+      views: 'shikime',
+      yourStory: 'Ti',
+      justNow: 'Tani',
     },
     profile: {
       title: 'Profili',
@@ -329,8 +413,8 @@ export const nativeCopy: Record<
     },
     category: {
       filters: ['Te gjitha', 'Tradicionale', 'Kafene', 'Ushqim rruge', 'Fine Dining'],
-      cultureTitle: 'Ikonat e Kosoves',
-      cultureSubtitle: 'Eksploro monumentet',
+      cultureTitle: 'Monumente & Natyre',
+      cultureSubtitle: 'Monumente historike dhe arratisje ne natyre',
       restaurantTitle: 'Gjej vendin tend te preferuar.',
       restaurantSubtitle: 'Kerko restorante, kuzhina, vibe dhe vende te pelqyera nga komuniteti.',
       searchPlaceholder: 'Kerko restorante, kuzhina, vibe...',
@@ -397,6 +481,18 @@ export const nativeCopy: Record<
       dates: 'Datat',
       timeSlots: 'Oret',
       confirm: 'Konfirmo rezervimin',
+    },
+    restaurantDetails: {
+      openNow: 'Hapur tani',
+      closed: 'Mbyllur',
+      ratingSuffix: 'vleresim',
+      todaySpecial: 'Specialja e dites',
+      about: 'Rreth vendit',
+      openDailyPrefix: 'Hapur cdo dite',
+      menuHighlights: 'Pikat kryesore te menus',
+      seasonalSelection: 'Zgjedhje sezonale',
+      reviews: 'Vleresime',
+      bookTable: 'Rezervo tavoline',
     },
   },
 };

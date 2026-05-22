@@ -17,27 +17,37 @@ export type HomeStackParamList = {
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
   Settings: undefined;
+  History: undefined;
 };
 
 export type MapStackParamList = {
   MapMain: undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
+  Settings: undefined;
+  History: undefined;
 };
 
 export type TavolinaStackParamList = {
   TavolinaMain: undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
+  Settings: undefined;
+  History: undefined;
 };
 
 export type FavoritesStackParamList = {
   FavoritesMain: undefined;
+  StoryDetail: { storyId: string };
+  CreateStory: undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
+  Settings: undefined;
+  History: undefined;
 };
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   Settings: undefined;
+  History: undefined;
 };

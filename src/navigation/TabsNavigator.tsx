@@ -8,11 +8,14 @@ import { StyleSheet } from 'react-native';
 import { ActivityDashboardScreen } from '../screens/ActivityDashboardScreen';
 import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
+import { CreateStoryScreen } from '../screens/CreateStoryScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { HistoryScreen } from '../screens/HistoryScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { StoryDetailScreen } from '../screens/StoryDetailScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -73,6 +76,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
+      <HomeStack.Screen name="History" component={HistoryScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -83,6 +87,8 @@ function MapStackNavigator() {
       <MapStack.Screen name="MapMain" component={MapScreen} />
       <MapStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <MapStack.Screen name="BookTable" component={BookTableScreen} />
+      <MapStack.Screen name="Settings" component={SettingsScreen} />
+      <MapStack.Screen name="History" component={HistoryScreen} />
     </MapStack.Navigator>
   );
 }
@@ -93,6 +99,8 @@ function TavolinaStackNavigator() {
       <TavolinaStack.Screen name="TavolinaMain" component={TavolinaScreen} />
       <TavolinaStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <TavolinaStack.Screen name="BookTable" component={BookTableScreen} />
+      <TavolinaStack.Screen name="Settings" component={SettingsScreen} />
+      <TavolinaStack.Screen name="History" component={HistoryScreen} />
     </TavolinaStack.Navigator>
   );
 }
@@ -101,8 +109,12 @@ function FavoritesStackNavigator() {
   return (
     <FavoritesStack.Navigator screenOptions={stackScreenOptions}>
       <FavoritesStack.Screen name="FavoritesMain" component={FavoritesScreen} />
+      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} />
+      <FavoritesStack.Screen name="CreateStory" component={CreateStoryScreen} />
       <FavoritesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />
+      <FavoritesStack.Screen name="Settings" component={SettingsScreen} />
+      <FavoritesStack.Screen name="History" component={HistoryScreen} />
     </FavoritesStack.Navigator>
   );
 }
@@ -112,6 +124,7 @@ function ProfileStackNavigator() {
     <ProfileStack.Navigator screenOptions={stackScreenOptions}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+      <ProfileStack.Screen name="History" component={HistoryScreen} />
     </ProfileStack.Navigator>
   );
 }
