@@ -1,6 +1,6 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppText } from '@/src/components/AppText';
 import { theme } from '@/src/theme';
