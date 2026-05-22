@@ -12,11 +12,11 @@ export const theme = {
 };
 
 export const navigationTheme: Theme = {
-  dark: false,
+  dark: true,
   colors: {
     primary: colors.primary,
     background: colors.background,
-    card: colors.surface,
+    card: '#0B0D16',
     text: colors.heading,
     border: colors.border,
     notification: colors.gold,

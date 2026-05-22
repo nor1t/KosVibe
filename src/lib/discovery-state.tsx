@@ -14,6 +14,8 @@ type DiscoveryContextValue = {
   selectedLocationId: string;
   selectedLocation: DiscoveryLocation;
   setSelectedLocationId: (locationId: string) => void;
+  selectedCategory: 'Restaurants' | 'Hiking' | 'Party' | 'Culture' | 'Study' | null;
+  setSelectedCategory: (category: DiscoveryContextValue['selectedCategory']) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   isChatOpen: boolean;
@@ -88,12 +90,13 @@ const initialMessages: ChatMessage[] = [
   {
     id: 'assistant-welcome',
     role: 'assistant',
-    text: 'Hi, I am your Yummy assistant. I can help you find restaurants, compare offers, or guide you to a booking.',
+    text: 'Hi, I am your KosVibe guide. I can help you find restaurants, discover monuments, or plan your next vibe in Kosovo.',
   },
 ];
 
 export function DiscoveryProvider({ children }: { children: ReactNode }) {
   const [selectedLocationId, setSelectedLocationId] = useState('prishtine');
+  const [selectedCategory, setSelectedCategory] = useState<DiscoveryContextValue['selectedCategory']>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
@@ -156,6 +159,8 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
       selectedLocationId,
       selectedLocation,
       setSelectedLocationId,
+      selectedCategory,
+      setSelectedCategory: (category) => setSelectedCategory(category),
       searchQuery,
       setSearchQuery,
       isChatOpen,
@@ -172,6 +177,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
       searchQuery,
       selectedLocation,
       selectedLocationId,
+      selectedCategory,
       sendMessage,
     ]
   );

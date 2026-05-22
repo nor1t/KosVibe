@@ -16,7 +16,8 @@ import { FeaturedMenuCard } from '../components/cards/FeaturedMenuCard';
 import { InfoHighlightCard } from '../components/cards/InfoHighlightCard';
 import { OfferGradientCard } from '../components/cards/OfferGradientCard';
 import { RestaurantListCard } from '../components/cards/RestaurantListCard';
-import { IconCircleButton } from '../components/common/IconCircleButton';
+import { CompactHeader } from '../components/common/CompactHeader';
+import { Footer } from '../components/common/Footer';
 import { LocationPickerModal } from '../components/common/LocationPickerModal';
 import { SectionTitle } from '../components/common/SectionTitle';
 import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
@@ -102,18 +103,9 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
   return (
     <View style={styles.container}>
-      <Screen contentContainerStyle={styles.content}>
+      <Screen variant="semafori" contentContainerStyle={styles.content}>
         <GradientHeaderShell>
-          <View style={styles.headerTopRow}>
-            <View>
-              <Text style={styles.brandPrimary}>YUMMY</Text>
-              <Text style={styles.brandAccent}>KOSOVA</Text>
-            </View>
-
-            <IconCircleButton onPress={() => navigation.navigate('Settings')}>
-              <Ionicons name="settings-outline" size={24} color={theme.colors.surface} />
-            </IconCircleButton>
-          </View>
+          <CompactHeader />
 
           <Pressable style={styles.locationChip} onPress={() => setIsLocationPickerOpen(true)}>
             <Ionicons name="location-outline" size={18} color={theme.colors.surface} />
@@ -262,6 +254,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             ))}
           </View>
         </View>
+        <Footer />
       </Screen>
 
       <Pressable style={styles.chatFab} onPress={openChat}>

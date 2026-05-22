@@ -2,11 +2,13 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { ComponentProps } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet } from 'react-native';
 
+import { ActivityDashboardScreen } from '../screens/ActivityDashboardScreen';
 import { BookTableScreen } from '../screens/BookTableScreen';
+import { CategoryScreen } from '../screens/CategoryScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
-import { HomeScreen } from '../screens/HomeScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
@@ -14,12 +16,12 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
 import { theme } from '../theme';
 import type {
-  FavoritesStackParamList,
-  HomeStackParamList,
-  MapStackParamList,
-  ProfileStackParamList,
-  RootTabParamList,
-  TavolinaStackParamList,
+    FavoritesStackParamList,
+    HomeStackParamList,
+    MapStackParamList,
+    ProfileStackParamList,
+    RootTabParamList,
+    TavolinaStackParamList,
 } from './types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -48,13 +50,13 @@ function TabIcon({
   size: number;
 }) {
   if (routeName === 'TavolinaTab') {
-    return <MaterialCommunityIcons name="silverware-fork-knife" size={size + 1} color={color} />;
+    return <MaterialCommunityIcons name="plus-circle-outline" size={size + 2} color={color} />;
   }
 
   const iconByRoute: Record<Exclude<keyof RootTabParamList, 'TavolinaTab'>, IconName> = {
     HomeTab: 'home-outline',
-    MapTab: 'map-outline',
-    FavoritesTab: 'heart-outline',
+    MapTab: 'search-outline',
+    FavoritesTab: 'book-outline',
     ProfileTab: 'person-outline',
   };
 
@@ -64,7 +66,8 @@ function TabIcon({
 function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={stackScreenOptions}>
-      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="HomeMain" component={ActivityDashboardScreen} />
+      <HomeStack.Screen name="Category" component={CategoryScreen} />
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
@@ -120,20 +123,23 @@ export function TabsNavigator() {
         tabBarStyle: styles.tabBar,
         sceneStyle: styles.scene,
         tabBarLabelStyle: styles.tabBarLabel,
-        tabBarActiveTintColor: theme.colors.primary,
+        tabBarActiveTintColor: theme.colors.surface,
         tabBarInactiveTintColor: theme.colors.tabInactive,
         tabBarHideOnKeyboard: true,
+        tabBarBackground: () => (
+          <LinearGradient colors={['rgba(8,10,18,0.98)', 'rgba(13,13,26,0.98)']} style={StyleSheet.absoluteFill} />
+        ),
         tabBarIcon: ({ color, size }) => (
           <TabIcon routeName={route.name as keyof RootTabParamList} color={color} size={size} />
         ),
       })}>
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: 'Home' }} />
-      <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: 'Map' }} />
-      <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: 'Tavolina' }} />
+      <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: 'Explore' }} />
+      <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: 'Events' }} />
       <Tab.Screen
         name="FavoritesTab"
         component={FavoritesStackNavigator}
-        options={{ title: 'Favorites' }}
+        options={{ title: 'Stories' }}
       />
       <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Profile' }} />
     </Tab.Navigator>
@@ -145,15 +151,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   tabBar: {
-    height: 74,
-    paddingTop: 6,
-    paddingBottom: 8,
-    borderTopColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    height: 82,
+    paddingTop: 10,
+    paddingBottom: 12,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'transparent',
   },
   tabBarLabel: {
     fontSize: 11,
-    fontWeight: '500',
-    marginTop: 2,
+    fontWeight: '700',
+    marginTop: 4,
+    letterSpacing: 0.2,
   },
 });

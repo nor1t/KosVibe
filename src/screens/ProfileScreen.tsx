@@ -1,23 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  profileAchievements,
-  profileQuickLinks,
-  profileStats,
-  recentActivity,
-} from '../data/mockData';
-import { AchievementCard } from '../components/cards/AchievementCard';
-import { ActivityCard } from '../components/cards/ActivityCard';
-import { OptionListCard } from '../components/cards/OptionListCard';
-import { StatCard } from '../components/cards/StatCard';
-import { IconCircleButton } from '../components/common/IconCircleButton';
-import { SectionTitle } from '../components/common/SectionTitle';
 import { useAuth } from '../features/auth/AuthProvider';
-import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
-import { Screen } from '../components/layout/Screen';
 import { theme } from '../theme';
 
 type ProfileScreenProps = {
@@ -33,237 +19,251 @@ function getDisplayName(fullName: string | null | undefined, email: string | nul
     return email.split('@')[0];
   }
 
-  return 'Yummy Member';
+  return 'KosVibe Member';
 }
+
+const stats = [
+  { id: 'saved', value: '28', label: 'Saved spots' },
+  { id: 'stories', value: '12', label: 'Stories' },
+  { id: 'events', value: '05', label: 'Events hosted' },
+];
+
+const quickActions = ['Favorite restaurants', 'Hidden gems list', 'Monument trail', 'Settings'];
 
 export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { user } = useAuth();
-  const { width } = useWindowDimensions();
-  const achievementWidth = (width - theme.spacing.xxl * 2 - theme.spacing.lg) / 2;
   const fullName =
     typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
   const displayName = getDisplayName(fullName, user?.email);
 
   return (
-    <Screen contentContainerStyle={styles.content}>
-      <GradientHeaderShell style={styles.header}>
-        <View style={styles.headerTopRow}>
-          <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              <Ionicons name="person-outline" size={42} color={theme.colors.danger} />
-            </View>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
+          <Ionicons name="settings-outline" size={22} color={theme.colors.surface} />
+        </Pressable>
+      </View>
 
-            <View style={styles.profileCopy}>
-              <Text style={styles.name}>{displayName}</Text>
-              <Text style={styles.email}>{user?.email ?? 'member@yummykosova.app'}</Text>
+      <LinearGradient colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
+        <View style={styles.avatarWrap}>
+          <LinearGradient colors={theme.gradients.sunset} style={styles.avatarRing}>
+            <View style={styles.avatarCore}>
+              <Ionicons name="person" size={34} color={theme.colors.surface} />
             </View>
-          </View>
-
-          <IconCircleButton onPress={() => navigation.navigate('Settings')}>
-            <Ionicons name="settings-outline" size={24} color={theme.colors.surface} />
-          </IconCircleButton>
+          </LinearGradient>
         </View>
 
-        <View style={styles.membershipBanner}>
-          <View style={styles.membershipCopy}>
-            <Ionicons name="ribbon-outline" size={22} color="#FFD74A" />
-            <Text style={styles.membershipText}>Member since January 2024</Text>
-          </View>
-
-          <View style={styles.pointsPill}>
-            <Text style={styles.pointsText}>450 pts</Text>
-          </View>
-        </View>
-      </GradientHeaderShell>
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.email}>{user?.email ?? 'member@kosvibe.app'}</Text>
+        <Text style={styles.bio}>
+          Curating restaurants, monuments, and city stories with a modern Kosovo state of mind.
+        </Text>
+      </LinearGradient>
 
       <View style={styles.statsRow}>
-        {profileStats.map((item) => (
-          <StatCard
-            key={item.id}
-            icon={item.icon as 'calendar-outline'}
-            value={item.value}
-            label={item.label}
-          />
+        {stats.map((stat) => (
+          <View key={stat.id} style={styles.statCard}>
+            <Text style={styles.statValue}>{stat.value}</Text>
+            <Text style={styles.statLabel}>{stat.label}</Text>
+          </View>
         ))}
       </View>
 
-      <View style={styles.sectionBlock}>
-        <SectionTitle
-          title="Achievements"
-          icon={<Ionicons name="ribbon-outline" size={22} color={theme.colors.danger} />}
-        />
-        <View style={styles.achievementGrid}>
-          {profileAchievements.map((achievement) => (
-            <AchievementCard
-              key={achievement.id}
-              achievement={achievement}
-              style={{ width: achievementWidth }}
-            />
-          ))}
-        </View>
+      <Text style={styles.sectionHeading}>Your vibe</Text>
+      <View style={styles.actionList}>
+        {quickActions.map((action, index) => (
+          <Pressable key={action} style={styles.actionCard}>
+            <View style={[styles.actionIcon, index % 2 === 0 ? styles.actionIconRed : styles.actionIconGold]}>
+              <Ionicons
+                name={index === 0 ? 'heart-outline' : index === 1 ? 'sparkles-outline' : index === 2 ? 'business-outline' : 'settings-outline'}
+                size={18}
+                color={theme.colors.surface}
+              />
+            </View>
+            <Text style={styles.actionLabel}>{action}</Text>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.mutedText} />
+          </Pressable>
+        ))}
       </View>
 
-      <View style={styles.sectionBlock}>
-        <SectionTitle
-          title="Recent Activity"
-          icon={<Ionicons name="time-outline" size={22} color={theme.colors.danger} />}
-        />
-        <View style={styles.listGap}>
-          {recentActivity.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity} />
-          ))}
-        </View>
+      <View style={styles.badgeCard}>
+        <Text style={styles.badgeEyebrow}>KosVibe Badge</Text>
+        <Text style={styles.badgeTitle}>Gold city curator</Text>
+        <Text style={styles.badgeText}>
+          You are one of the most active members in your circle this month. Keep posting and exploring.
+        </Text>
       </View>
-
-      <View style={styles.sectionBlock}>
-        <OptionListCard items={profileQuickLinks} />
-      </View>
-
-      <View style={styles.sectionBlock}>
-        <LinearGradient colors={theme.gradients.premium} style={styles.premiumBanner}>
-          <Text style={styles.premiumTitle}>Yummy Plus</Text>
-          <Text style={styles.premiumSubtitle}>
-            Unlock premium Tavolina invites and faster booking perks.
-          </Text>
-        </LinearGradient>
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerBrand}>YUMMY KOSOVA</Text>
-        <Text style={styles.footerVersion}>Version 1.0.0</Text>
-        <Text style={styles.footerNote}>© 2026 Yummy Kosova. All rights reserved.</Text>
-      </View>
-    </Screen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
   content: {
-    gap: theme.spacing.xxxl,
+    paddingHorizontal: 20,
+    paddingTop: 54,
+    paddingBottom: 140,
   },
-  header: {
-    paddingBottom: 86,
-  },
-  headerTopRow: {
+  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: theme.spacing.lg,
-  },
-  profileRow: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.lg,
   },
-  avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: theme.radius.round,
-    backgroundColor: theme.colors.surface,
+  headerTitle: {
+    color: theme.colors.heading,
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  settingsButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
-    ...theme.shadow.card,
   },
-  profileCopy: {
-    flex: 1,
-    gap: theme.spacing.xs,
+  heroCard: {
+    marginTop: 20,
+    padding: 24,
+    borderRadius: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  avatarWrap: {
+    marginBottom: 16,
+  },
+  avatarRing: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarCore: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#121522',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   name: {
-    color: theme.colors.surface,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '800',
+    color: theme.colors.heading,
+    fontSize: 28,
+    fontWeight: '900',
   },
   email: {
-    color: 'rgba(255,255,255,0.88)',
+    marginTop: 6,
+    color: '#F7D7A2',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  bio: {
+    marginTop: 12,
+    color: '#E2E6F4',
     fontSize: 15,
-  },
-  membershipBanner: {
-    marginTop: theme.spacing.xxl,
-    borderRadius: theme.radius.lg,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: theme.spacing.lg,
-  },
-  membershipCopy: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    flex: 1,
-  },
-  membershipText: {
-    color: theme.colors.surface,
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  pointsPill: {
-    backgroundColor: '#FFD939',
-    borderRadius: theme.radius.round,
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.sm,
-  },
-  pointsText: {
-    color: theme.colors.heading,
-    fontSize: 15,
-    fontWeight: '800',
+    lineHeight: 23,
+    textAlign: 'center',
+    maxWidth: 290,
   },
   statsRow: {
     flexDirection: 'row',
-    gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.xxl,
-    marginTop: -60,
+    gap: 12,
+    marginTop: 20,
   },
-  sectionBlock: {
-    gap: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.xxl,
-  },
-  achievementGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.lg,
-  },
-  listGap: {
-    gap: theme.spacing.lg,
-  },
-  premiumBanner: {
-    borderRadius: theme.radius.lg,
-    paddingHorizontal: theme.spacing.xxl,
-    paddingVertical: theme.spacing.xl,
-    ...theme.shadow.card,
-  },
-  premiumTitle: {
-    color: theme.colors.surface,
-    fontSize: 20,
-    fontWeight: '800',
-    marginBottom: theme.spacing.sm,
-  },
-  premiumSubtitle: {
-    color: theme.colors.surface,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  footer: {
+  statCard: {
+    flex: 1,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xxl,
   },
-  footerBrand: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: theme.colors.secondary,
+  statValue: {
+    color: theme.colors.heading,
+    fontSize: 26,
+    fontWeight: '900',
   },
-  footerVersion: {
-    fontSize: theme.typography.sizes.body,
+  statLabel: {
+    marginTop: 6,
     color: theme.colors.mutedText,
-  },
-  footerNote: {
-    fontSize: 14,
-    color: theme.colors.subtle,
+    fontSize: 12,
     textAlign: 'center',
+  },
+  sectionHeading: {
+    marginTop: 28,
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  actionList: {
+    marginTop: 14,
+    gap: 12,
+  },
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionIconRed: {
+    backgroundColor: 'rgba(255,31,61,0.3)',
+  },
+  actionIconGold: {
+    backgroundColor: 'rgba(255,179,0,0.22)',
+  },
+  actionLabel: {
+    flex: 1,
+    color: theme.colors.heading,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  badgeCard: {
+    marginTop: 28,
+    padding: 20,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,179,0,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.18)',
+  },
+  badgeEyebrow: {
+    color: '#F0C06B',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
+  badgeTitle: {
+    marginTop: 10,
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  badgeText: {
+    marginTop: 10,
+    color: '#E9E3D2',
+    fontSize: 15,
+    lineHeight: 22,
   },
 });

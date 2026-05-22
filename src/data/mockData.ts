@@ -94,7 +94,7 @@ export type ActiveOffer = {
 export type EventFeature = {
   id: string;
   title: string;
-  category: 'Restaurants' | 'Hiking' | 'Party' | 'Culture';
+  category: 'Restaurants' | 'Hiking' | 'Party' | 'Culture' | 'Study';
   venue: string;
   date: string;
   description: string;
@@ -786,6 +786,15 @@ export const eventHighlights: EventFeature[] = [
     date: 'Wed • 19:00',
     description: 'Enjoy authentic dishes with live traditional music and warm hospitality from Kosovo hosts.',
     colors: ['#FF6A2F', '#FF9A54'],
+  },
+  {
+    id: 'event-study-spotlight',
+    title: 'Campus Study Circle',
+    category: 'Study',
+    venue: 'Innovation Hub, Prishtina',
+    date: 'Thu • 17:00',
+    description: 'Meet students, attend quick workshops, and discover Kosovo’s study culture.',
+    colors: ['#FFC92C', '#FFB54A'],
   },
 ];
 

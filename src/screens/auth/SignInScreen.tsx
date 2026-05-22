@@ -113,7 +113,7 @@ export function SignInScreen() {
           </Pressable>
 
           <View style={styles.authFooterRow}>
-            <Text style={styles.authFooterText}>Don't have an account?</Text>
+            <Text style={styles.authFooterText}>Do not have an account?</Text>
             <Pressable onPress={() => navigation.navigate('SignUp')}>
               <Text style={styles.authLink}>Create one</Text>
             </Pressable>

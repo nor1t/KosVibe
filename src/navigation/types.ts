@@ -13,6 +13,7 @@ export type RootTabParamList = {
 
 export type HomeStackParamList = {
   HomeMain: undefined;
+  Category: { category: 'Restaurants' | 'Hiking' | 'Party' | 'Culture' | 'Study' };
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
   Settings: undefined;

@@ -40,10 +40,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   soft: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   light: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(248,247,255,0.94)',
     ...theme.shadow.card,
   },
   pressed: {

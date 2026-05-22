@@ -1,7 +1,6 @@
-import { Image } from 'expo-image';
-import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { AppText } from '@/src/components/AppText';
 import { theme } from '@/src/theme';
 
 type AppLogoProps = {
@@ -12,18 +11,14 @@ export function AppLogo({ compact = false }: AppLogoProps) {
   return (
     <View style={styles.row}>
       <View style={[styles.markWrap, compact ? styles.markWrapCompact : undefined]}>
-        <Image
-          source={require('@/assets/images/icon.png')}
-          contentFit="contain"
-          style={[styles.mark, compact ? styles.markCompact : undefined]}
-        />
+        <LinearGradient colors={theme.gradients.sunset} style={[styles.mark, compact ? styles.markCompact : undefined]}>
+          <Text style={[styles.markText, compact ? styles.markTextCompact : undefined]}>KV</Text>
+        </LinearGradient>
       </View>
       {!compact ? (
         <View>
-          <AppText variant="subtitle">YummyKosova</AppText>
-          <AppText variant="caption" color={theme.colors.mutedText}>
-            Logo placeholder
-          </AppText>
+          <Text style={styles.wordmark}>KosVibe</Text>
+          <Text style={styles.caption}>Kosovo lifestyle</Text>
         </View>
       ) : null}
     </View>
@@ -40,7 +35,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: theme.radius.lg,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
     borderColor: theme.colors.border,
     alignItems: 'center',
@@ -52,11 +47,35 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.xl,
   },
   mark: {
-    width: 28,
-    height: 28,
+    width: 34,
+    height: 34,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   markCompact: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    borderRadius: 18,
+  },
+  markText: {
+    color: theme.colors.surface,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1.4,
+  },
+  markTextCompact: {
+    fontSize: 14,
+  },
+  wordmark: {
+    color: theme.colors.heading,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  caption: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    marginTop: 2,
   },
 });

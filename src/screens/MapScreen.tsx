@@ -1,19 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  filterRestaurantsByDiscovery,
-  getMapRegionForRestaurants,
-  restaurants,
-} from '../data/mockData';
-import { RestaurantListCard } from '../components/cards/RestaurantListCard';
-import { IconCircleButton } from '../components/common/IconCircleButton';
-import { LocationPickerModal } from '../components/common/LocationPickerModal';
-import { RestaurantMapView } from '../components/map/RestaurantMapView';
-import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
-import { Screen } from '../components/layout/Screen';
+import { FakeMap } from '../components/map/FakeMap';
+import { filterRestaurantsByDiscovery, restaurants, type MapPin } from '../data/mockData';
 import { useDiscovery } from '../lib/discovery-state';
 import { theme } from '../theme';
 
@@ -21,164 +13,248 @@ type MapScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
+type MonumentPin = MapPin & {
+  title: string;
+  subtitle: string;
+};
+
+const monumentPins: MonumentPin[] = [
+  { id: 'monument-1', restaurantId: 'culture-1', x: '33%', y: '42%', color: '#FFB300', title: 'Prizren Bridge', subtitle: 'Historic landmark' },
+  { id: 'monument-2', restaurantId: 'culture-2', x: '52%', y: '35%', color: '#FF8C00', title: 'Newborn Monument', subtitle: 'Urban culture' },
+  { id: 'monument-3', restaurantId: 'culture-3', x: '64%', y: '56%', color: '#FFD166', title: 'Bear Sanctuary', subtitle: 'Nature preserve' },
+];
+
 export function MapScreen({ navigation }: MapScreenProps) {
-  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
-  const {
-    locationOptions,
-    searchQuery,
-    selectedLocation,
-    selectedLocationId,
-    setSelectedLocationId,
-  } = useDiscovery();
-
+  const { selectedLocation, selectedLocationId } = useDiscovery();
+  const [activeLayer, setActiveLayer] = useState<'eat' | 'icons'>('eat');
   const visibleRestaurants = useMemo(
-    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery),
-    [searchQuery, selectedLocationId]
+    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, ''),
+    [selectedLocationId]
   );
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(
-    visibleRestaurants[0]?.id ?? null
+  const pins: MapPin[] = useMemo(
+    () =>
+      visibleRestaurants.slice(0, 4).map((restaurant, index) => ({
+        id: `pin-${restaurant.id}`,
+        restaurantId: restaurant.id,
+        x: `${24 + index * 16}%` as `${number}%`,
+        y: `${32 + (index % 2) * 18}%` as `${number}%`,
+        color: index % 2 === 0 ? theme.colors.primary : theme.colors.secondary,
+      })),
+    [visibleRestaurants]
   );
-
-  useEffect(() => {
-    if (!visibleRestaurants.some((restaurant) => restaurant.id === selectedRestaurantId)) {
-      setSelectedRestaurantId(visibleRestaurants[0]?.id ?? null);
-    }
-  }, [selectedRestaurantId, visibleRestaurants]);
-
-  const region =
-    visibleRestaurants.length > 0
-      ? getMapRegionForRestaurants(visibleRestaurants)
-      : selectedLocation.region;
 
   return (
-    <Screen scrollable={false}>
-      <View style={styles.container}>
-        <GradientHeaderShell bottomRadius={0} style={styles.header}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.title}>Map View</Text>
-              <Text style={styles.subtitle}>{visibleRestaurants.length} restaurants nearby</Text>
-            </View>
+    <View style={styles.container}>
+      <FakeMap
+        pins={activeLayer === 'eat' ? pins : monumentPins}
+        onPinPress={(restaurantId) => {
+          if (activeLayer === 'eat') {
+            navigation.navigate('RestaurantDetails', { restaurantId });
+          }
+        }}
+      />
 
-            <IconCircleButton onPress={() => setIsLocationPickerOpen(true)}>
-              <Ionicons name="options-outline" size={24} color={theme.colors.surface} />
-            </IconCircleButton>
-          </View>
-        </GradientHeaderShell>
+      <LinearGradient colors={['rgba(7,8,16,0.14)', 'rgba(7,8,16,0.72)']} style={styles.topFade} />
 
-        <View style={styles.mapContainer}>
-          <RestaurantMapView
-            restaurants={visibleRestaurants}
-            region={region}
-            selectedRestaurantId={selectedRestaurantId}
-            onMarkerPress={setSelectedRestaurantId}
-            style={styles.map}
-          />
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Explore Kosovo</Text>
+          <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
         </View>
 
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
-          <Text style={styles.sheetTitle}>Nearest Restaurants</Text>
-          <Text style={styles.sheetSubtitle}>{selectedLocation.label}</Text>
+        <Pressable style={styles.headerButton}>
+          <Ionicons name="locate-outline" size={22} color={theme.colors.surface} />
+        </Pressable>
+      </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sheetContent}>
-            {visibleRestaurants.map((restaurant) => (
-              <RestaurantListCard
-                key={restaurant.id}
-                restaurant={restaurant}
-                style={restaurant.id === selectedRestaurantId ? styles.selectedCard : undefined}
-                onPress={() =>
-                  navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })
-                }
-              />
-            ))}
-          </ScrollView>
+      <View style={styles.toggleWrap}>
+        <View style={styles.toggleShell}>
+          <Pressable style={styles.toggleSide} onPress={() => setActiveLayer('eat')}>
+            {activeLayer === 'eat' ? (
+              <LinearGradient colors={theme.gradients.primary} style={styles.toggleActive}>
+                <Text style={styles.toggleActiveLabel}>Eat</Text>
+              </LinearGradient>
+            ) : (
+              <Text style={styles.toggleLabel}>Eat</Text>
+            )}
+          </Pressable>
+
+          <Pressable style={styles.toggleSide} onPress={() => setActiveLayer('icons')}>
+            {activeLayer === 'icons' ? (
+              <LinearGradient colors={theme.gradients.gold} style={styles.toggleActive}>
+                <Text style={styles.toggleActiveLabel}>Icons</Text>
+              </LinearGradient>
+            ) : (
+              <Text style={styles.toggleLabel}>Icons</Text>
+            )}
+          </Pressable>
         </View>
       </View>
 
-      <LocationPickerModal
-        visible={isLocationPickerOpen}
-        locations={locationOptions}
-        selectedLocationId={selectedLocationId}
-        onClose={() => setIsLocationPickerOpen(false)}
-        onSelect={setSelectedLocationId}
-      />
-    </Screen>
+      <View style={styles.sheet}>
+        <View style={styles.handle} />
+        <Text style={styles.sheetTitle}>{activeLayer === 'eat' ? 'Nearby Vibes' : 'Kosovo Icons'}</Text>
+        <Text style={styles.sheetSubtitle}>
+          {activeLayer === 'eat'
+            ? `${visibleRestaurants.length} curated places around you`
+            : 'Switch between cultural landmarks across the country'}
+        </Text>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sheetRow}>
+          {activeLayer === 'eat'
+            ? visibleRestaurants.slice(0, 4).map((restaurant) => (
+                <Pressable
+                  key={restaurant.id}
+                  style={styles.placeCard}
+                  onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })}>
+                  <Text style={styles.placeName}>{restaurant.name}</Text>
+                  <Text style={styles.placeMeta}>{restaurant.cuisine}</Text>
+                  <Text style={styles.placeAccent}>{restaurant.distance} away</Text>
+                </Pressable>
+              ))
+            : monumentPins.map((item) => (
+                <View key={item.id} style={styles.placeCard}>
+                  <Text style={styles.placeName}>{item.title}</Text>
+                  <Text style={styles.placeMeta}>{item.subtitle}</Text>
+                  <Text style={styles.placeAccent}>Saved to trail</Text>
+                </View>
+              ))}
+        </ScrollView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.mapSurface,
+  },
+  topFade: {
+    ...StyleSheet.absoluteFillObject,
+    bottom: '42%',
   },
   header: {
-    paddingBottom: theme.spacing.xl,
-  },
-  headerRow: {
+    position: 'absolute',
+    top: 62,
+    left: 20,
+    right: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: theme.spacing.xl,
+    justifyContent: 'space-between',
   },
-  headerCopy: {
-    gap: theme.spacing.xs,
+  headerTitle: {
+    color: theme.colors.heading,
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: -0.8,
   },
-  title: {
+  headerSubtitle: {
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 14,
+  },
+  headerButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleWrap: {
+    position: 'absolute',
+    top: 128,
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  toggleShell: {
+    flexDirection: 'row',
+    padding: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    minWidth: 220,
+  },
+  toggleSide: {
+    flex: 1,
+  },
+  toggleActive: {
+    borderRadius: 999,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  toggleLabel: {
+    textAlign: 'center',
+    paddingVertical: 10,
+    color: theme.colors.mutedText,
+    fontWeight: '700',
+  },
+  toggleActiveLabel: {
     color: theme.colors.surface,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 15,
-  },
-  mapContainer: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
+    fontWeight: '900',
   },
   sheet: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    minHeight: '40%',
-    maxHeight: '46%',
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.radius.xxl,
-    borderTopRightRadius: theme.radius.xxl,
-    paddingTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xxl,
+    left: 14,
+    right: 14,
+    bottom: 108,
+    padding: 20,
+    borderRadius: 30,
+    backgroundColor: 'rgba(15,17,28,0.94)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   handle: {
     alignSelf: 'center',
-    width: 70,
-    height: 7,
-    borderRadius: theme.radius.round,
-    backgroundColor: '#D9DCE5',
-    marginBottom: theme.spacing.md,
+    width: 58,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    marginBottom: 12,
   },
   sheetTitle: {
-    fontSize: theme.typography.sizes.title,
-    lineHeight: theme.typography.lineHeights.title,
-    fontWeight: '800',
     color: theme.colors.heading,
+    fontSize: 22,
+    fontWeight: '900',
   },
   sheetSubtitle: {
-    fontSize: theme.typography.sizes.body,
+    marginTop: 4,
     color: theme.colors.mutedText,
-    marginTop: 2,
-    marginBottom: theme.spacing.lg,
+    fontSize: 14,
+    lineHeight: 20,
   },
-  sheetContent: {
-    gap: theme.spacing.md,
-    paddingBottom: 96,
+  sheetRow: {
+    gap: 12,
+    paddingTop: 18,
+    paddingRight: 4,
   },
-  selectedCard: {
+  placeCard: {
+    width: 170,
+    padding: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: theme.colors.primarySoft,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  placeName: {
+    color: theme.colors.heading,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  placeMeta: {
+    marginTop: 6,
+    color: theme.colors.mutedText,
+    fontSize: 14,
+  },
+  placeAccent: {
+    marginTop: 12,
+    color: theme.colors.secondary,
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

@@ -1,16 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
-import { BookingDateSelector } from '../components/booking/BookingDateSelector';
-import { TimeSlotGrid } from '../components/booking/TimeSlotGrid';
-import { IconCircleButton } from '../components/common/IconCircleButton';
-import { PrimaryButton } from '../components/common/PrimaryButton';
-import { SectionTitle } from '../components/common/SectionTitle';
-import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
-import { Screen } from '../components/layout/Screen';
 import { theme } from '../theme';
 
 type BookTableRoute = RouteProp<{ BookTable: { restaurantId: string } }, 'BookTable'>;
@@ -26,50 +20,74 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   return (
-    <View style={styles.container}>
-      <Screen contentContainerStyle={styles.content}>
-        <GradientHeaderShell>
-          <View style={styles.headerRow}>
-            <IconCircleButton onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back-outline" size={28} color={theme.colors.surface} />
-            </IconCircleButton>
-
-            <View style={styles.headerCopy}>
-              <Text style={styles.title}>Book a Table</Text>
-              <Text style={styles.subtitle}>{restaurant?.name ?? 'Restaurant'}</Text>
-            </View>
-
-            <View style={styles.headerSpacer} />
-          </View>
-        </GradientHeaderShell>
-
-        <View style={styles.section}>
-          <SectionTitle
-            title="Select Date"
-            icon={<Ionicons name="calendar-outline" size={28} color={theme.colors.danger} />}
-          />
-          <BookingDateSelector
-            dates={bookingDates}
-            selectedDateId={selectedDateId}
-            onSelect={setSelectedDateId}
-          />
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.headerRow}>
+        <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
+        </Pressable>
+        <View style={styles.headerCopy}>
+          <Text style={styles.title}>Reserve a table</Text>
+          <Text style={styles.subtitle}>{restaurant?.name ?? 'KosVibe pick'}</Text>
         </View>
-
-        <View style={styles.timeSection}>
-          <View style={styles.section}>
-            <SectionTitle
-              title="Select Time"
-              icon={<Ionicons name="time-outline" size={28} color={theme.colors.danger} />}
-            />
-            <TimeSlotGrid times={bookingTimes} selectedTime={selectedTime} onSelect={setSelectedTime} />
-          </View>
-        </View>
-      </Screen>
-
-      <View style={styles.footer}>
-        <PrimaryButton label="Confirm Booking" variant="muted" disabled={!selectedTime} />
       </View>
-    </View>
+
+      <LinearGradient colors={['rgba(255,31,61,0.2)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
+        <Text style={styles.heroTitle}>Choose your date</Text>
+        <Text style={styles.heroText}>
+          Lock in the best hour for a night out, a slow lunch, or a last-minute cultural dinner.
+        </Text>
+      </LinearGradient>
+
+      <Text style={styles.sectionHeading}>Dates</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
+        {bookingDates.map((date) => {
+          const active = date.id === selectedDateId;
+          return (
+            <Pressable key={date.id} onPress={() => setSelectedDateId(date.id)} style={styles.dateCardWrap}>
+              {active ? (
+                <LinearGradient colors={theme.gradients.primary} style={styles.dateCardActive}>
+                  <Text style={styles.dateTopActive}>{date.dayLabel}</Text>
+                  <Text style={styles.dateNumberActive}>{date.dayNumber}</Text>
+                  <Text style={styles.dateMonthActive}>{date.month}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.dateCard}>
+                  <Text style={styles.dateTop}>{date.dayLabel}</Text>
+                  <Text style={styles.dateNumber}>{date.dayNumber}</Text>
+                  <Text style={styles.dateMonth}>{date.month}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={styles.sectionHeading}>Time slots</Text>
+      <View style={styles.timeGrid}>
+        {bookingTimes.map((time) => {
+          const active = selectedTime === time;
+          return (
+            <Pressable key={time} onPress={() => setSelectedTime(time)} style={styles.timeCellWrap}>
+              {active ? (
+                <LinearGradient colors={theme.gradients.gold} style={styles.timeCellActive}>
+                  <Text style={styles.timeLabelActive}>{time}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.timeCell}>
+                  <Text style={styles.timeLabel}>{time}</Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Pressable disabled={!selectedTime} style={[styles.confirmWrap, !selectedTime && styles.confirmDisabled]}>
+        <LinearGradient colors={selectedTime ? theme.gradients.primary : theme.gradients.disabled} style={styles.confirmButton}>
+          <Text style={styles.confirmLabel}>Confirm Booking</Text>
+        </LinearGradient>
+      </Pressable>
+    </ScrollView>
   );
 }
 
@@ -79,43 +97,167 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    gap: theme.spacing.xxxl,
-    paddingBottom: 160,
+    paddingHorizontal: 20,
+    paddingTop: 54,
+    paddingBottom: 140,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.lg,
+    gap: 14,
+  },
+  iconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerCopy: {
     flex: 1,
   },
   title: {
-    color: theme.colors.surface,
+    color: theme.colors.heading,
     fontSize: 30,
-    lineHeight: 36,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 18,
-    marginTop: 2,
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 14,
   },
-  headerSpacer: {
-    width: 56,
+  heroCard: {
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  section: {
-    gap: theme.spacing.xl,
+  heroTitle: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
   },
-  timeSection: {
-    backgroundColor: '#F3F5FA',
-    paddingVertical: theme.spacing.xxxl,
-    paddingHorizontal: theme.spacing.xxl,
+  heroText: {
+    marginTop: 10,
+    color: '#E5DFDB',
+    fontSize: 15,
+    lineHeight: 22,
   },
-  footer: {
-    position: 'absolute',
-    left: theme.spacing.xxl,
-    right: theme.spacing.xxl,
-    bottom: 104,
+  sectionHeading: {
+    marginTop: 24,
+    marginBottom: 14,
+    color: theme.colors.heading,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  dateRow: {
+    gap: 12,
+    paddingRight: 20,
+  },
+  dateCardWrap: {
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  dateCard: {
+    width: 88,
+    paddingVertical: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+  },
+  dateCardActive: {
+    width: 88,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  dateTop: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dateNumber: {
+    marginTop: 8,
+    color: theme.colors.heading,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  dateMonth: {
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 12,
+  },
+  dateTopActive: {
+    color: theme.colors.surface,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dateNumberActive: {
+    marginTop: 8,
+    color: theme.colors.surface,
+    fontSize: 28,
+    fontWeight: '900',
+  },
+  dateMonthActive: {
+    marginTop: 4,
+    color: theme.colors.surface,
+    fontSize: 12,
+  },
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  timeCellWrap: {
+    width: '22%',
+    borderRadius: 18,
+    overflow: 'hidden',
+  },
+  timeCell: {
+    minHeight: 46,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeCellActive: {
+    minHeight: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timeLabel: {
+    color: theme.colors.heading,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timeLabelActive: {
+    color: '#1A1203',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  confirmWrap: {
+    marginTop: 30,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  confirmDisabled: {
+    opacity: 0.6,
+  },
+  confirmButton: {
+    minHeight: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmLabel: {
+    color: theme.colors.surface,
+    fontSize: 17,
+    fontWeight: '900',
   },
 });

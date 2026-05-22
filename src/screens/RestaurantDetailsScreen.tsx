@@ -1,23 +1,10 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import {
-  ImageBackground,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getRestaurantById } from '../data/mockData';
-import { PromotionStrip } from '../components/cards/PromotionStrip';
-import { ReviewCard } from '../components/cards/ReviewCard';
-import { SpecialDishCard } from '../components/cards/SpecialDishCard';
-import { IconCircleButton } from '../components/common/IconCircleButton';
-import { Pill } from '../components/common/Pill';
-import { PrimaryButton } from '../components/common/PrimaryButton';
-import { SectionTitle } from '../components/common/SectionTitle';
-import { Screen } from '../components/layout/Screen';
-import { MenuAccordion } from '../components/restaurant/MenuAccordion';
 import { theme } from '../theme';
 
 type RestaurantDetailsRoute = RouteProp<
@@ -30,230 +17,303 @@ type RestaurantDetailsScreenProps = {
   route: RestaurantDetailsRoute;
 };
 
-function DetailRow({ icon, value }: { icon: keyof typeof Ionicons.glyphMap; value: string }) {
-  return (
-    <View style={styles.detailRow}>
-      <Ionicons name={icon} size={24} color={theme.colors.mutedText} />
-      <Text style={styles.detailText}>{value}</Text>
-    </View>
-  );
-}
-
 export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetailsScreenProps) {
   const restaurant = getRestaurantById(route.params.restaurantId);
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   if (!restaurant) {
     return null;
   }
 
   return (
-    <Screen>
-      <ImageBackground source={{ uri: restaurant.heroImage }} style={styles.hero}>
-        <View style={styles.heroOverlay} />
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ImageBackground source={{ uri: restaurant.heroImage }} style={styles.heroImage}>
+        <LinearGradient colors={['rgba(7,8,16,0.15)', 'rgba(7,8,16,0.78)', 'rgba(7,8,16,0.96)']} style={styles.heroOverlay}>
+          <View style={styles.heroActions}>
+            <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
+            </Pressable>
 
-        <View style={styles.heroActions}>
-          <IconCircleButton variant="light" onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back-outline" size={24} color={theme.colors.heading} />
-          </IconCircleButton>
-
-          <View style={styles.heroActionRight}>
-            <IconCircleButton variant="light">
-              <Ionicons name="share-social-outline" size={24} color={theme.colors.heading} />
-            </IconCircleButton>
-            <IconCircleButton variant="light" onPress={() => setIsFavorite((current) => !current)}>
-              <Ionicons
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={24}
-                color={isFavorite ? theme.colors.primary : theme.colors.heading}
-              />
-            </IconCircleButton>
+            <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
+              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
+            </Pressable>
           </View>
-        </View>
 
-        {restaurant.isOpen ? <Pill label="Open Now" tone="success" /> : null}
+          <View style={styles.heroCopy}>
+            <View style={styles.statusChip}>
+              <Text style={styles.statusLabel}>{restaurant.isOpen ? 'Open Now' : 'Closed'}</Text>
+            </View>
+            <Text style={styles.restaurantName}>{restaurant.name}</Text>
+            <Text style={styles.restaurantTagline}>{restaurant.tagline}</Text>
+          </View>
+        </LinearGradient>
       </ImageBackground>
 
       <View style={styles.sheet}>
-        <View style={styles.headerBlock}>
-          <Text style={styles.name}>{restaurant.name}</Text>
-          <Text style={styles.tagline}>{restaurant.tagline}</Text>
-
-          <View style={styles.ratingMetaRow}>
-            <View style={styles.ratingGroup}>
-              <Ionicons name="star" size={28} color={theme.colors.gold} />
-              
-              <Text style={styles.ratingValue}>
-                {restaurant.rating.toFixed(1)} <Text style={styles.reviewCount}>({restaurant.reviewCount} reviews)</Text>
-              </Text>
-            </View>
-            <Text style={styles.priceRange}>{restaurant.priceRange}</Text>
+        <View style={styles.metaRow}>
+          <View style={styles.metaCard}>
+            <Ionicons name="star" size={18} color={theme.colors.secondary} />
+            <Text style={styles.metaCardLabel}>{restaurant.rating.toFixed(1)} rating</Text>
           </View>
-
-          <View style={styles.detailList}>
-            <DetailRow icon="location-outline" value={restaurant.address} />
-            <DetailRow icon="call-outline" value={restaurant.phone} />
-            <DetailRow icon="time-outline" value={`Open: ${restaurant.hours}`} />
+          <View style={styles.metaCard}>
+            <Ionicons name="location-outline" size={18} color={theme.colors.secondary} />
+            <Text style={styles.metaCardLabel}>{restaurant.distance}</Text>
+          </View>
+          <View style={styles.metaCard}>
+            <Ionicons name="cash-outline" size={18} color={theme.colors.secondary} />
+            <Text style={styles.metaCardLabel}>{restaurant.priceRange}</Text>
           </View>
         </View>
 
-        <View style={styles.actionButtons}>
-          <PrimaryButton
-            label={`Get Directions (${restaurant.distance})`}
-            icon={<Feather name="navigation" size={22} color={theme.colors.surface} />}
-            textStyle={styles.actionButtonText}
-          />
-          <PrimaryButton
-            label="Book a Table"
-            onPress={() => navigation.navigate('BookTable', { restaurantId: restaurant.id })}
-            textStyle={styles.actionButtonText}
-          />
-        </View>
+        <LinearGradient colors={['rgba(255,31,61,0.22)', 'rgba(255,179,0,0.08)']} style={styles.specialCard}>
+          <Text style={styles.specialEyebrow}>Today&apos;s Special</Text>
+          <Text style={styles.specialTitle}>{restaurant.todaySpecial.name}</Text>
+          <Text style={styles.specialText}>{restaurant.todaySpecial.description}</Text>
+          <Text style={styles.specialPrice}>
+            {restaurant.todaySpecial.price} <Text style={styles.specialOriginal}>{restaurant.todaySpecial.originalPrice}</Text>
+          </Text>
+        </LinearGradient>
 
-        <View style={styles.softSection}>
-          <SectionTitle
-            title="Today's Special"
-            icon={<Ionicons name="star" size={24} color={theme.colors.gold} />}
-          />
-          <SpecialDishCard restaurant={restaurant} />
+        <View style={styles.section}>
+          <Text style={styles.sectionHeading}>About</Text>
+          <Text style={styles.detailLine}>{restaurant.address}</Text>
+          <Text style={styles.detailLine}>{restaurant.phone}</Text>
+          <Text style={styles.detailLine}>Open daily: {restaurant.hours}</Text>
         </View>
 
         <View style={styles.section}>
-          <SectionTitle title="Active Promotions" />
-          <View style={styles.listGap}>
-            {restaurant.promotions.map((promotion) => (
-              <PromotionStrip key={promotion.id} promotion={promotion} />
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <SectionTitle title="Menu" />
-          <View style={styles.listGap}>
+          <Text style={styles.sectionHeading}>Menu highlights</Text>
+          <View style={styles.list}>
             {restaurant.menuSections.map((section) => (
-              <MenuAccordion key={section.id} section={section} />
+              <View key={section.id} style={styles.infoCard}>
+                <Text style={styles.infoTitle}>{section.title}</Text>
+                <Text style={styles.infoText}>
+                  {section.items[0]?.name ?? 'Seasonal selection'} • {section.items[0]?.price ?? ''}
+                </Text>
+              </View>
             ))}
           </View>
         </View>
 
         <View style={styles.section}>
-          <SectionTitle title="Reviews" />
-          <View style={styles.listGap}>
+          <Text style={styles.sectionHeading}>Reviews</Text>
+          <View style={styles.list}>
             {restaurant.reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
+              <View key={review.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <Text style={styles.reviewAuthor}>{review.author}</Text>
+                  <Text style={styles.reviewTime}>{review.timeAgo}</Text>
+                </View>
+                <Text style={styles.reviewText}>{review.comment}</Text>
+              </View>
             ))}
           </View>
         </View>
 
-        <PrimaryButton
-          label="Book a Table"
-          onPress={() => navigation.navigate('BookTable', { restaurantId: restaurant.id })}
-        />
+        <Pressable style={styles.bookButton} onPress={() => navigation.navigate('BookTable', { restaurantId: restaurant.id })}>
+          <LinearGradient colors={theme.gradients.primary} style={styles.bookButtonFill}>
+            <Text style={styles.bookButtonLabel}>Book a Table</Text>
+          </LinearGradient>
+        </Pressable>
       </View>
-    </Screen>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    height: 340,
-    justifyContent: 'space-between',
-    paddingHorizontal: theme.spacing.xxl,
-    paddingTop: theme.spacing.xxxl,
-    paddingBottom: theme.spacing.xxxl,
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    paddingBottom: 140,
+  },
+  heroImage: {
+    height: 400,
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(17, 24, 39, 0.4)',
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingBottom: 26,
   },
   heroActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    zIndex: 1,
   },
-  heroActionRight: {
-    flexDirection: 'row',
-    gap: theme.spacing.lg,
+  iconButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroCopy: {
+    gap: 10,
+  },
+  statusChip: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,179,0,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.25)',
+  },
+  statusLabel: {
+    color: '#FFD789',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  restaurantName: {
+    color: theme.colors.heading,
+    fontSize: 36,
+    lineHeight: 36,
+    fontWeight: '900',
+    letterSpacing: -1.4,
+  },
+  restaurantTagline: {
+    color: '#E1E6F2',
+    fontSize: 16,
   },
   sheet: {
-    marginTop: -28,
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: theme.radius.xxl,
-    borderTopRightRadius: theme.radius.xxl,
-    paddingHorizontal: theme.spacing.xxl,
-    paddingTop: theme.spacing.xxl,
-    paddingBottom: theme.spacing.xxxxl,
-    gap: theme.spacing.xxxl,
+    marginTop: -18,
+    paddingHorizontal: 20,
+    gap: 24,
   },
-  headerBlock: {
-    gap: theme.spacing.lg,
-  },
-  name: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '900',
-    color: theme.colors.heading,
-  },
-  tagline: {
-    fontSize: 16,
-    color: theme.colors.mutedText,
-  },
-  ratingMetaRow: {
+  metaRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xl,
+    gap: 10,
   },
-  ratingGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
+  metaCard: {
     flex: 1,
+    paddingVertical: 16,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    alignItems: 'center',
+    gap: 8,
   },
-  ratingValue: {
-    fontSize: 16,
+  metaCardLabel: {
+    color: theme.colors.heading,
+    fontSize: 12,
     fontWeight: '700',
+    textAlign: 'center',
+  },
+  specialCard: {
+    padding: 20,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  specialEyebrow: {
+    color: '#F8C979',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+  },
+  specialTitle: {
+    marginTop: 10,
     color: theme.colors.heading,
+    fontSize: 26,
+    fontWeight: '900',
   },
-  reviewCount: {
-    fontWeight: '400',
-    color: theme.colors.mutedText,
-  },
-  priceRange: {
-    fontSize: 22,
-    color: theme.colors.heading,
-  },
-  detailList: {
-    gap: theme.spacing.lg,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.lg,
-  },
-  detailText: {
-    flex: 1,
+  specialText: {
+    marginTop: 8,
+    color: '#E6E0DC',
     fontSize: 15,
     lineHeight: 22,
-    color: theme.colors.mutedText,
   },
-  actionButtons: {
-    gap: theme.spacing.xl,
-  },
-  actionButtonText: {
+  specialPrice: {
+    marginTop: 16,
+    color: theme.colors.secondary,
     fontSize: 18,
-    lineHeight: 24,
+    fontWeight: '900',
   },
-  softSection: {
-    gap: theme.spacing.xl,
-    backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.xl,
+  specialOriginal: {
+    color: theme.colors.mutedText,
+    textDecorationLine: 'line-through',
+    fontWeight: '500',
   },
   section: {
-    gap: theme.spacing.xl,
+    gap: 14,
   },
-  listGap: {
-    gap: theme.spacing.xl,
+  sectionHeading: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  detailLine: {
+    color: theme.colors.mutedText,
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  list: {
+    gap: 12,
+  },
+  infoCard: {
+    padding: 16,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  infoTitle: {
+    color: theme.colors.heading,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  infoText: {
+    marginTop: 8,
+    color: theme.colors.mutedText,
+    fontSize: 14,
+  },
+  reviewCard: {
+    padding: 16,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  reviewAuthor: {
+    color: theme.colors.heading,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  reviewTime: {
+    color: theme.colors.secondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  reviewText: {
+    marginTop: 10,
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  bookButton: {
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  bookButtonFill: {
+    minHeight: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookButtonLabel: {
+    color: theme.colors.surface,
+    fontSize: 17,
+    fontWeight: '900',
   },
 });

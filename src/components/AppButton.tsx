@@ -1,5 +1,6 @@
 import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { AppText } from '@/src/components/AppText';
 import { theme } from '@/src/theme';
@@ -16,11 +17,10 @@ type AppButtonProps = PressableProps & {
 
 const variantStyles: Record<ButtonVariant, ViewStyle> = {
   primary: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
+    borderColor: 'rgba(255, 179, 0, 0.16)',
   },
   secondary: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderColor: theme.colors.border,
   },
   ghost: {
@@ -32,8 +32,8 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
 
 const textColors: Record<ButtonVariant, string> = {
   primary: theme.colors.surface,
-  secondary: theme.colors.text,
-  ghost: theme.colors.primary,
+  secondary: theme.colors.heading,
+  ghost: theme.colors.gold,
 };
 
 export function AppButton({
@@ -60,12 +60,23 @@ export function AppButton({
       ]}
       disabled={disabled || isLoading}
       {...props}>
-      <View style={styles.content}>
-        {isLoading ? <ActivityIndicator size="small" color={textColor} /> : null}
-        <AppText variant="label" color={textColor}>
-          {label}
-        </AppText>
-      </View>
+      {variant === 'primary' ? (
+        <LinearGradient colors={theme.gradients.primary} style={styles.primaryFill}>
+          <View style={styles.content}>
+            {isLoading ? <ActivityIndicator size="small" color={textColor} /> : null}
+            <AppText variant="label" color={textColor}>
+              {label}
+            </AppText>
+          </View>
+        </LinearGradient>
+      ) : (
+        <View style={styles.content}>
+          {isLoading ? <ActivityIndicator size="small" color={textColor} /> : null}
+          <AppText variant="label" color={textColor}>
+            {label}
+          </AppText>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -75,17 +86,24 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: theme.radius.round,
     borderWidth: 1,
-    alignItems: 'center',
+    overflow: 'hidden',
     justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
   },
   autoWidth: {
     alignSelf: 'flex-start',
   },
+  primaryFill: {
+    minHeight: 52,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
   },
   disabled: {
     opacity: 0.55,

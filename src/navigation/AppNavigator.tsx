@@ -1,12 +1,11 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import { useAuth } from '../features/auth/AuthProvider';
 import { ChatAssistantModal } from '../components/common/ChatAssistantModal';
-import { navigationTheme } from '../theme';
+import { useAuth } from '../features/auth/AuthProvider';
+import { navigationTheme, theme } from '../theme';
 import { AuthNavigator } from './AuthNavigator';
 import { TabsNavigator } from './TabsNavigator';
-import { theme } from '../theme';
 
 export function AppNavigator() {
   const { isAuthReady, session } = useAuth();
@@ -16,7 +15,7 @@ export function AppNavigator() {
       {!isAuthReady ? (
         <View style={styles.loadingScreen}>
           <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading YummyKosova...</Text>
+          <Text style={styles.loadingText}>Loading KosVibe...</Text>
         </View>
       ) : (
         <>

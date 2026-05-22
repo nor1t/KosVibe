@@ -15,6 +15,7 @@ const icons: Record<EventFeature['category'], string> = {
   Hiking: 'leaf-outline',
   Party: 'sparkles-outline',
   Culture: 'book-outline',
+  Study: 'school-outline',
 };
 
 export function EventCard({ event, onPress }: EventCardProps) {
