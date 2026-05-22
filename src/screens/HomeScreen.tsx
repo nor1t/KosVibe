@@ -170,8 +170,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
         <View style={styles.section}>
           <SectionTitle
-            title="Menuja Ditore"
-            actionLabel={featuredItems.length ? 'Shiko te gjitha' : undefined}
+            title="Daily Menu"
+            actionLabel={featuredItems.length ? 'View all' : undefined}
             icon={<Feather name="trending-up" size={22} color={theme.colors.danger} />}
           />
 
@@ -194,7 +194,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
         <View style={styles.section}>
           <SectionTitle
-            title="Ofertat Aktive"
+            title="Active Offers"
             icon={<Feather name="percent" size={22} color={theme.colors.danger} />}
           />
 
@@ -238,7 +238,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
         <View style={styles.section}>
           <SectionTitle
-            title="Prane Jush"
+            title="Near You"
             icon={<Feather name="navigation" size={22} color={theme.colors.danger} />}
           />
 

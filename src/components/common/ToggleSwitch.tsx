@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   trackDisabled: {
-    backgroundColor: '#D5D9E5',
+    backgroundColor: 'rgba(255,255,255,0.12)',
   },
   thumb: {
     width: 30,

@@ -12,6 +12,7 @@ type GradientHeaderShellProps = {
   contentStyle?: StyleProp<ViewStyle>;
   bottomRadius?: number;
   colors?: readonly [string, string];
+  topPadding?: number;
 };
 
 export function GradientHeaderShell({
@@ -20,6 +21,7 @@ export function GradientHeaderShell({
   contentStyle,
   bottomRadius = theme.radius.xxl,
   colors = theme.gradients.primary,
+  topPadding = theme.spacing.xl,
 }: GradientHeaderShellProps) {
   const insets = useSafeAreaInsets();
 
@@ -29,7 +31,7 @@ export function GradientHeaderShell({
       style={[
         styles.container,
         {
-          paddingTop: insets.top + theme.spacing.xl,
+          paddingTop: insets.top + topPadding,
           borderBottomLeftRadius: bottomRadius,
           borderBottomRightRadius: bottomRadius,
         },

@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 
 type BookTableRoute = RouteProp<{ BookTable: { restaurantId: string } }, 'BookTable'>;
@@ -15,6 +17,8 @@ type BookTableScreenProps = {
 };
 
 export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].booking;
   const restaurant = getRestaurantById(route.params.restaurantId);
   const [selectedDateId, setSelectedDateId] = useState(bookingDates[0]?.id ?? '');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -26,19 +30,19 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
           <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
         </Pressable>
         <View style={styles.headerCopy}>
-          <Text style={styles.title}>Reserve a table</Text>
-          <Text style={styles.subtitle}>{restaurant?.name ?? 'KosVibe pick'}</Text>
+          <Text style={styles.title}>{copy.title}</Text>
+          <Text style={styles.subtitle}>{restaurant?.name ?? copy.fallbackRestaurant}</Text>
         </View>
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.2)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
-        <Text style={styles.heroTitle}>Choose your date</Text>
+        <Text style={styles.heroTitle}>{copy.heroTitle}</Text>
         <Text style={styles.heroText}>
-          Lock in the best hour for a night out, a slow lunch, or a last-minute cultural dinner.
+          {copy.heroText}
         </Text>
       </LinearGradient>
 
-      <Text style={styles.sectionHeading}>Dates</Text>
+      <Text style={styles.sectionHeading}>{copy.dates}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
         {bookingDates.map((date) => {
           const active = date.id === selectedDateId;
@@ -62,7 +66,7 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
         })}
       </ScrollView>
 
-      <Text style={styles.sectionHeading}>Time slots</Text>
+      <Text style={styles.sectionHeading}>{copy.timeSlots}</Text>
       <View style={styles.timeGrid}>
         {bookingTimes.map((time) => {
           const active = selectedTime === time;
@@ -84,7 +88,7 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
 
       <Pressable disabled={!selectedTime} style={[styles.confirmWrap, !selectedTime && styles.confirmDisabled]}>
         <LinearGradient colors={selectedTime ? theme.gradients.primary : theme.gradients.disabled} style={styles.confirmButton}>
-          <Text style={styles.confirmLabel}>Confirm Booking</Text>
+          <Text style={styles.confirmLabel}>{copy.confirm}</Text>
         </LinearGradient>
       </Pressable>
     </ScrollView>

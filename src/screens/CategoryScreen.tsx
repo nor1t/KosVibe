@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ImageBackground,
   Pressable,
@@ -14,6 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import type { HomeStackParamList } from '../navigation/types';
 import { theme } from '../theme';
@@ -22,8 +24,6 @@ type CategoryScreenProps = {
   navigation: NavigationProp<ParamListBase>;
   route: RouteProp<HomeStackParamList, 'Category'>;
 };
-
-const restaurantFilters = ['All', 'Traditional', 'Cafe', 'Street Food', 'Fine Dining'];
 
 const monumentSpots = [
   {
@@ -78,9 +78,15 @@ const storyReviews = [
 ];
 
 export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].category;
   const { category } = route.params;
   const { searchQuery, selectedLocationId, setSearchQuery } = useDiscovery();
-  const [selectedFilter, setSelectedFilter] = useState(restaurantFilters[0]);
+  const [selectedFilter, setSelectedFilter] = useState(copy.filters[0]);
+
+  useEffect(() => {
+    setSelectedFilter(copy.filters[0]);
+  }, [copy.filters]);
 
   const visibleRestaurants = useMemo(
     () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery),
@@ -92,8 +98,8 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.monumentsContent}>
           <View style={styles.centerHeader}>
-            <Text style={styles.monumentsTitle}>Kosovo Icons</Text>
-            <Text style={styles.monumentsSubtitle}>Monuments Explorer</Text>
+            <Text style={styles.monumentsTitle}>{copy.cultureTitle}</Text>
+            <Text style={styles.monumentsSubtitle}>{copy.cultureSubtitle}</Text>
           </View>
 
           <View style={styles.monumentsGrid}>
@@ -126,9 +132,9 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
         <Text style={styles.brandWordmark}>KosVibe</Text>
 
         <View style={styles.restaurantHero}>
-          <Text style={styles.restaurantHeroTitle}>Find your next favorite spot.</Text>
+          <Text style={styles.restaurantHeroTitle}>{copy.restaurantTitle}</Text>
           <Text style={styles.restaurantHeroSubtitle}>
-            Search restaurants, cuisines, vibes and community-approved places.
+            {copy.restaurantSubtitle}
           </Text>
         </View>
 
@@ -139,7 +145,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholder="Search restaurants, cuisines, vibes..."
+                placeholder={copy.searchPlaceholder}
                 placeholderTextColor="rgba(255,255,255,0.5)"
                 style={styles.searchInput}
               />
@@ -148,7 +154,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-          {restaurantFilters.map((filter) => {
+          {copy.filters.map((filter) => {
             const active = selectedFilter === filter;
             return (
               <Pressable key={filter} onPress={() => setSelectedFilter(filter)} style={styles.filterChip}>
@@ -166,7 +172,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
           })}
         </ScrollView>
 
-        <Text style={styles.sectionHeading}>Restaurants</Text>
+        <Text style={styles.sectionHeading}>{copy.restaurants}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
           {visibleRestaurants.slice(0, 4).map((restaurant) => (
             <Pressable
@@ -207,7 +213,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
             </View>
           ))}
 
-          <Text style={styles.communityHeading}>Community Reviews</Text>
+          <Text style={styles.communityHeading}>{copy.communityReviews}</Text>
           <View style={styles.avatarRow}>
             {['A', 'M', 'R', 'D', 'L'].map((label, index) => (
               <View key={label} style={[styles.avatarRing, index % 2 === 0 ? styles.avatarRed : styles.avatarGold]}>

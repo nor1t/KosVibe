@@ -4,13 +4,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../features/auth/AuthProvider';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 
 type ProfileScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-function getDisplayName(fullName: string | null | undefined, email: string | null | undefined) {
+function getDisplayName(
+  fullName: string | null | undefined,
+  email: string | null | undefined,
+  fallbackName: string
+) {
   if (fullName?.trim()) {
     return fullName.trim();
   }
@@ -19,27 +25,26 @@ function getDisplayName(fullName: string | null | undefined, email: string | nul
     return email.split('@')[0];
   }
 
-  return 'KosVibe Member';
+  return fallbackName;
 }
 
-const stats = [
-  { id: 'saved', value: '28', label: 'Saved spots' },
-  { id: 'stories', value: '12', label: 'Stories' },
-  { id: 'events', value: '05', label: 'Events hosted' },
-];
-
-const quickActions = ['Favorite restaurants', 'Hidden gems list', 'Monument trail', 'Settings'];
-
 export function ProfileScreen({ navigation }: ProfileScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].profile;
   const { user } = useAuth();
   const fullName =
     typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
-  const displayName = getDisplayName(fullName, user?.email);
+  const displayName = getDisplayName(fullName, user?.email, copy.fallbackName);
+  const stats = [
+    { id: 'saved', value: '28', label: copy.stats.saved },
+    { id: 'stories', value: '12', label: copy.stats.stories },
+    { id: 'events', value: '05', label: copy.stats.events },
+  ];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{copy.title}</Text>
         <Pressable style={styles.settingsButton} onPress={() => navigation.navigate('Settings')}>
           <Ionicons name="settings-outline" size={22} color={theme.colors.surface} />
         </Pressable>
@@ -57,7 +62,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         <Text style={styles.name}>{displayName}</Text>
         <Text style={styles.email}>{user?.email ?? 'member@kosvibe.app'}</Text>
         <Text style={styles.bio}>
-          Curating restaurants, monuments, and city stories with a modern Kosovo state of mind.
+          {copy.bio}
         </Text>
       </LinearGradient>
 
@@ -70,9 +75,9 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         ))}
       </View>
 
-      <Text style={styles.sectionHeading}>Your vibe</Text>
+      <Text style={styles.sectionHeading}>{copy.section}</Text>
       <View style={styles.actionList}>
-        {quickActions.map((action, index) => (
+        {copy.actions.map((action, index) => (
           <Pressable key={action} style={styles.actionCard}>
             <View style={[styles.actionIcon, index % 2 === 0 ? styles.actionIconRed : styles.actionIconGold]}>
               <Ionicons
@@ -88,10 +93,10 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
       </View>
 
       <View style={styles.badgeCard}>
-        <Text style={styles.badgeEyebrow}>KosVibe Badge</Text>
-        <Text style={styles.badgeTitle}>Gold city curator</Text>
+        <Text style={styles.badgeEyebrow}>{copy.badgeEyebrow}</Text>
+        <Text style={styles.badgeTitle}>{copy.badgeTitle}</Text>
         <Text style={styles.badgeText}>
-          You are one of the most active members in your circle this month. Keep posting and exploring.
+          {copy.badgeText}
         </Text>
       </View>
     </ScrollView>

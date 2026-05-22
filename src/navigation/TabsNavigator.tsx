@@ -14,6 +14,8 @@ import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 import type {
     FavoritesStackParamList,
@@ -115,6 +117,9 @@ function ProfileStackNavigator() {
 }
 
 export function TabsNavigator() {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].tabs;
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -133,15 +138,15 @@ export function TabsNavigator() {
           <TabIcon routeName={route.name as keyof RootTabParamList} color={color} size={size} />
         ),
       })}>
-      <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: 'Home' }} />
-      <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: 'Explore' }} />
-      <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: 'Events' }} />
+      <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: copy.home }} />
+      <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: copy.explore }} />
+      <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: copy.events }} />
       <Tab.Screen
         name="FavoritesTab"
         component={FavoritesStackNavigator}
-        options={{ title: 'Stories' }}
+        options={{ title: copy.stories }}
       />
-      <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: 'Profile' }} />
+      <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: copy.profile }} />
     </Tab.Navigator>
   );
 }

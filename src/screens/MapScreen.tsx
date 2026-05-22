@@ -12,6 +12,8 @@ import {
     type Coordinates,
     type MapRegion,
 } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { theme } from '../theme';
 
@@ -386,6 +388,8 @@ function getFocusedRegion(coordinate: Coordinates, fallbackRegion: MapRegion): M
 }
 
 export function MapScreen({ navigation }: MapScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].map;
   const { selectedCategory, selectedLocation, selectedLocationId } = useDiscovery();
   const [activeCategory, setActiveCategory] = useState<ActivityKey>(() =>
     mapDiscoveryCategory(selectedCategory)
@@ -408,20 +412,30 @@ export function MapScreen({ navigation }: MapScreenProps) {
     [selectedLocation.city]
   );
 
+  const localizedActivityOptions = useMemo<ActivityOption[]>(
+    () =>
+      activityOptions.map((option) => ({
+        ...option,
+        ...copy.options[option.id],
+      })),
+    [copy.options]
+  );
+
   const activityCounts = useMemo(
     () =>
-      activityOptions.reduce<Record<ActivityKey, number>>((counts, option) => {
+      localizedActivityOptions.reduce<Record<ActivityKey, number>>((counts, option) => {
         counts[option.id] =
           option.id === 'eat'
             ? visibleRestaurants.length
             : visibleSpots.filter((spot) => spot.category === option.id).length;
         return counts;
       }, {} as Record<ActivityKey, number>),
-    [visibleRestaurants, visibleSpots]
+    [localizedActivityOptions, visibleRestaurants, visibleSpots]
   );
 
   const currentOption =
-    activityOptions.find((option) => option.id === activeCategory) ?? activityOptions[0];
+    localizedActivityOptions.find((option) => option.id === activeCategory) ??
+    localizedActivityOptions[0];
 
   const mapMarkers = useMemo<ExploreMapMarker[]>(() => {
     if (activeCategory === 'eat') {
@@ -545,7 +559,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
       />
 
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore Kosovo</Text>
+        <Text style={styles.headerTitle}>{copy.title}</Text>
         <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
       </View>
 
@@ -558,7 +572,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
           </LinearGradient>
 
           <View style={styles.categoryCopy}>
-            <Text style={styles.categoryEyebrow}>Explore category</Text>
+            <Text style={styles.categoryEyebrow}>{copy.categoryEyebrow}</Text>
             <Text style={styles.categoryValue}>{currentOption.label}</Text>
           </View>
 
@@ -576,9 +590,9 @@ export function MapScreen({ navigation }: MapScreenProps) {
 
       {isCategoryMenuOpen ? (
         <View style={styles.dropdownPanel}>
-          <Text style={styles.dropdownTitle}>Choose the vibe you want on the map</Text>
+          <Text style={styles.dropdownTitle}>{copy.dropdownTitle}</Text>
           <View style={styles.dropdownGrid}>
-            {activityOptions.map((option) => {
+            {localizedActivityOptions.map((option) => {
               const isActive = option.id === activeCategory;
 
               return (
@@ -590,13 +604,17 @@ export function MapScreen({ navigation }: MapScreenProps) {
                     <LinearGradient colors={option.colors} style={styles.dropdownOptionActive}>
                       <Ionicons name={option.icon as never} size={18} color={theme.colors.surface} />
                       <Text style={styles.dropdownActiveLabel}>{option.label}</Text>
-                      <Text style={styles.dropdownActiveCount}>{activityCounts[option.id]} spots</Text>
+                      <Text style={styles.dropdownActiveCount}>
+                        {activityCounts[option.id]} {copy.spotsLabel}
+                      </Text>
                     </LinearGradient>
                   ) : (
                     <View style={styles.dropdownOptionInactive}>
                       <Ionicons name={option.icon as never} size={18} color={theme.colors.mutedText} />
                       <Text style={styles.dropdownLabel}>{option.label}</Text>
-                      <Text style={styles.dropdownCount}>{activityCounts[option.id]} spots</Text>
+                      <Text style={styles.dropdownCount}>
+                        {activityCounts[option.id]} {copy.spotsLabel}
+                      </Text>
                     </View>
                   )}
                 </Pressable>
@@ -613,7 +631,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
               <Text style={styles.sheetTitle}>{currentOption.sheetTitle}</Text>
               <Text style={styles.sheetSubtitle}>
                 {activityCounts[activeCategory] > 0
-                  ? `${activityCounts[activeCategory]} spots · ${currentOption.sheetDescription}`
+                  ? `${activityCounts[activeCategory]} ${copy.spotsLabel} - ${currentOption.sheetDescription}`
                   : currentOption.emptyDescription}
               </Text>
             </View>
@@ -657,7 +675,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
             </ScrollView>
           ) : (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>Nothing pinned here yet</Text>
+              <Text style={styles.emptyTitle}>{copy.emptyTitle}</Text>
               <Text style={styles.emptyDescription}>{currentOption.emptyDescription}</Text>
             </View>
           )}
@@ -665,7 +683,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
       ) : (
         <Pressable style={styles.revealButton} onPress={handleRevealSheet}>
           <Ionicons name="layers-outline" size={18} color={theme.colors.surface} />
-          <Text style={styles.revealLabel}>Show {currentOption.sheetTitle}</Text>
+          <Text style={styles.revealLabel}>{copy.reveal} {currentOption.sheetTitle}</Text>
         </Pressable>
       )}
     </View>

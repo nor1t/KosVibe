@@ -5,6 +5,8 @@ import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { theme } from '../theme';
 
@@ -17,29 +19,25 @@ const heroImage =
 
 const categories = [
   {
-    id: 'restaurants',
-    title: 'Restaurants',
+    id: 'restaurants' as const,
     icon: 'restaurant-outline' as const,
     onPress: (navigation: NavigationProp<ParamListBase>) =>
       navigation.navigate('Category', { category: 'Restaurants' }),
   },
   {
-    id: 'monuments',
-    title: 'Monuments',
+    id: 'monuments' as const,
     icon: 'business-outline' as const,
     onPress: (navigation: NavigationProp<ParamListBase>) =>
       navigation.navigate('Category', { category: 'Culture' }),
   },
   {
-    id: 'events',
-    title: 'Events',
+    id: 'events' as const,
     icon: 'sparkles-outline' as const,
     onPress: (navigation: NavigationProp<ParamListBase>) =>
       navigation.getParent()?.navigate('TavolinaTab'),
   },
   {
-    id: 'stories',
-    title: 'Stories',
+    id: 'stories' as const,
     icon: 'book-outline' as const,
     onPress: (navigation: NavigationProp<ParamListBase>) =>
       navigation.getParent()?.navigate('FavoritesTab'),
@@ -47,6 +45,8 @@ const categories = [
 ];
 
 export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].dashboard;
   const { selectedLocation, selectedLocationId } = useDiscovery();
   const visibleRestaurants = filterRestaurantsByDiscovery(restaurants, selectedLocationId, '');
   const trending = visibleRestaurants.slice(0, 2);
@@ -64,21 +64,26 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                 <Text style={styles.location}>{selectedLocation.label}</Text>
               </View>
 
-              <Pressable style={styles.headerAction}>
-                <Ionicons name="notifications-outline" size={22} color={theme.colors.surface} />
+              <Pressable
+                accessibilityLabel={copy.settingsLabel}
+                style={styles.headerAction}
+                onPress={() => navigation.navigate('Settings')}>
+                <Ionicons name="settings-outline" size={22} color={theme.colors.surface} />
               </Pressable>
             </View>
 
             <View style={styles.heroCopy}>
-              <Text style={styles.heroTitle}>Discover Kosovo <Text style={styles.heroAccent}>XK</Text></Text>
+              <Text style={styles.heroTitle}>
+                {copy.heroTitle} <Text style={styles.heroAccent}>{copy.heroAccent}</Text>
+              </Text>
               <Text style={styles.heroSubtitle}>
-                Your ultimate guide to hidden gems, culture and unforgettable experiences.
+                {copy.heroSubtitle}
               </Text>
 
               <Pressable
                 style={styles.ctaRow}
                 onPress={() => navigation.navigate('Category', { category: 'Culture' })}>
-                <Text style={styles.ctaText}>Explore Now</Text>
+                <Text style={styles.ctaText}>{copy.cta}</Text>
                 <Ionicons name="arrow-forward" size={18} color={theme.colors.surface} />
               </Pressable>
             </View>
@@ -93,14 +98,14 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                     <View style={styles.categoryIconWrap}>
                       <Ionicons name={category.icon} size={18} color={theme.colors.surface} />
                     </View>
-                    <Text style={styles.categoryLabel}>{category.title}</Text>
+                    <Text style={styles.categoryLabel}>{copy.categories[category.id]}</Text>
                   </LinearGradient>
                 </Pressable>
               ))}
             </View>
 
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Trending in Kosovo</Text>
+              <Text style={styles.sectionTitle}>{copy.trending}</Text>
               <View style={styles.trendingGrid}>
                 {trending.map((item) => (
                   <Pressable
@@ -119,7 +124,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
 
             {topPick ? (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Top Picks Near You</Text>
+                <Text style={styles.sectionTitle}>{copy.topPicks}</Text>
                 <Pressable
                   style={styles.featureCard}
                   onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: topPick.id })}>
@@ -127,7 +132,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                   <Text style={styles.featureMeta}>
                     {topPick.cuisine} • {topPick.priceRange}
                   </Text>
-                  <Text style={styles.featureDistance}>{topPick.distance} away</Text>
+                  <Text style={styles.featureDistance}>{topPick.distance} {copy.away}</Text>
                 </Pressable>
               </View>
             ) : null}

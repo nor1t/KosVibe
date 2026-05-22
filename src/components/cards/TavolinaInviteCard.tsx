@@ -45,7 +45,7 @@ export function TavolinaInviteCard({
         <View style={styles.creatorRow}>
           <Image source={{ uri: invite.creatorAvatar }} style={styles.avatar} />
           <Text style={styles.creatorText}>
-            Krijuar nga <Text style={styles.creatorName}>{invite.creator}</Text>
+            Created by <Text style={styles.creatorName}>{invite.creator}</Text>
           </Text>
         </View>
 
@@ -71,10 +71,10 @@ export function TavolinaInviteCard({
 
         <View style={styles.buttonsRow}>
           <View style={styles.buttonHalf}>
-            <PrimaryButton label="Shiko Profilin" variant="outline" onPress={onViewRestaurant} />
+            <PrimaryButton label="View Profile" variant="outline" onPress={onViewRestaurant} />
           </View>
           <View style={styles.buttonHalf}>
-            <PrimaryButton label="Bashkohu" onPress={onJoin} />
+            <PrimaryButton label="Join" onPress={onJoin} />
           </View>
         </View>
       </View>

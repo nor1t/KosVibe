@@ -2,44 +2,75 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 
 type FavoritesScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-const stories = [
-  {
-    id: 'story-1',
-    title: 'Midnight in Prizren',
-    author: '@streetvibes.xk',
-    subtitle: 'A cinematic walk through river lights, food spots, and late-night chatter.',
-    image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'story-2',
-    title: 'Kosovo Coffee Trails',
-    author: '@beansandbridges',
-    subtitle: 'Warm cafes, gold-hour corners, and local stories behind every cup.',
-    image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: 'story-3',
-    title: 'Icons After Rain',
-    author: '@culturepulse',
-    subtitle: 'How monuments, mist, and city sounds collide into one proud moodboard.',
-    image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
-  },
-];
+const storyItems = {
+  en: [
+    {
+      id: 'story-1',
+      title: 'Midnight in Prizren',
+      author: '@streetvibes.xk',
+      subtitle: 'A cinematic walk through river lights, food spots, and late-night chatter.',
+      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 'story-2',
+      title: 'Kosovo Coffee Trails',
+      author: '@beansandbridges',
+      subtitle: 'Warm cafes, gold-hour corners, and local stories behind every cup.',
+      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 'story-3',
+      title: 'Icons After Rain',
+      author: '@culturepulse',
+      subtitle: 'How monuments, mist, and city sounds collide into one proud moodboard.',
+      image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
+    },
+  ],
+  sq: [
+    {
+      id: 'story-1',
+      title: 'Mesnate ne Prizren',
+      author: '@streetvibes.xk',
+      subtitle: 'Nje ecje kinematike mes dritave te lumit, ushqimit dhe bisedave te vona.',
+      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 'story-2',
+      title: 'Shtigjet e kafes ne Kosove',
+      author: '@beansandbridges',
+      subtitle: 'Kafene te ngrohta, qoshe me drite te arte dhe histori lokale pas cdo filxhani.',
+      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+    },
+    {
+      id: 'story-3',
+      title: 'Ikonat pas shiut',
+      author: '@culturepulse',
+      subtitle: 'Monumente, mjegull dhe tinguj qyteti qe bashkohen ne nje atmosfere krenare.',
+      image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1200&q=80',
+    },
+  ],
+} as const;
 
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].stories;
+  const stories = storyItems[language];
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Community Stories</Text>
-        <Text style={styles.title}>What Kosovo feels like right now.</Text>
+        <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
+        <Text style={styles.title}>{copy.title}</Text>
         <Text style={styles.subtitle}>
-          Swipe through creator-led travel notes, restaurant drops, and local stories from the community.
+          {copy.subtitle}
         </Text>
       </View>
 
@@ -49,7 +80,7 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
           <View style={styles.heroContent}>
             <View style={styles.liveBadge}>
               <Ionicons name="sparkles-outline" size={14} color={theme.colors.surface} />
-              <Text style={styles.liveLabel}>Trending Story</Text>
+              <Text style={styles.liveLabel}>{copy.trending}</Text>
             </View>
             <Text style={styles.heroTitle}>{stories[0].title}</Text>
             <Text style={styles.heroAuthor}>{stories[0].author}</Text>
@@ -58,7 +89,7 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
         </ImageBackground>
       </Pressable>
 
-      <Text style={styles.sectionHeading}>Latest Drops</Text>
+      <Text style={styles.sectionHeading}>{copy.latest}</Text>
       <View style={styles.storyList}>
         {stories.slice(1).map((story, index) => (
           <Pressable key={story.id} style={styles.storyCard}>
@@ -74,12 +105,12 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
       </View>
 
       <View style={styles.ctaPanel}>
-        <Text style={styles.ctaTitle}>Share your own vibe</Text>
+        <Text style={styles.ctaTitle}>{copy.ctaTitle}</Text>
         <Text style={styles.ctaText}>
-          Post a story from your favorite restaurant, event, or hidden Kosovo corner and inspire the next route.
+          {copy.ctaText}
         </Text>
         <Pressable style={styles.ctaButton} onPress={() => navigation.getParent()?.navigate('TavolinaTab')}>
-          <Text style={styles.ctaButtonText}>Create a Story</Text>
+          <Text style={styles.ctaButtonText}>{copy.ctaButton}</Text>
         </Pressable>
       </View>
     </ScrollView>

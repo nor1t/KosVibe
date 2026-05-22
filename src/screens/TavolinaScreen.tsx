@@ -4,39 +4,43 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { tavolinaInvites } from '../data/mockData';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 
 type TavolinaScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-const moods = ['Tonight', 'Culture', 'Food Crew'];
-
-const creatorOptions = [
+const creatorOptionVisuals = [
   {
     id: 'host-dinner',
     icon: 'restaurant-outline' as const,
-    title: 'Host a dinner',
-    subtitle: 'Invite your people to a high-energy local food night.',
     colors: ['#FF1F3D', '#C8102E'] as const,
   },
   {
     id: 'drop-event',
     icon: 'sparkles-outline' as const,
-    title: 'Drop an event',
-    subtitle: 'Create a vibe around music, culture, or a spontaneous meetup.',
     colors: ['#FFB300', '#FF8C00'] as const,
   },
 ];
 
 export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
+  const { language } = useI18n();
+  const copy = nativeCopy[language].tavolina;
+  const creatorOptions = creatorOptionVisuals.map((visual) => ({
+    ...visual,
+    title: copy.creatorOptions.find((option) => option.id === visual.id)?.title ?? '',
+    subtitle: copy.creatorOptions.find((option) => option.id === visual.id)?.subtitle ?? '',
+  }));
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>KosVibe Events</Text>
-        <Text style={styles.title}>Create the next big vibe.</Text>
+        <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
+        <Text style={styles.title}>{copy.title}</Text>
         <Text style={styles.subtitle}>
-          Start a cultural night, dinner plan, or city meetup and let the community join in.
+          {copy.subtitle}
         </Text>
       </View>
 
@@ -51,7 +55,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       </ScrollView>
 
       <View style={styles.actionBar}>
-        {moods.map((mood, index) => (
+        {copy.moods.map((mood, index) => (
           <Pressable key={mood} style={[styles.moodChip, index === 0 && styles.moodChipActive]}>
             <Text style={[styles.moodLabel, index === 0 && styles.moodLabelActive]}>{mood}</Text>
           </Pressable>
@@ -59,17 +63,17 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.22)', 'rgba(255,179,0,0.08)']} style={styles.launchCard}>
-        <Text style={styles.launchTitle}>Start a new event</Text>
+        <Text style={styles.launchTitle}>{copy.launchTitle}</Text>
         <Text style={styles.launchText}>
-          Pick a restaurant, set the mood, and share it as a live community drop in seconds.
+          {copy.launchText}
         </Text>
         <Pressable style={styles.launchButton}>
           <Feather name="plus" size={18} color={theme.colors.surface} />
-          <Text style={styles.launchButtonText}>Create Event</Text>
+          <Text style={styles.launchButtonText}>{copy.launchButton}</Text>
         </Pressable>
       </LinearGradient>
 
-      <Text style={styles.sectionHeading}>Community Drops</Text>
+      <Text style={styles.sectionHeading}>{copy.communityDrops}</Text>
       <View style={styles.inviteList}>
         {tavolinaInvites.map((invite, index) => (
           <Pressable

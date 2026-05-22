@@ -912,37 +912,37 @@ export const profileQuickLinks: QuickLink[] = [
 ];
 
 export const settingsLanguages: LanguageOption[] = [
-  { id: 'sq', flag: '🇽🇰', label: 'Shqip (Albanian)', selected: true },
-  { id: 'en', flag: '🇬🇧', label: 'English', selected: false },
+  { id: 'en', flag: '🇬🇧', label: 'English', selected: true },
+  { id: 'sq', flag: '🇽🇰', label: 'Albanian', selected: false },
 ];
 
 export const notificationOptions: NotificationOption[] = [
   {
     id: 'offers',
-    title: 'Ofertat & Promocionet',
-    subtitle: 'Merr njoftime per ofertat e reja',
+    title: 'Offers & Promotions',
+    subtitle: 'Get notifications about new offers',
     enabled: true,
   },
   {
     id: 'reservations',
-    title: 'Rezervimet',
-    subtitle: 'Perkujtesa per rezervimet e tua',
+    title: 'Reservations',
+    subtitle: 'Reminders for your reservations',
     enabled: true,
   },
   {
     id: 'reviews',
-    title: 'Vleresimet',
-    subtitle: 'Njoftime per vleresimet e reja',
+    title: 'Reviews',
+    subtitle: 'Notifications about new reviews',
     enabled: false,
   },
 ];
 
 export const accountLinks: QuickLink[] = [
-  { id: 'profile', icon: 'person-outline', label: 'Profili im' },
-  { id: 'addresses', icon: 'location-sharp', label: 'Adresat' },
-  { id: 'payments', icon: 'card-outline', label: 'Metodat e pageses' },
-  { id: 'help', icon: 'help-circle-outline', label: 'Ndihme & Mbeshtejte' },
-  { id: 'logout', icon: 'log-out-outline', label: 'Dil nga llogaria', tone: 'danger' },
+  { id: 'profile', icon: 'person-outline', label: 'My Profile' },
+  { id: 'addresses', icon: 'location-sharp', label: 'Addresses' },
+  { id: 'payments', icon: 'card-outline', label: 'Payment Methods' },
+  { id: 'help', icon: 'help-circle-outline', label: 'Help & Support' },
+  { id: 'logout', icon: 'log-out-outline', label: 'Sign Out', tone: 'danger' },
 ];
 
 export const bookingDates: BookingDate[] = [
