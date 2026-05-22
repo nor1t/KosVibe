@@ -10,6 +10,8 @@ type WeatherSettingsButtonProps = {
   navigation: NavigationProp<ParamListBase>;
   showSettings?: boolean;
   showHistory?: boolean;
+  showHelp?: boolean;
+  showExchange?: boolean;
   compact?: boolean;
 };
 
@@ -50,6 +52,8 @@ export function WeatherSettingsButton({
   navigation,
   showSettings = true,
   showHistory = true,
+  showHelp = true,
+  showExchange = true,
   compact = false,
 }: WeatherSettingsButtonProps) {
   const { selectedLocation } = useDiscovery();
@@ -99,6 +103,24 @@ export function WeatherSettingsButton({
       </View>
 
       <View style={styles.actionGroup}>
+        {showExchange ? (
+          <Pressable
+            accessibilityLabel="Open exchange rates"
+            style={[styles.actionButton, compact && styles.compactActionButton]}
+            onPress={() => navigation.navigate('Exchange')}>
+            <Ionicons name="logo-usd" size={20} color={theme.colors.surface} />
+          </Pressable>
+        ) : null}
+
+        {showHelp ? (
+          <Pressable
+            accessibilityLabel="Open important numbers"
+            style={[styles.actionButton, compact && styles.compactActionButton]}
+            onPress={() => navigation.navigate('Help')}>
+            <Ionicons name="help-outline" size={21} color={theme.colors.surface} />
+          </Pressable>
+        ) : null}
+
         {showHistory ? (
           <Pressable
             accessibilityLabel="Open Kosovo history"

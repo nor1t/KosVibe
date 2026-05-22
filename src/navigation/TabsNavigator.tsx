@@ -9,8 +9,10 @@ import { ActivityDashboardScreen } from '../screens/ActivityDashboardScreen';
 import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
+import { ExchangeScreen } from '../screens/ExchangeScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
+import { HelpScreen } from '../screens/HelpScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
@@ -77,6 +79,8 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
       <HomeStack.Screen name="History" component={HistoryScreen} />
+      <HomeStack.Screen name="Help" component={HelpScreen} />
+      <HomeStack.Screen name="Exchange" component={ExchangeScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -89,6 +93,8 @@ function MapStackNavigator() {
       <MapStack.Screen name="BookTable" component={BookTableScreen} />
       <MapStack.Screen name="Settings" component={SettingsScreen} />
       <MapStack.Screen name="History" component={HistoryScreen} />
+      <MapStack.Screen name="Help" component={HelpScreen} />
+      <MapStack.Screen name="Exchange" component={ExchangeScreen} />
     </MapStack.Navigator>
   );
 }
@@ -101,6 +107,8 @@ function TavolinaStackNavigator() {
       <TavolinaStack.Screen name="BookTable" component={BookTableScreen} />
       <TavolinaStack.Screen name="Settings" component={SettingsScreen} />
       <TavolinaStack.Screen name="History" component={HistoryScreen} />
+      <TavolinaStack.Screen name="Help" component={HelpScreen} />
+      <TavolinaStack.Screen name="Exchange" component={ExchangeScreen} />
     </TavolinaStack.Navigator>
   );
 }
@@ -115,6 +123,8 @@ function FavoritesStackNavigator() {
       <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />
       <FavoritesStack.Screen name="Settings" component={SettingsScreen} />
       <FavoritesStack.Screen name="History" component={HistoryScreen} />
+      <FavoritesStack.Screen name="Help" component={HelpScreen} />
+      <FavoritesStack.Screen name="Exchange" component={ExchangeScreen} />
     </FavoritesStack.Navigator>
   );
 }
@@ -125,6 +135,8 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
       <ProfileStack.Screen name="History" component={HistoryScreen} />
+      <ProfileStack.Screen name="Help" component={HelpScreen} />
+      <ProfileStack.Screen name="Exchange" component={ExchangeScreen} />
     </ProfileStack.Navigator>
   );
 }

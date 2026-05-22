@@ -1,10 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   GestureResponderEvent,
+  Image,
   ImageBackground,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -231,6 +235,13 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   const { searchQuery, selectedLocationId, setSearchQuery } = useDiscovery();
   const [selectedFilter, setSelectedFilter] = useState(copy.filters[0]);
   const [expandedSpotId, setExpandedSpotId] = useState<string | null>(monumentSpots[0].id);
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraTargetSpot, setCameraTargetSpot] = useState<(typeof monumentSpots)[number] | null>(null);
+  const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
+  const [cameraAnalysisSpot, setCameraAnalysisSpot] = useState<(typeof monumentSpots)[number] | null>(null);
+  const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
 
   useEffect(() => {
     setSelectedFilter(copy.filters[0]);
@@ -248,6 +259,13 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
     photo: language === 'sq' ? 'Foto' : 'Photo',
     open: language === 'sq' ? 'hap detajet' : 'open details',
     close: language === 'sq' ? 'mbyll detajet' : 'collapse details',
+    camera: language === 'sq' ? 'Kamera AI' : 'AI Camera',
+    scan: language === 'sq' ? 'Skano me kamere' : 'Scan with camera',
+    analyzing: language === 'sq' ? 'Duke analizuar foton...' : 'Analyzing photo...',
+    analysisTitle: language === 'sq' ? 'Perputhja e mundshme' : 'Likely match',
+    permission: language === 'sq' ? 'Lejo kameren per te skanuar monumentet.' : 'Allow camera access to scan monuments.',
+    openCamera: language === 'sq' ? 'Hap kameren' : 'Open camera',
+    retake: language === 'sq' ? 'Bej foto tjeter' : 'Retake',
   };
 
   const getSpotCopy = (spot: (typeof monumentSpots)[number]) => ({
@@ -261,11 +279,53 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
     void openDirectionsToPlace({ label: getSpotCopy(spot).title, coordinate: spot.coordinate });
   };
 
+  const openCameraAnalyzer = async (spot?: (typeof monumentSpots)[number]) => {
+    setCameraTargetSpot(spot ?? monumentSpots.find((item) => item.id === expandedSpotId) ?? monumentSpots[0]);
+    setCapturedPhotoUri(null);
+    setCameraAnalysisSpot(null);
+    setIsAnalyzingPhoto(false);
+
+    if (!cameraPermission?.granted) {
+      await requestCameraPermission();
+    }
+
+    setIsCameraOpen(true);
+  };
+
+  const closeCameraAnalyzer = () => {
+    setIsCameraOpen(false);
+    setCapturedPhotoUri(null);
+    setCameraAnalysisSpot(null);
+    setIsAnalyzingPhoto(false);
+  };
+
+  const takeAnalyzerPhoto = async () => {
+    const photo = await cameraRef.current?.takePictureAsync({ quality: 0.7 });
+
+    if (!photo?.uri) {
+      return;
+    }
+
+    setCapturedPhotoUri(photo.uri);
+    setIsAnalyzingPhoto(true);
+
+    const matchedSpot = cameraTargetSpot ?? monumentSpots[0];
+    setTimeout(() => {
+      setCameraAnalysisSpot(matchedSpot);
+      setExpandedSpotId(matchedSpot.id);
+      setIsAnalyzingPhoto(false);
+    }, 900);
+  };
+
   if (category === 'Culture') {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.monumentsContent}>
           <View style={styles.monumentsActions}>
+            <Pressable style={styles.cameraActionButton} onPress={() => void openCameraAnalyzer()}>
+              <Ionicons name="camera-outline" size={18} color={theme.colors.surface} />
+              <Text style={styles.cameraActionText}>{cultureLabels.camera}</Text>
+            </Pressable>
             <WeatherSettingsButton navigation={navigation} />
           </View>
 
@@ -334,6 +394,15 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
                         <Ionicons name="map-outline" size={17} color={theme.colors.surface} />
                         <Text style={styles.directionsLabel}>{cultureLabels.directions}</Text>
                       </Pressable>
+                      <Pressable
+                        style={styles.scanButton}
+                        onPress={(event) => {
+                          event.stopPropagation();
+                          void openCameraAnalyzer(spot);
+                        }}>
+                        <Ionicons name="camera-outline" size={17} color={theme.colors.surface} />
+                        <Text style={styles.directionsLabel}>{cultureLabels.scan}</Text>
+                      </Pressable>
                       <Text style={styles.monumentPhotoCredit}>
                         {cultureLabels.photo}: {spot.photoCredit}
                       </Text>
@@ -344,6 +413,66 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
             })}
           </View>
         </ScrollView>
+
+        <Modal visible={isCameraOpen} animationType="slide" onRequestClose={closeCameraAnalyzer}>
+          <SafeAreaView style={styles.cameraScreen}>
+            <View style={styles.cameraTopBar}>
+              <Pressable style={styles.cameraCloseButton} onPress={closeCameraAnalyzer}>
+                <Ionicons name="close" size={24} color={theme.colors.surface} />
+              </Pressable>
+              <Text style={styles.cameraTitle}>{cultureLabels.camera}</Text>
+              <View style={styles.cameraSpacer} />
+            </View>
+
+            {cameraPermission?.granted ? (
+              capturedPhotoUri ? (
+                <View style={styles.analysisWrap}>
+                  <Image source={{ uri: capturedPhotoUri }} style={styles.capturedImage} />
+                  <View style={styles.analysisPanel}>
+                    {isAnalyzingPhoto ? (
+                      <View style={styles.analyzingRow}>
+                        <ActivityIndicator color={theme.colors.secondary} />
+                        <Text style={styles.analysisText}>{cultureLabels.analyzing}</Text>
+                      </View>
+                    ) : cameraAnalysisSpot ? (
+                      <>
+                        <Text style={styles.analysisEyebrow}>{cultureLabels.analysisTitle}</Text>
+                        <Text style={styles.analysisName}>{getSpotCopy(cameraAnalysisSpot).title}</Text>
+                        <Text style={styles.analysisText}>{getSpotCopy(cameraAnalysisSpot).detail}</Text>
+                      </>
+                    ) : null}
+                    <Pressable
+                      style={styles.captureButton}
+                      onPress={() => {
+                        setCapturedPhotoUri(null);
+                        setCameraAnalysisSpot(null);
+                      }}>
+                      <Ionicons name="camera-reverse-outline" size={20} color={theme.colors.surface} />
+                      <Text style={styles.captureText}>{cultureLabels.retake}</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.cameraPreviewWrap}>
+                  <CameraView ref={cameraRef} style={styles.cameraPreview} facing="back" />
+                  <View style={styles.cameraBottomBar}>
+                    <Pressable style={styles.shutterButton} onPress={takeAnalyzerPhoto}>
+                      <View style={styles.shutterInner} />
+                    </Pressable>
+                  </View>
+                </View>
+              )
+            ) : (
+              <View style={styles.permissionPanel}>
+                <Ionicons name="camera-outline" size={42} color={theme.colors.secondary} />
+                <Text style={styles.permissionText}>{cultureLabels.permission}</Text>
+                <Pressable style={styles.captureButton} onPress={() => void requestCameraPermission()}>
+                  <Text style={styles.captureText}>{cultureLabels.openCamera}</Text>
+                </Pressable>
+              </View>
+            )}
+          </SafeAreaView>
+        </Modal>
       </SafeAreaView>
     );
   }
@@ -666,8 +795,27 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   monumentsActions: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 18,
+  },
+  cameraActionButton: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: 'rgba(93,167,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(93,167,255,0.32)',
+  },
+  cameraActionText: {
+    color: theme.colors.surface,
+    fontSize: 13,
+    fontWeight: '900',
   },
   monumentsSubtitle: {
     marginTop: 8,
@@ -782,9 +930,142 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(255,31,61,0.86)',
   },
+  scanButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 999,
+    backgroundColor: 'rgba(93,167,255,0.84)',
+  },
   directionsLabel: {
     color: theme.colors.surface,
     fontSize: 13,
     fontWeight: '900',
+  },
+  cameraScreen: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  cameraTopBar: {
+    minHeight: 62,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+  },
+  cameraCloseButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraTitle: {
+    color: theme.colors.heading,
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  cameraSpacer: {
+    width: 42,
+  },
+  cameraPreviewWrap: {
+    flex: 1,
+  },
+  cameraPreview: {
+    flex: 1,
+  },
+  cameraBottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 34,
+    alignItems: 'center',
+  },
+  shutterButton: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    borderWidth: 4,
+    borderColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  shutterInner: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: theme.colors.surface,
+  },
+  analysisWrap: {
+    flex: 1,
+  },
+  capturedImage: {
+    height: 330,
+    width: '100%',
+    backgroundColor: '#10131F',
+  },
+  analysisPanel: {
+    margin: 18,
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    gap: 12,
+  },
+  analyzingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  analysisEyebrow: {
+    color: theme.colors.secondary,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  analysisName: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  analysisText: {
+    color: theme.colors.mutedText,
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  captureButton: {
+    minHeight: 50,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: theme.colors.primary,
+  },
+  captureText: {
+    color: theme.colors.surface,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  permissionPanel: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 18,
+  },
+  permissionText: {
+    color: theme.colors.mutedText,
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
   },
 });

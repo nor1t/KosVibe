@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useState } from 'react';
 import {
+  Alert,
   ImageBackground,
   Modal,
   Pressable,
@@ -52,6 +53,8 @@ const formCopy = {
     joined: 'Joined',
     hostedBy: 'Hosted by',
     eventDetails: 'Event details',
+    joinSuccessTitle: 'You joined the event',
+    joinSuccessMessage: 'Your spot is saved in this community event.',
   },
   sq: {
     modalTitle: 'Event i ri nga komuniteti',
@@ -72,8 +75,25 @@ const formCopy = {
     joined: 'Je bashkuar',
     hostedBy: 'Organizuar nga',
     eventDetails: 'Detajet e eventit',
+    joinSuccessTitle: 'U bashkove ne event',
+    joinSuccessMessage: 'Vendi yt u ruajt ne kete event te komunitetit.',
   },
 };
+
+function formatSpotsLabel(spotsLabel: string, joined: boolean) {
+  const match = spotsLabel.match(/^(\d+)\/(\d+)(.*)$/);
+
+  if (!match) {
+    return spotsLabel;
+  }
+
+  const current = Number(match[1]);
+  const total = Number(match[2]);
+  const suffix = match[3] ?? '';
+  const visibleCurrent = joined ? Math.min(current + 1, total) : current;
+
+  return `${visibleCurrent}/${total}${suffix}`;
+}
 
 export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const { language } = useI18n();
@@ -126,7 +146,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       creatorAvatar: selectedImage,
       description: description.trim(),
       tags: [modalCopy.spots, city.trim()],
-      spotsLabel: modalCopy.spots,
+      spotsLabel: language === 'sq' ? '0/8 vende' : '0/8 spots',
       image: selectedImage,
     };
 
@@ -150,6 +170,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
         next.delete(selectedEvent.id);
       } else {
         next.add(selectedEvent.id);
+        Alert.alert(modalCopy.joinSuccessTitle, modalCopy.joinSuccessMessage);
       }
 
       return next;
@@ -161,12 +182,10 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerTopRow}>
-            <View style={styles.headerCopy}>
-              <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
-              <Text style={styles.title}>{copy.title}</Text>
-            </View>
             <WeatherSettingsButton navigation={navigation} compact />
           </View>
+          <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
+          <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{copy.subtitle}</Text>
         </View>
 
@@ -204,7 +223,9 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                       {invite.day} | {invite.time} | {invite.city}
                     </Text>
                   </View>
-                  <Text style={styles.spotsLabel}>{invite.spotsLabel}</Text>
+                  <Text style={styles.spotsLabel}>
+                    {formatSpotsLabel(invite.spotsLabel, joinedEventIds.has(invite.id))}
+                  </Text>
                 </View>
 
                 <Text style={styles.inviteDescription}>{invite.description}</Text>
@@ -368,7 +389,9 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                     <Text style={styles.hostLabel}>{modalCopy.hostedBy}</Text>
                     <Text style={styles.hostName}>{selectedEvent.creator}</Text>
                   </View>
-                  <Text style={styles.spotsLabel}>{selectedEvent.spotsLabel}</Text>
+                  <Text style={styles.spotsLabel}>
+                    {formatSpotsLabel(selectedEvent.spotsLabel, isSelectedEventJoined)}
+                  </Text>
                 </View>
 
                 <Text style={styles.eventDetailDescription}>{selectedEvent.description}</Text>
@@ -421,12 +444,9 @@ const styles = StyleSheet.create({
   },
   headerTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'flex-start',
-    gap: 12,
-  },
-  headerCopy: {
-    flex: 1,
+    marginBottom: 22,
   },
   eyebrow: {
     color: theme.colors.secondary,
@@ -442,7 +462,7 @@ const styles = StyleSheet.create({
     lineHeight: 42,
     fontWeight: '900',
     letterSpacing: -1.8,
-    maxWidth: 280,
+    width: '100%',
   },
   subtitle: {
     marginTop: 12,

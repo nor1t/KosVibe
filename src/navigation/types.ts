@@ -18,6 +18,8 @@ export type HomeStackParamList = {
   BookTable: { restaurantId: string };
   Settings: undefined;
   History: undefined;
+  Help: undefined;
+  Exchange: undefined;
 };
 
 export type MapStackParamList = {
@@ -26,6 +28,8 @@ export type MapStackParamList = {
   BookTable: { restaurantId: string };
   Settings: undefined;
   History: undefined;
+  Help: undefined;
+  Exchange: undefined;
 };
 
 export type TavolinaStackParamList = {
@@ -34,6 +38,8 @@ export type TavolinaStackParamList = {
   BookTable: { restaurantId: string };
   Settings: undefined;
   History: undefined;
+  Help: undefined;
+  Exchange: undefined;
 };
 
 export type FavoritesStackParamList = {
@@ -44,10 +50,14 @@ export type FavoritesStackParamList = {
   BookTable: { restaurantId: string };
   Settings: undefined;
   History: undefined;
+  Help: undefined;
+  Exchange: undefined;
 };
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   Settings: undefined;
   History: undefined;
+  Help: undefined;
+  Exchange: undefined;
 };
