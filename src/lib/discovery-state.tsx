@@ -42,55 +42,58 @@ function buildAssistantReply(message: string, selectedLocation: DiscoveryLocatio
   );
 
   if (mentionedRestaurant) {
-    return `${mentionedRestaurant.name} has a ${mentionedRestaurant.rating.toFixed(1)} rating, serves ${mentionedRestaurant.cuisine.toLowerCase()}, and is ${mentionedRestaurant.distance} away. Open its card to book a table or check the menu.`;
+    return `${mentionedRestaurant.name} is one of the strongest restaurant picks around ${selectedLocation.label}. It has a ${mentionedRestaurant.rating.toFixed(1)} rating, serves ${mentionedRestaurant.cuisine.toLowerCase()}, and you can open its card to book or explore more.`;
   }
 
-  if (
-    normalized.includes('book') ||
-    normalized.includes('reservation') ||
-    normalized.includes('table')
-  ) {
+  if (normalized.includes('book') || normalized.includes('reservation') || normalized.includes('table')) {
     const bestMatch = visibleRestaurants[0] ?? restaurants[0];
-    return `The fastest option right now is ${bestMatch.name}. Open it and tap "Book a Table" to pick a date and time.`;
+    return `If you want to book something quickly, start with ${bestMatch.name}. Open the restaurant card and tap "Book a Table" to choose your date and time.`;
   }
 
-  if (
-    normalized.includes('special') ||
-    normalized.includes('offer') ||
-    normalized.includes('deal')
-  ) {
+  if (normalized.includes('special') || normalized.includes('offer') || normalized.includes('deal')) {
     const special = visibleRestaurants[0]?.todaySpecial;
     return special
-      ? `Today's standout offer in ${selectedLocation.label} is ${special.name} for ${special.price}. You can also check the Active Offers section for more promotions.`
-      : 'The Active Offers section is the best place to check current deals right now.';
+      ? `A standout food deal in ${selectedLocation.label} is ${special.name} for ${special.price}. You can also browse the app sections for more current offers.`
+      : 'For deals and promotions, the restaurant and activity sections are the best place to explore right now.';
   }
 
-  if (
-    normalized.includes('near') ||
-    normalized.includes('nearby') ||
-    normalized.includes('location') ||
-    normalized.includes('map')
-  ) {
+  if (normalized.includes('monument') || normalized.includes('nature') || normalized.includes('culture')) {
+    return 'For monuments and nature, start with the Monuments & Nature section. It is the best path for Prizren Fortress, Stone Bridge, Rugova, and other cultural or scenic stops.';
+  }
+
+  if (normalized.includes('market') || normalized.includes('craft') || normalized.includes('rural')) {
+    return 'The Rural Market page is the best place for family sellers, traditional food and drink, handmade objects, instruments, and clothing rooted in local culture.';
+  }
+
+  if (normalized.includes('event') || normalized.includes('night') || normalized.includes('party')) {
+    return 'For nightlife and community energy, check the Events section. It is the best route for finding what feels active, social, and current in Kosovo.';
+  }
+
+  if (normalized.includes('history') || normalized.includes('kosova history') || normalized.includes('past')) {
+    return 'If you want context before exploring, open the History of Kosova page. It gives a compact overview of heritage, identity, and key historical moments.';
+  }
+
+  if (normalized.includes('near') || normalized.includes('nearby') || normalized.includes('location') || normalized.includes('map')) {
     const names = visibleRestaurants.slice(0, 3).map((restaurant) => restaurant.name).join(', ');
-    return `Around ${selectedLocation.label}, I'd start with ${names}. The Map tab will show all matching places on a live map.`;
+    return `Around ${selectedLocation.label}, I would start with ${names}. The Explore map is the best tool if you want to see what is nearby in a more visual way.`;
   }
 
   if (normalized.includes('pizza') || normalized.includes('italian')) {
-    return 'Pizza Napoli is the strongest pizza pick in the list. It is great if you want something casual and easy to share.';
+    return 'Pizza Napoli is one of the easiest pizza picks in the app if you want something casual, familiar, and easy to share.';
   }
 
   if (normalized.includes('traditional') || normalized.includes('kosovo')) {
-    return 'For traditional Kosovo food, Pishat Restaurant is the best match. Its Tave Kosi special is the highlight in the current design.';
+    return 'For a traditional Kosovo experience, I would point you first to local food, monuments, village markets, and the history page. Pishat Restaurant is one of the strongest traditional food picks in the current app.';
   }
 
-  return `I can help you find restaurants in ${selectedLocation.label}, compare specials, or guide you to booking. Try asking for something like "best traditional food", "show me pizza", or "help me book a table".`;
+  return `I can help you discover Kosovo through food, monuments, nature, markets, events, and history. Try asking something like "best traditional food", "show me monuments", "where can I buy local crafts", or "what should I see in ${selectedLocation.label}".`;
 }
 
 const initialMessages: ChatMessage[] = [
   {
     id: 'assistant-welcome',
     role: 'assistant',
-    text: 'Hi, I am your KosVibe guide. I can help you find restaurants, discover monuments, or plan your next vibe in Kosovo.',
+    text: 'Hi, I am your KosVibe AI guide. I can help you discover Kosovo through food, culture, nature, village markets, and local experiences.',
   },
 ];
 

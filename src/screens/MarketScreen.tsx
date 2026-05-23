@@ -19,7 +19,7 @@ const marketCopy = {
     eyebrow: 'Village Market Guide',
     title: 'Find the local things tourists actually want to take home.',
     subtitle:
-      'A curated rural-market page for discovering wine, rakia, handmade objects, traditional foods, and authentic farm-side experiences across Kosovo.',
+      'FROM OUR LAND TO YOUR HAND',
     categories: [
       { key: 'food' as const, label: 'Food & Drink' },
       { key: 'craft' as const, label: 'Items & Instruments' },

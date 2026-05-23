@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -18,8 +19,8 @@ import { theme } from '../../theme';
 
 const quickPrompts = [
   'Show me the best traditional food',
-  'What is popular tonight?',
-  'Help me book a table',
+  'What monuments should I visit?',
+  'Where can I buy local crafts?',
 ];
 
 export function ChatAssistantModal() {
@@ -50,66 +51,77 @@ export function ChatAssistantModal() {
 
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={[styles.sheetWrap, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
-          <View style={styles.handle} />
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>Yummy AI Assistant</Text>
-              <Text style={styles.subtitle}>Helping around {selectedLocation.label}</Text>
-            </View>
-            <Pressable onPress={closeChat} style={styles.closeButton}>
-              <Ionicons name="close" size={22} color={theme.colors.heading} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.messagesContent}>
-            <View style={styles.quickPromptsRow}>
-              {quickPrompts.map((prompt) => (
-                <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
-                  <Text style={styles.quickPromptText}>{prompt}</Text>
-                </Pressable>
-              ))}
+          style={styles.sheetWrap}>
+          <LinearGradient
+            colors={['#171B28', '#0D1019']}
+            start={{ x: 0.2, y: 0 }}
+            end={{ x: 0.9, y: 1 }}
+            style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
+            <View style={styles.handle} />
+            <View style={styles.header}>
+              <View style={styles.headerCopy}>
+                <View style={styles.badge}>
+                  <Ionicons name="sparkles-outline" size={14} color={theme.colors.secondary} />
+                  <Text style={styles.badgeText}>AI Guide</Text>
+                </View>
+                <Text style={styles.title}>KosVibe Assistant</Text>
+                <Text style={styles.subtitle}>Helping you discover {selectedLocation.label}</Text>
+              </View>
+              <Pressable onPress={closeChat} style={styles.closeButton}>
+                <Ionicons name="close" size={22} color={theme.colors.heading} />
+              </Pressable>
             </View>
 
-            {chatMessages.map((message) => (
-              <View
-                key={message.id}
-                style={[
-                  styles.messageBubble,
-                  message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
-                ]}>
-                <Text
+            <ScrollView
+              style={styles.messagesScroll}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.messagesContent}>
+              <View style={styles.quickPromptsRow}>
+                {quickPrompts.map((prompt) => (
+                  <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
+                    <Text style={styles.quickPromptText}>{prompt}</Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {chatMessages.map((message) => (
+                <View
+                  key={message.id}
                   style={[
-                    styles.messageText,
-                    message.role === 'assistant' ? styles.assistantText : styles.userText,
+                    styles.messageBubble,
+                    message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
                   ]}>
-                  {message.text}
-                </Text>
-              </View>
-            ))}
+                  <Text
+                    style={[
+                      styles.messageText,
+                      message.role === 'assistant' ? styles.assistantText : styles.userText,
+                    ]}>
+                    {message.text}
+                  </Text>
+                </View>
+              ))}
 
-            {isAssistantTyping ? (
-              <View style={[styles.messageBubble, styles.assistantBubble]}>
-                <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
-              </View>
-            ) : null}
-          </ScrollView>
+              {isAssistantTyping ? (
+                <View style={[styles.messageBubble, styles.assistantBubble]}>
+                  <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
+                </View>
+              ) : null}
+            </ScrollView>
 
-          <View style={styles.inputRow}>
-            <TextInput
-              value={draft}
-              onChangeText={setDraft}
-              placeholder="Ask about food, offers, or reservations..."
-              placeholderTextColor={theme.colors.subtle}
-              style={styles.input}
-              multiline
-            />
-            <Pressable onPress={handleSend} style={styles.sendButton}>
-              <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
-            </Pressable>
-          </View>
+            <View style={styles.inputRow}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Ask about Kosovo food, monuments, markets, or culture..."
+                placeholderTextColor={theme.colors.subtle}
+                style={styles.input}
+                multiline
+              />
+              <Pressable onPress={handleSend} style={styles.sendButton}>
+                <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
+              </Pressable>
+            </View>
+          </LinearGradient>
         </KeyboardAvoidingView>
       </View>
     </Modal>
@@ -120,22 +132,31 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(12, 18, 30, 0.28)',
+    backgroundColor: 'rgba(7, 8, 16, 0.54)',
   },
   sheetWrap: {
-    maxHeight: '78%',
-    backgroundColor: theme.colors.surface,
+    height: '84%',
+    maxHeight: '90%',
+    minHeight: '72%',
+  },
+  sheet: {
+    flex: 1,
     borderTopLeftRadius: theme.radius.xxl,
     borderTopRightRadius: theme.radius.xxl,
     paddingTop: theme.spacing.lg,
     paddingHorizontal: theme.spacing.xxl,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    overflow: 'hidden',
+    ...theme.shadow.floating,
   },
   handle: {
     alignSelf: 'center',
     width: 64,
     height: 6,
     borderRadius: theme.radius.round,
-    backgroundColor: '#D7DCE7',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     marginBottom: theme.spacing.lg,
   },
   header: {
@@ -144,6 +165,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.lg,
     marginBottom: theme.spacing.lg,
+  },
+  headerCopy: {
+    flex: 1,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: 6,
+    borderRadius: theme.radius.round,
+    backgroundColor: 'rgba(255, 179, 0, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 179, 0, 0.22)',
+    marginBottom: theme.spacing.md,
+  },
+  badgeText: {
+    fontSize: theme.typography.sizes.caption,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    color: theme.colors.secondary,
   },
   title: {
     fontSize: theme.typography.sizes.title,
@@ -162,11 +205,16 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.round,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  messagesScroll: {
+    flex: 1,
   },
   messagesContent: {
     gap: theme.spacing.md,
-    paddingBottom: theme.spacing.lg,
+    paddingBottom: theme.spacing.xl,
   },
   quickPromptsRow: {
     flexDirection: 'row',
@@ -174,14 +222,16 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   quickPrompt: {
-    backgroundColor: theme.colors.primarySoft,
+    backgroundColor: 'rgba(255, 31, 61, 0.14)',
     borderRadius: theme.radius.round,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 31, 61, 0.24)',
   },
   quickPromptText: {
     fontSize: theme.typography.sizes.caption,
-    color: theme.colors.primary,
+    color: '#FFC0C8',
     fontWeight: '700',
   },
   messageBubble: {
@@ -192,7 +242,9 @@ const styles = StyleSheet.create({
   },
   assistantBubble: {
     alignSelf: 'flex-start',
-    backgroundColor: '#F3F6FB',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
   },
   userBubble: {
     alignSelf: 'flex-end',
@@ -203,7 +255,7 @@ const styles = StyleSheet.create({
     lineHeight: theme.typography.lineHeights.body,
   },
   assistantText: {
-    color: theme.colors.heading,
+    color: theme.colors.text,
   },
   userText: {
     color: theme.colors.surface,
@@ -214,20 +266,20 @@ const styles = StyleSheet.create({
     gap: theme.spacing.md,
     paddingTop: theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   input: {
     flex: 1,
     minHeight: 48,
     maxHeight: 96,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: theme.radius.lg,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     fontSize: theme.typography.sizes.body,
-    color: theme.colors.heading,
-    backgroundColor: theme.colors.background,
+    color: theme.colors.text,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   sendButton: {
     width: 42,
@@ -236,5 +288,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.primary,
+    ...theme.shadow.glow,
   },
 });

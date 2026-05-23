@@ -125,10 +125,12 @@ const categories = [
 export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].dashboard;
-  const { selectedLocation, selectedLocationId } = useDiscovery();
+  const { openChat, selectedLocation, selectedLocationId } = useDiscovery();
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
   const [incomingHeroIndex, setIncomingHeroIndex] = useState<number | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const assistantPromptAnim = useRef(new Animated.Value(1)).current;
+  const [isAssistantPromptVisible, setIsAssistantPromptVisible] = useState(true);
   const visibleRestaurants = filterRestaurantsByDiscovery(restaurants, selectedLocationId, '');
   const trending = visibleRestaurants.slice(0, 2);
   const topPick = visibleRestaurants[2] ?? visibleRestaurants[0];
@@ -165,6 +167,23 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
 
     return () => clearInterval(interval);
   }, [activeHeroIndex, fadeAnim]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Animated.timing(assistantPromptAnim, {
+        toValue: 0,
+        duration: 260,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) {
+          setIsAssistantPromptVisible(false);
+        }
+      });
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, [assistantPromptAnim]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -283,6 +302,37 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
             </View>
           </ScrollView>
         </LinearGradient>
+
+        <Pressable style={styles.assistantLauncher} onPress={openChat}>
+          {isAssistantPromptVisible ? (
+            <Animated.Text
+              style={[
+                styles.assistantPrompt,
+                {
+                  opacity: assistantPromptAnim,
+                  transform: [
+                    {
+                      translateX: assistantPromptAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [18, 0],
+                      }),
+                    },
+                    {
+                      scale: assistantPromptAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0.92, 1],
+                      }),
+                    },
+                  ],
+                },
+              ]}>
+              How can I help you discover Kosovo?
+            </Animated.Text>
+          ) : null}
+          <View style={styles.assistantOrb}>
+            <Ionicons name="sparkles-outline" size={24} color={theme.colors.surface} />
+          </View>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -507,5 +557,39 @@ const styles = StyleSheet.create({
     color: '#E3E5F0',
     fontSize: 14,
     lineHeight: 21,
+  },
+  assistantLauncher: {
+    position: 'absolute',
+    right: 18,
+    bottom: 102,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    zIndex: 4,
+  },
+  assistantPrompt: {
+    maxWidth: 154,
+    color: theme.colors.surface,
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '700',
+    textAlign: 'right',
+    backgroundColor: 'rgba(7,8,16,0.62)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  assistantOrb: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...theme.shadow.floating,
   },
 });
