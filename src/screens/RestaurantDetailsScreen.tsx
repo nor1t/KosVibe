@@ -41,7 +41,7 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
             </Pressable>
 
             <View style={styles.heroActionGroup}>
-              <WeatherSettingsButton navigation={navigation} compact />
+              <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
               <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
                 <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
               </Pressable>

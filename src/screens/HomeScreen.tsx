@@ -38,6 +38,64 @@ type HomeScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
+type FunActivity = {
+  id: string;
+  title: string;
+  subtitle: string;
+  city: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  accentColor: string;
+  backgroundColor: string;
+};
+
+const funActivities: FunActivity[] = [
+  {
+    id: 'fun-prishtina-mall',
+    title: 'Prishtina Mall',
+    subtitle: 'Shopping, cinema, food court, and easy indoor hangout energy.',
+    city: 'Prishtina',
+    icon: 'bag-handle-outline',
+    accentColor: '#FFB300',
+    backgroundColor: 'rgba(255, 179, 0, 0.16)',
+  },
+  {
+    id: 'fun-germia-park',
+    title: 'Germia Park',
+    subtitle: 'Forest walks, bike rides, fresh air, and a quick city escape.',
+    city: 'Prishtina',
+    icon: 'bicycle-outline',
+    accentColor: '#42D98C',
+    backgroundColor: 'rgba(66, 217, 140, 0.16)',
+  },
+  {
+    id: 'fun-1-tetori',
+    title: '1 Tetori Sports Hall',
+    subtitle: 'Sports events, training sessions, and an active local crowd.',
+    city: 'Prishtina',
+    icon: 'basketball-outline',
+    accentColor: '#FF6138',
+    backgroundColor: 'rgba(255, 97, 56, 0.16)',
+  },
+  {
+    id: 'fun-brezovica',
+    title: 'Brezovica',
+    subtitle: 'Mountain views, snow-season fun, and a classic weekend trip.',
+    city: 'Prizren',
+    icon: 'snow-outline',
+    accentColor: '#5DA7FF',
+    backgroundColor: 'rgba(93, 167, 255, 0.16)',
+  },
+  {
+    id: 'fun-rugova',
+    title: 'Rugova Canyon',
+    subtitle: 'Adventure routes, scenic drives, and outdoor adrenaline near Peje.',
+    city: 'Peje',
+    icon: 'trail-sign-outline',
+    accentColor: '#8F7CFF',
+    backgroundColor: 'rgba(143, 124, 255, 0.16)',
+  },
+];
+
 export function HomeScreen({ navigation }: HomeScreenProps) {
   const { width } = useWindowDimensions();
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
@@ -69,6 +127,13 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     () => filterRestaurantsByDiscovery(nearbyRestaurants, selectedLocationId, deferredQuery),
     [deferredQuery, selectedLocationId]
   );
+  const visibleFunActivities = useMemo(() => {
+    if (!selectedLocation.city) {
+      return funActivities;
+    }
+
+    return funActivities.filter((activity) => activity.city === selectedLocation.city);
+  }, [selectedLocation.city]);
   const hasSearch = deferredQuery.trim().length > 0;
 
   const experienceCategories = [
@@ -254,6 +319,33 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             ))}
           </View>
         </View>
+
+        <View style={styles.section}>
+          <SectionTitle
+            title="Fun Activities"
+            icon={<Feather name="compass" size={22} color={theme.colors.secondary} />}
+          />
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.funActivityRow}>
+            {visibleFunActivities.map((activity) => (
+              <View key={activity.id} style={styles.funActivityCard}>
+                <View
+                  style={[
+                    styles.funActivityIconWrap,
+                    { backgroundColor: activity.backgroundColor },
+                  ]}>
+                  <Ionicons name={activity.icon} size={24} color={activity.accentColor} />
+                </View>
+                <Text style={styles.funActivityCity}>{activity.city}</Text>
+                <Text style={styles.funActivityTitle}>{activity.title}</Text>
+                <Text style={styles.funActivitySubtitle}>{activity.subtitle}</Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
         <Footer />
       </Screen>
 
@@ -368,8 +460,48 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
     paddingRight: theme.spacing.xxl,
   },
+  funActivityRow: {
+    gap: theme.spacing.lg,
+    paddingRight: theme.spacing.xxl,
+  },
   listGap: {
     gap: theme.spacing.lg,
+  },
+  funActivityCard: {
+    width: 244,
+    borderRadius: theme.radius.xl,
+    padding: theme.spacing.xl,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    gap: theme.spacing.md,
+    ...theme.shadow.card,
+  },
+  funActivityIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: theme.radius.round,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  funActivityCity: {
+    color: theme.colors.secondary,
+    fontSize: theme.typography.sizes.caption,
+    lineHeight: theme.typography.lineHeights.caption,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  funActivityTitle: {
+    color: theme.colors.heading,
+    fontSize: theme.typography.sizes.title,
+    lineHeight: theme.typography.lineHeights.title,
+    fontWeight: '900',
+  },
+  funActivitySubtitle: {
+    color: theme.colors.mutedText,
+    fontSize: theme.typography.sizes.body,
+    lineHeight: theme.typography.lineHeights.body,
   },
   emptyCard: {
     backgroundColor: theme.colors.surface,

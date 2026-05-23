@@ -34,7 +34,7 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{restaurant?.name ?? copy.fallbackRestaurant}</Text>
         </View>
-        <WeatherSettingsButton navigation={navigation} compact />
+        <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.2)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>

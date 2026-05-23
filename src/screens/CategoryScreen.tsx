@@ -16,7 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
@@ -229,6 +229,7 @@ const storyReviews = [
 ];
 
 export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
+  const insets = useSafeAreaInsets();
   const { language } = useI18n();
   const copy = nativeCopy[language].category;
   const { category } = route.params;
@@ -326,7 +327,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
               <Ionicons name="camera-outline" size={18} color={theme.colors.surface} />
               <Text style={styles.cameraActionText}>{cultureLabels.camera}</Text>
             </Pressable>
-            <WeatherSettingsButton navigation={navigation} />
+            <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
           </View>
 
           <View style={styles.centerHeader}>
@@ -414,9 +415,13 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
           </View>
         </ScrollView>
 
-        <Modal visible={isCameraOpen} animationType="slide" onRequestClose={closeCameraAnalyzer}>
-          <SafeAreaView style={styles.cameraScreen}>
-            <View style={styles.cameraTopBar}>
+        <Modal
+          visible={isCameraOpen}
+          animationType="slide"
+          statusBarTranslucent
+          onRequestClose={closeCameraAnalyzer}>
+          <SafeAreaView style={styles.cameraScreen} edges={['left', 'right', 'bottom']}>
+            <View style={[styles.cameraTopBar, { paddingTop: insets.top + theme.spacing.lg }]}>
               <Pressable style={styles.cameraCloseButton} onPress={closeCameraAnalyzer}>
                 <Ionicons name="close" size={24} color={theme.colors.surface} />
               </Pressable>
@@ -481,7 +486,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.restaurantsContent}>
         <View style={styles.categoryActions}>
-          <WeatherSettingsButton navigation={navigation} />
+          <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
         </View>
         <Text style={styles.brandWordmark}>KosVibe</Text>
 
@@ -955,11 +960,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 18,
+    paddingBottom: 10,
   },
   cameraCloseButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -970,7 +976,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   cameraSpacer: {
-    width: 42,
+    width: 48,
   },
   cameraPreviewWrap: {
     flex: 1,

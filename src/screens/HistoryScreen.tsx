@@ -130,7 +130,7 @@ export function HistoryScreen({ navigation }: HistoryScreenProps) {
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
         </Pressable>
-        <WeatherSettingsButton navigation={navigation} showHistory={false} compact />
+        <WeatherSettingsButton navigation={navigation} showHistory={false} compact collapseInfoActions showWeather={false} />
       </View>
 
       <LinearGradient colors={['rgba(255,179,0,0.22)', 'rgba(93,167,255,0.12)']} style={styles.hero}>

@@ -94,7 +94,7 @@ export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
         </Pressable>
-        <WeatherSettingsButton navigation={navigation} showExchange={false} compact />
+        <WeatherSettingsButton navigation={navigation} showExchange={false} compact collapseInfoActions showWeather={false} />
       </View>
 
       <View style={styles.hero}>

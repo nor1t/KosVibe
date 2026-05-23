@@ -44,7 +44,7 @@ export function StoryDetailScreen({ navigation, route }: StoryDetailScreenProps)
               <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
             </Pressable>
             <View style={styles.topRightActions}>
-              <WeatherSettingsButton navigation={navigation} compact />
+              <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
               <View style={styles.categoryPill}>
                 <Text style={styles.categoryLabel}>{story.category}</Text>
               </View>

@@ -59,7 +59,7 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
           <Text style={styles.eyebrow}>{copy.creatorEyebrow}</Text>
           <Text style={styles.title}>{copy.createTitle}</Text>
         </View>
-        <WeatherSettingsButton navigation={navigation} compact />
+        <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
       </View>
 
       <View style={styles.imageChooser}>

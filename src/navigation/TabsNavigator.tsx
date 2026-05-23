@@ -14,6 +14,7 @@ import { FavoritesScreen } from '../screens/FavoritesScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { MapScreen } from '../screens/MapScreen';
+import { MarketScreen } from '../screens/MarketScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -74,6 +75,7 @@ function HomeStackNavigator() {
   return (
     <HomeStack.Navigator screenOptions={stackScreenOptions}>
       <HomeStack.Screen name="HomeMain" component={ActivityDashboardScreen} />
+      <HomeStack.Screen name="Market" component={MarketScreen} />
       <HomeStack.Screen name="Category" component={CategoryScreen} />
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />

@@ -120,7 +120,7 @@ export function HelpScreen({ navigation }: HelpScreenProps) {
         <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
         </Pressable>
-        <WeatherSettingsButton navigation={navigation} showHelp={false} compact />
+        <WeatherSettingsButton navigation={navigation} showHelp={false} compact collapseInfoActions showWeather={false} />
       </View>
 
       <View style={styles.hero}>

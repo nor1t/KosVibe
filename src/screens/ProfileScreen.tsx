@@ -46,7 +46,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>{copy.title}</Text>
-        <WeatherSettingsButton navigation={navigation} />
+        <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>

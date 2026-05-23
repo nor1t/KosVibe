@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
@@ -15,8 +16,84 @@ type ActivityDashboardScreenProps = {
   navigation: NavigationProp<ParamListBase>;
 };
 
-const heroImage =
-  'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1400&q=80';
+type FunActivity = {
+  id: string;
+  title: string;
+  subtitle: string;
+  city: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  accentColor: string;
+  backgroundColor: string;
+};
+
+const heroSlides = [
+  {
+    id: 'drini',
+    image: require('../../assets/images/home-drini.jpeg'),
+    title: 'DRINI I BARDHE',
+    subtitle: 'PEJE, KOSOVO',
+  },
+  {
+    id: 'prishtina',
+    image: require('../../assets/images/home-prishtina.jpeg'),
+    title: 'PRISHTINA',
+    subtitle: 'KOSOVO',
+  },
+  {
+    id: 'rugova',
+    image: require('../../assets/images/home-rugova.jpeg'),
+    title: 'RUGOVA CANYON',
+    subtitle: 'PEJE, KOSOVO',
+  },
+] as const;
+
+const funActivities: FunActivity[] = [
+  {
+    id: 'fun-prishtina-mall',
+    title: 'Prishtina Mall',
+    subtitle: 'Shopping, cinema, food court, and easy indoor hangout energy.',
+    city: 'Prishtina',
+    icon: 'bag-handle-outline',
+    accentColor: '#FFB300',
+    backgroundColor: 'rgba(255, 179, 0, 0.16)',
+  },
+  {
+    id: 'fun-germia-park',
+    title: 'Germia Park',
+    subtitle: 'Forest walks, bike rides, fresh air, and a quick city escape.',
+    city: 'Prishtina',
+    icon: 'bicycle-outline',
+    accentColor: '#42D98C',
+    backgroundColor: 'rgba(66, 217, 140, 0.16)',
+  },
+  {
+    id: 'fun-1-tetori',
+    title: '1 Tetori Sports Hall',
+    subtitle: 'Sports events, training sessions, and an active local crowd.',
+    city: 'Prishtina',
+    icon: 'basketball-outline',
+    accentColor: '#FF6138',
+    backgroundColor: 'rgba(255, 97, 56, 0.16)',
+  },
+  {
+    id: 'fun-brezovica',
+    title: 'Brezovica',
+    subtitle: 'Mountain views, snow-season fun, and a classic weekend trip.',
+    city: 'Prizren',
+    icon: 'snow-outline',
+    accentColor: '#5DA7FF',
+    backgroundColor: 'rgba(93, 167, 255, 0.16)',
+  },
+  {
+    id: 'fun-rugova',
+    title: 'Rugova Canyon',
+    subtitle: 'Adventure routes, scenic drives, and outdoor adrenaline near Peje.',
+    city: 'Peje',
+    icon: 'trail-sign-outline',
+    accentColor: '#8F7CFF',
+    backgroundColor: 'rgba(143, 124, 255, 0.16)',
+  },
+];
 
 const categories = [
   {
@@ -39,9 +116,9 @@ const categories = [
   },
   {
     id: 'stories' as const,
-    icon: 'book-outline' as const,
+    icon: 'storefront-outline' as const,
     onPress: (navigation: NavigationProp<ParamListBase>) =>
-      navigation.getParent()?.navigate('FavoritesTab'),
+      navigation.navigate('Market'),
   },
 ];
 
@@ -49,23 +126,72 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const { language } = useI18n();
   const copy = nativeCopy[language].dashboard;
   const { selectedLocation, selectedLocationId } = useDiscovery();
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [incomingHeroIndex, setIncomingHeroIndex] = useState<number | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const visibleRestaurants = filterRestaurantsByDiscovery(restaurants, selectedLocationId, '');
   const trending = visibleRestaurants.slice(0, 2);
   const topPick = visibleRestaurants[2] ?? visibleRestaurants[0];
+  const visibleFunActivities = selectedLocation.city
+    ? funActivities.filter((activity) => activity.city === selectedLocation.city)
+    : funActivities;
+  const activeHero = heroSlides[activeHeroIndex];
+  const incomingHero = incomingHeroIndex === null ? null : heroSlides[incomingHeroIndex];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIncomingHeroIndex((currentIncomingIndex) => {
+        if (currentIncomingIndex !== null) {
+          return currentIncomingIndex;
+        }
+
+        const nextIndex = (activeHeroIndex + 1) % heroSlides.length;
+        fadeAnim.setValue(0);
+
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }).start(() => {
+          setActiveHeroIndex(nextIndex);
+          setIncomingHeroIndex(null);
+          fadeAnim.setValue(0);
+        });
+
+        return nextIndex;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [activeHeroIndex, fadeAnim]);
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ImageBackground source={{ uri: heroImage }} style={styles.background}>
-        <LinearGradient colors={['rgba(7,8,16,0.18)', 'rgba(7,8,16,0.55)', 'rgba(7,8,16,0.92)']} style={styles.overlay}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <View style={styles.background}>
+        <Animated.Image source={activeHero.image} style={styles.heroImage} resizeMode="cover" />
+        {incomingHero ? (
+          <Animated.Image
+            source={incomingHero.image}
+            style={[styles.heroImage, styles.heroImageOverlay, { opacity: fadeAnim }]}
+            resizeMode="cover"
+          />
+        ) : null}
+        <LinearGradient
+          colors={['rgba(7,8,16,0.18)', 'rgba(7,8,16,0.58)', 'rgba(7,8,16,0.82)', 'rgba(7,8,16,0.9)']}
+          locations={[0, 0.44, 0.74, 1]}
+          style={styles.overlay}>
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
             <View style={styles.headerRow}>
-              <View>
+              <View style={styles.headerCopy}>
                 <Text style={styles.brand}>KosVibe</Text>
-                <Text style={styles.countryCode}>XK</Text>
-                <Text style={styles.location}>{selectedLocation.label}</Text>
+                <Text style={styles.countryCode}>{activeHero.title}</Text>
+                <Text style={styles.location}>{activeHero.subtitle}</Text>
               </View>
 
-              <WeatherSettingsButton navigation={navigation} />
+              <View style={styles.headerAction}>
+                <WeatherSettingsButton navigation={navigation} collapseInfoActions />
+              </View>
             </View>
 
             <View style={styles.heroCopy}>
@@ -132,9 +258,32 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                 </Pressable>
               </View>
             ) : null}
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Fun Activities</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.funActivityRow}>
+                {visibleFunActivities.map((activity) => (
+                  <View key={activity.id} style={styles.funActivityCard}>
+                    <View
+                      style={[
+                        styles.funActivityIconWrap,
+                        { backgroundColor: activity.backgroundColor },
+                      ]}>
+                      <Ionicons name={activity.icon} size={24} color={activity.accentColor} />
+                    </View>
+                    <Text style={styles.funActivityCity}>{activity.city}</Text>
+                    <Text style={styles.funActivityTitle}>{activity.title}</Text>
+                    <Text style={styles.funActivitySubtitle}>{activity.subtitle}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
           </ScrollView>
         </LinearGradient>
-      </ImageBackground>
+      </View>
     </SafeAreaView>
   );
 }
@@ -142,25 +291,40 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.background,
+    backgroundColor: 'transparent',
   },
   background: {
     flex: 1,
   },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  heroImageOverlay: {
+    zIndex: 1,
+  },
   overlay: {
     flex: 1,
+    zIndex: 2,
   },
   content: {
     minHeight: '100%',
     paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 144,
+    paddingBottom: 88,
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 92,
+  },
+  headerCopy: {
+    flex: 1,
+    maxWidth: 220,
+    minHeight: 72,
+  },
+  headerAction: {
+    marginLeft: 16,
+    alignSelf: 'flex-start',
   },
   brand: {
     color: theme.colors.heading,
@@ -173,12 +337,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 12,
     fontWeight: '800',
+    letterSpacing: 0.5,
+    maxWidth: 220,
   },
   location: {
     color: theme.colors.secondary,
     marginTop: 2,
     fontSize: 13,
     fontWeight: '600',
+    maxWidth: 220,
   },
   heroCopy: {
     maxWidth: 360,
@@ -244,8 +411,10 @@ const styles = StyleSheet.create({
   categoryLabel: {
     color: theme.colors.surface,
     fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
     textAlign: 'center',
+    minHeight: 32,
   },
   section: {
     marginTop: 26,
@@ -300,5 +469,43 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     fontSize: 14,
     fontWeight: '700',
+  },
+  funActivityRow: {
+    marginTop: 14,
+    gap: 12,
+    paddingRight: 16,
+  },
+  funActivityCard: {
+    width: 244,
+    borderRadius: 24,
+    padding: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    gap: 10,
+  },
+  funActivityIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  funActivityCity: {
+    color: theme.colors.secondary,
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  funActivityTitle: {
+    color: theme.colors.heading,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  funActivitySubtitle: {
+    color: '#E3E5F0',
+    fontSize: 14,
+    lineHeight: 21,
   },
 });

@@ -566,7 +566,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
             <Text style={styles.headerTitle}>{copy.title}</Text>
             <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
           </View>
-          <WeatherSettingsButton navigation={navigation} compact />
+          <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
         </View>
       </View>
 

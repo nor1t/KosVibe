@@ -41,7 +41,7 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <WeatherSettingsButton navigation={navigation} compact />
+            <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
           </View>
           <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
           <Text style={styles.title}>{copy.title}</Text>

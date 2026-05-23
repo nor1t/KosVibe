@@ -257,7 +257,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
             <Ionicons name="arrow-back-outline" size={24} color={theme.colors.surface} />
           </IconCircleButton>
           <Text style={styles.headerTitle}>{copy.title}</Text>
-          <WeatherSettingsButton navigation={navigation} showSettings={false} compact />
+          <WeatherSettingsButton navigation={navigation} showSettings={false} compact collapseInfoActions showWeather={false} />
         </View>
       </GradientHeaderShell>
 
