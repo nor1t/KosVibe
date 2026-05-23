@@ -83,7 +83,7 @@ export function SignUpScreen() {
         <View style={styles.languageSwitchWrap}>
           <LanguageSwitcher />
         </View>
-        <Text style={styles.authBrand}>YUMMY KOSOVA</Text>
+        <Text style={styles.authBrand}>KOSVIBE</Text>
         <Text style={styles.authTitle}>{messages.auth.createAccountTitle}</Text>
         <Text style={styles.authSubtitle}>
           {messages.auth.createAccountSubtitle}
@@ -202,10 +202,12 @@ const styles = StyleSheet.create({
   },
   authCard: {
     marginHorizontal: theme.spacing.xxl,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#FFF7F1',
     borderRadius: theme.radius.lg,
     padding: theme.spacing.xxl,
     gap: theme.spacing.xl,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 179, 0, 0.14)',
     ...theme.shadow.card,
   },
   fieldWrap: {
@@ -214,17 +216,17 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontSize: theme.typography.sizes.label,
     fontWeight: '600',
-    color: theme.colors.heading,
+    color: '#1B2133',
   },
   input: {
     minHeight: 50,
     borderRadius: theme.radius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
+    borderColor: 'rgba(21, 26, 39, 0.12)',
+    backgroundColor: '#FFFDFC',
     paddingHorizontal: theme.spacing.lg,
     fontSize: theme.typography.sizes.body,
-    color: theme.colors.heading,
+    color: '#151A27',
   },
   errorText: {
     color: theme.colors.danger,

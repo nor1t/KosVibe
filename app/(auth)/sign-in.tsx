@@ -136,6 +136,12 @@ const styles = StyleSheet.create({
   },
   formCard: {
     gap: theme.spacing.lg,
+    backgroundColor: '#FFF7F1',
+    borderColor: 'rgba(255, 179, 0, 0.14)',
+    shadowColor: '#000000',
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
   },
   footer: {
     gap: theme.spacing.sm,

@@ -36,7 +36,7 @@ export default function DiscoverScreen() {
     <Screen scrollable contentContainerStyle={styles.content}>
       <Card variant="accent" style={styles.heroCard}>
         <AppText variant="eyebrow" color={theme.colors.surface}>
-          YummyKosova
+          KosVibe
         </AppText>
         <AppText variant="display" color={theme.colors.surface} style={styles.heroTitle}>
           Discover where Kosovo loves to eat.

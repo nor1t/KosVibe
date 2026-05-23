@@ -90,7 +90,7 @@ const settingsCopy: Record<
     notificationsTitle: 'Njoftimet',
     accountTitle: 'Llogaria',
     versionLabel: 'Versioni 1.0.0',
-    footerNote: 'Copyright 2026 Yummy Kosova. Te gjitha te drejtat e rezervuara.',
+    footerNote: 'Copyright 2026 KosVibe. Te gjitha te drejtat e rezervuara.',
     selectedLabel: 'E zgjedhur',
     signOutErrorTitle: 'Dalja deshtoi',
     signOutErrorFallback: 'Nuk mund te dilni nga llogaria.',
@@ -298,7 +298,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerBrand}>YUMMY KOSOVA</Text>
+        <Text style={styles.footerBrand}>KOSVIBE</Text>
         <Text style={styles.footerVersion}>{copy.versionLabel}</Text>
         <Text style={styles.footerNote}>{copy.footerNote}</Text>
       </View>

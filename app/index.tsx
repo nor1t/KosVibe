@@ -30,7 +30,7 @@ export default function AppEntry() {
 
   return (
     <LoadingState
-      title="YummyKosova"
+      title="KosVibe"
       message="Finding the best restaurants, coffee spots, and hidden gems across Kosovo."
     />
   );

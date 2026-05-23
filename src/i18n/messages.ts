@@ -42,7 +42,7 @@ export const messages = {
       signInTitle: 'Your restaurant shortlist starts here.',
       signInSubtitle:
         'Sign in to keep favorites, preferences, and future recommendations in one place.',
-      createAccountTitle: 'Create your YummyKosova profile.',
+      createAccountTitle: 'Create your KosVibe profile.',
       createAccountSubtitle:
         'Set up the account layer now so future Supabase auth can plug in without reshaping the screens.',
       email: 'Email address',
@@ -198,7 +198,7 @@ export const messages = {
       signInTitle: 'Lista jote e restoranteve fillon këtu.',
       signInSubtitle:
         'Kyçu për të ruajtur favoritët, preferencat dhe rekomandimet e ardhshme.',
-      createAccountTitle: 'Krijo profilin tënd në YummyKosova.',
+      createAccountTitle: 'Krijo profilin tënd në KosVibe.',
       createAccountSubtitle:
         'Përgatite shtresën e llogarisë tani që Supabase të lidhet pastër më vonë.',
       email: 'Email adresa',
