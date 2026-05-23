@@ -147,7 +147,7 @@ export const nativeCopy: Record<
     dashboard: {
       settingsLabel: 'Open settings',
       heroTitle: 'Discover Kosovo',
-      heroAccent: 'XK',
+      heroAccent: '',
       heroSubtitle: 'Your ultimate guide to hidden gems, culture and unforgettable experiences.',
       cta: 'Explore Now',
       categories: {
