@@ -96,6 +96,48 @@ export const nativeCopy: Record<
       launchText: string;
       launchButton: string;
       communityDrops: string;
+      createEvent: {
+        stepType: string;
+        stepDetails: string;
+        stepPricing: string;
+        food: string;
+        culture: string;
+        nightlife: string;
+        other: string;
+        eventName: string;
+        eventNamePlaceholder: string;
+        city: string;
+        cityPlaceholder: string;
+        day: string;
+        dayPlaceholder: string;
+        time: string;
+        timePlaceholder: string;
+        description: string;
+        descriptionPlaceholder: string;
+        uploadPhoto: string;
+        takePhoto: string;
+        changePhoto: string;
+        isPaid: string;
+        isFree: string;
+        price: string;
+        pricePlaceholder: string;
+        maxAttendees: string;
+        maxAttendeesPlaceholder: string;
+        spots: string;
+        next: string;
+        back: string;
+        publish: string;
+        cancel: string;
+        hostedBy: string;
+        eventDetails: string;
+        joinSuccessTitle: string;
+        joinSuccessMessage: string;
+        join: string;
+        joined: string;
+        paidLabel: string;
+        freeLabel: string;
+        capacityLabel: string;
+      };
     };
     category: {
       filters: string[];
@@ -234,14 +276,14 @@ export const nativeCopy: Record<
     },
     tavolina: {
       eyebrow: 'KosVibe Events',
-      title: 'Create the next big vibe.',
-      subtitle: 'Start a cultural night, dinner plan, or city meetup and let the community join in.',
+      title: 'Create the next vibe.',
+      subtitle: 'Start a culture night, dinner, or city meetup and invite the community.',
       moods: ['All', 'Food', 'Culture', 'Nightlife'],
       creatorOptions: [
         {
           id: 'host-dinner',
           title: 'Host a dinner',
-          subtitle: 'Invite your people to a high-energy local food night.',
+          subtitle: 'Invite people to a local food night with great energy.',
         },
         {
           id: 'drop-event',
@@ -249,11 +291,53 @@ export const nativeCopy: Record<
           subtitle: 'Create a vibe around music, culture, or a spontaneous meetup.',
         },
       ],
-      launchTitle: 'Start a new event',
+      launchTitle: 'Launch a new event',
       launchText:
-        'Pick a restaurant, set the mood, and share it as a live community drop in seconds.',
+        'Pick a restaurant, set the mood, and share it with the community in seconds.',
       launchButton: 'Create Event',
-      communityDrops: 'Community Drops',
+      communityDrops: 'Community events',
+      createEvent: {
+        stepType: 'What kind of event?',
+        stepDetails: 'Event details',
+        stepPricing: 'Pricing & capacity',
+        food: 'Food',
+        culture: 'Culture',
+        nightlife: 'Nightlife',
+        other: 'Other',
+        eventName: 'Event name',
+        eventNamePlaceholder: 'Sunset food meetup',
+        city: 'City',
+        cityPlaceholder: 'Prishtina',
+        day: 'Day',
+        dayPlaceholder: 'Friday',
+        time: 'Time',
+        timePlaceholder: '20:00',
+        description: 'Description',
+        descriptionPlaceholder: 'Tell people what the vibe is and who should join.',
+        uploadPhoto: 'Upload photo',
+        takePhoto: 'Take photo',
+        changePhoto: 'Change photo',
+        isPaid: 'Paid event',
+        isFree: 'Free event',
+        price: 'Price per person',
+        pricePlaceholder: '€5.00',
+        maxAttendees: 'Max attendees',
+        maxAttendeesPlaceholder: '30',
+        spots: 'Open spots',
+        next: 'Next',
+        back: 'Back',
+        publish: 'Publish',
+        cancel: 'Cancel',
+        hostedBy: 'Hosted by',
+        eventDetails: 'Event details',
+        joinSuccessTitle: 'You joined the event',
+        joinSuccessMessage: 'Your spot is saved in this community event.',
+        join: 'Join event',
+        joined: 'Joined',
+        paidLabel: 'Paid',
+        freeLabel: 'Free',
+        capacityLabel: 'Capacity',
+      },
     },
     category: {
       filters: ['All', 'Traditional', 'Cafe', 'Street Food', 'Fine Dining'],
@@ -447,6 +531,48 @@ export const nativeCopy: Record<
         'Zgjidh restorantin, vendos atmosferen dhe ndaje me komunitetin ne pak sekonda.',
       launchButton: 'Krijo Event',
       communityDrops: 'Evente nga komuniteti',
+      createEvent: {
+        stepType: 'Cfare lloj eventi?',
+        stepDetails: 'Detajet e eventit',
+        stepPricing: 'Cmimi & kapaciteti',
+        food: 'Ushqim',
+        culture: 'Kulture',
+        nightlife: 'Nate',
+        other: 'Tjeter',
+        eventName: 'Emri i eventit',
+        eventNamePlaceholder: 'Takim ushqimi ne perendim',
+        city: 'Qyteti',
+        cityPlaceholder: 'Prishtine',
+        day: 'Dita',
+        dayPlaceholder: 'E premte',
+        time: 'Ora',
+        timePlaceholder: '20:00',
+        description: 'Pershkrimi',
+        descriptionPlaceholder: 'Trego cfare vibe ka eventi dhe kush mund te bashkohet.',
+        uploadPhoto: 'Ngarko foto',
+        takePhoto: 'Foto me kamere',
+        changePhoto: 'Ndrysho foton',
+        isPaid: 'Event me pagese',
+        isFree: 'Event falas',
+        price: 'Cmimi per person',
+        pricePlaceholder: '€5.00',
+        maxAttendees: 'Maksimum pjesemarresish',
+        maxAttendeesPlaceholder: '30',
+        spots: 'Vende te lira',
+        next: 'Tjetra',
+        back: 'Pas',
+        publish: 'Publiko',
+        cancel: 'Anulo',
+        hostedBy: 'Organizuar nga',
+        eventDetails: 'Detajet e eventit',
+        joinSuccessTitle: 'U bashkove ne event',
+        joinSuccessMessage: 'Vendi yt u ruajt ne kete event te komunitetit.',
+        join: 'Bashkohu',
+        joined: 'Je bashkuar',
+        paidLabel: 'Me pagese',
+        freeLabel: 'Falas',
+        capacityLabel: 'Kapaciteti',
+      },
     },
     category: {
       filters: ['Te gjitha', 'Tradicionale', 'Kafene', 'Ushqim rruge', 'Fine Dining'],

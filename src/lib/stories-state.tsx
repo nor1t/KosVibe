@@ -18,6 +18,7 @@ export type StoryItem = {
   likes: number;
   views: number;
   isUserStory?: boolean;
+  imageUri?: string;
 };
 
 type CreateStoryInput = {
@@ -28,6 +29,7 @@ type CreateStoryInput = {
   category: string;
   image: string;
   postedAt?: string;
+  imageUri?: string;
 };
 
 type StoriesContextValue = {
@@ -219,6 +221,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
       likes: 0,
       views: 0,
       isUserStory: true,
+      imageUri: input.imageUri,
     };
 
     setCreatedStories((current) => {

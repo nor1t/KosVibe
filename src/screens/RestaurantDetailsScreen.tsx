@@ -2,12 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
-import { getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { openDirectionsToPlace } from '../lib/maps';
 import { theme } from '../theme';
 
@@ -24,8 +24,18 @@ type RestaurantDetailsScreenProps = {
 export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetailsScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].restaurantDetails;
+  const { getRestaurantById, loading } = useRestaurantCatalog();
   const restaurant = getRestaurantById(route.params.restaurantId);
   const [saved, setSaved] = useState(false);
+
+  if (!restaurant && loading) {
+    return (
+      <View style={[styles.container, styles.loadingState]}>
+        <ActivityIndicator color={theme.colors.secondary} />
+        <Text style={styles.loadingText}>Loading restaurant details...</Text>
+      </View>
+    );
+  }
 
   if (!restaurant) {
     return null;
@@ -109,31 +119,45 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
 
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>{copy.menuHighlights}</Text>
-          <View style={styles.list}>
-            {restaurant.menuSections.map((section) => (
-              <View key={section.id} style={styles.infoCard}>
-                <Text style={styles.infoTitle}>{section.title}</Text>
-                <Text style={styles.infoText}>
-                  {section.items[0]?.name ?? copy.seasonalSelection} - {section.items[0]?.price ?? ''}
-                </Text>
-              </View>
-            ))}
-          </View>
+          {restaurant.menuSections.length > 0 ? (
+            <View style={styles.list}>
+              {restaurant.menuSections.map((section) => (
+                <View key={section.id} style={styles.infoCard}>
+                  <Text style={styles.infoTitle}>{section.title}</Text>
+                  <Text style={styles.infoText}>
+                    {section.items[0]?.name ?? copy.seasonalSelection} - {section.items[0]?.price ?? ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>{copy.menuHighlights}</Text>
+              <Text style={styles.infoText}>No menu published yet.</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>{copy.reviews}</Text>
-          <View style={styles.list}>
-            {restaurant.reviews.map((review) => (
-              <View key={review.id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <Text style={styles.reviewAuthor}>{review.author}</Text>
-                  <Text style={styles.reviewTime}>{review.timeAgo}</Text>
+          {restaurant.reviews.length > 0 ? (
+            <View style={styles.list}>
+              {restaurant.reviews.map((review) => (
+                <View key={review.id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewAuthor}>{review.author}</Text>
+                    <Text style={styles.reviewTime}>{review.timeAgo}</Text>
+                  </View>
+                  <Text style={styles.reviewText}>{review.comment}</Text>
                 </View>
-                <Text style={styles.reviewText}>{review.comment}</Text>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.infoCard}>
+              <Text style={styles.infoTitle}>{copy.reviews}</Text>
+              <Text style={styles.infoText}>No reviews published yet.</Text>
+            </View>
+          )}
         </View>
 
         <Pressable style={styles.bookButton} onPress={() => navigation.navigate('BookTable', { restaurantId: restaurant.id })}>
@@ -150,6 +174,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  loadingState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  loadingText: {
+    color: theme.colors.mutedText,
+    fontSize: 15,
+    fontWeight: '600',
   },
   content: {
     paddingBottom: PAGE_BOTTOM_PADDING,

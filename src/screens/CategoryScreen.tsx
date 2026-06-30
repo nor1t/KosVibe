@@ -19,11 +19,14 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
+import { nearbyVibesRestaurants } from '../data/nearbyVibesRestaurants';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
+import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { openDirectionsToPlace } from '../lib/maps';
+import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseCard';
+import { RestaurantListCard } from '../components/common/RestaurantListCard';
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import type { HomeStackParamList } from '../navigation/types';
 import { theme } from '../theme';
@@ -234,7 +237,8 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].category;
   const { category } = route.params;
-  const { searchQuery, selectedLocationId, setSearchQuery } = useDiscovery();
+  const { searchQuery, setSearchQuery } = useDiscovery();
+  const { restaurants: catalogRestaurants, loading: restaurantsLoading, error: restaurantsError } = useRestaurantCatalog();
   const [selectedFilter, setSelectedFilter] = useState(copy.filters[0]);
   const [expandedSpotId, setExpandedSpotId] = useState<string | null>(monumentSpots[0].id);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -270,35 +274,46 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   }, [cameraHintAnim, showCameraHint]);
 
   const visibleRestaurants = useMemo(() => {
-    const discoveryFiltered = filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery);
     const selectedFilterValue = selectedFilter.toLowerCase();
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return discoveryFiltered.filter((restaurant) => {
-      if (selectedFilterValue === 'all') {
-        return true;
-      }
+    return catalogRestaurants
+      .filter((restaurant) => {
+        const searchBlob = [restaurant.name, restaurant.cuisine ?? '', restaurant.city, restaurant.description ?? '']
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
 
-      const cuisineText = restaurant.cuisine.toLowerCase();
+        if (normalizedQuery && !searchBlob.includes(normalizedQuery)) {
+          return false;
+        }
 
-      if (selectedFilterValue === 'traditional') {
-        return /traditional|kosovo|grill|mezze|mediterranean|steakhouse/.test(cuisineText);
-      }
+        if (selectedFilterValue === 'all') {
+          return true;
+        }
 
-      if (selectedFilterValue === 'cafe') {
-        return /cafe|breakfast|bakery|dessert|coffee/.test(cuisineText);
-      }
+        const cuisineText = (restaurant.cuisine ?? '').toLowerCase();
 
-      if (selectedFilterValue === 'street food') {
-        return /street|burger|pizza|taco|sushi|grill/.test(cuisineText);
-      }
+        if (selectedFilterValue === 'traditional') {
+          return /traditional|kosovo|grill|mezze|mediterranean|steakhouse/.test(cuisineText);
+        }
 
-      if (selectedFilterValue === 'fine dining') {
-        return /fine|european|bistro|steakhouse|restaurant/.test(cuisineText);
-      }
+        if (selectedFilterValue === 'cafe') {
+          return /cafe|breakfast|bakery|dessert|coffee/.test(cuisineText);
+        }
 
-      return cuisineText.includes(selectedFilterValue);
-    });
-  }, [searchQuery, selectedFilter, selectedLocationId]);
+        if (selectedFilterValue === 'street food') {
+          return /street|burger|pizza|taco|sushi|grill/.test(cuisineText);
+        }
+
+        if (selectedFilterValue === 'fine dining') {
+          return /fine|european|bistro|steakhouse|restaurant/.test(cuisineText);
+        }
+
+        return cuisineText.includes(selectedFilterValue);
+      })
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }, [catalogRestaurants, searchQuery, selectedFilter]);
 
   const cultureLabels = {
     monument: language === 'sq' ? 'Monument' : 'Monument',
@@ -596,27 +611,33 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
           })}
         </ScrollView>
 
-        <Text style={styles.sectionHeading}>{copy.restaurants}</Text>
+        <Text style={styles.sectionHeading}>Nearby Vibes</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
-          {visibleRestaurants.slice(0, 4).map((restaurant) => (
-            <Pressable
+          {nearbyVibesRestaurants.map((restaurant) => (
+            <RestaurantShowcaseCard
               key={restaurant.id}
-              style={styles.restaurantCard}
-              onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })}>
-              <ImageBackground source={{ uri: restaurant.image }} style={styles.restaurantCardImage}>
-                <LinearGradient colors={['rgba(13,13,26,0.1)', 'rgba(13,13,26,0.94)']} style={styles.restaurantCardOverlay}>
-                  <Text style={styles.restaurantCardTitle}>{restaurant.name}</Text>
-                  <Text style={styles.restaurantCardTag}>{restaurant.cuisine}</Text>
-                  <View style={styles.starsRow}>
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <Ionicons key={`${restaurant.id}-${index}`} name="star" size={13} color={theme.colors.secondary} />
-                    ))}
-                  </View>
-                </LinearGradient>
-              </ImageBackground>
-            </Pressable>
+              restaurant={restaurant}
+              onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })}
+            />
           ))}
         </ScrollView>
+
+        <View style={styles.sectionHeadingRow}>
+          <Text style={styles.sectionHeading}>{copy.restaurants}</Text>
+          <Text style={styles.sectionCount}>
+            {restaurantsLoading ? 'Loading...' : `${visibleRestaurants.length} places`}
+          </Text>
+        </View>
+        {restaurantsError ? <Text style={styles.errorText}>{restaurantsError}</Text> : null}
+        <View style={styles.restaurantList}>
+          {visibleRestaurants.map((restaurant) => (
+            <RestaurantListCard
+              key={restaurant.id}
+              restaurant={restaurant}
+              onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })}
+            />
+          ))}
+        </View>
 
         <View style={styles.reviewPanel}>
           <View style={styles.ratingSummary}>
@@ -737,34 +758,31 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: 16,
   },
+  sectionHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 16,
+  },
+  sectionCount: {
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    fontWeight: '700',
+    paddingBottom: 4,
+  },
+  errorText: {
+    marginBottom: 12,
+    color: '#FFB3B3',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   cardRow: {
     gap: 14,
     paddingRight: 24,
   },
-  restaurantCard: {
-    width: 168,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,31,61,0.22)',
-  },
-  restaurantCardImage: {
-    height: 220,
-  },
-  restaurantCardOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    padding: 14,
-  },
-  restaurantCardTitle: {
-    color: theme.colors.heading,
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  restaurantCardTag: {
-    marginTop: 2,
-    color: 'rgba(255,255,255,0.72)',
-    fontSize: 14,
+  restaurantList: {
+    gap: 12,
   },
   starsRow: {
     flexDirection: 'row',

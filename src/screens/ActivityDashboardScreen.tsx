@@ -6,9 +6,11 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
+import { nearbyVibesRestaurants } from '../data/nearbyVibesRestaurants';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
+import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseCard';
 import { usePageSpacing } from '../components/Screen';
 import { theme } from '../theme';
 
@@ -402,6 +404,22 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
             ) : null}
 
             <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{copy.categories.restaurants}</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.restaurantRow}>
+                {nearbyVibesRestaurants.map((restaurant) => (
+                  <RestaurantShowcaseCard
+                    key={restaurant.id}
+                    restaurant={restaurant}
+                    onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: restaurant.id })}
+                  />
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Fun Activities</Text>
               <View style={styles.funActivityBillboard}>
                 <Animated.View
@@ -575,6 +593,11 @@ const styles = StyleSheet.create({
     marginTop: 14,
     flexDirection: 'row',
     gap: 12,
+  },
+  restaurantRow: {
+    marginTop: 14,
+    gap: 14,
+    paddingRight: 24,
   },
   miniCard: {
     flex: 1,

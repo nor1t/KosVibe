@@ -153,18 +153,22 @@ export type QuickLink = {
 
 export type TavolinaInvite = {
   id: string;
-  restaurantId: string;
+  restaurantId?: string;
   restaurantName: string;
   city: string;
   day: string;
   time: string;
-  eventType: 'food' | 'culture' | 'nightlife';
+  eventType: 'food' | 'culture' | 'nightlife' | 'other';
   creator: string;
   creatorAvatar: string;
   description: string;
   tags: string[];
   spotsLabel: string;
   image: string;
+  isPaid?: boolean;
+  price?: string;
+  maxAttendees?: number;
+  imageUri?: string;
 };
 
 export type LanguageOption = {
@@ -1587,7 +1591,7 @@ const additionalRestaurants: Restaurant[] = [
   },
 ];
 
-export const restaurants = [
+export const restaurants: Restaurant[] = [
   pishatRestaurant,
   sushiRestaurant,
   pizzaRestaurant,

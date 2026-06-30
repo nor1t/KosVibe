@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -8,6 +7,7 @@ import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { theme } from '../theme';
 
 type BookTableRoute = RouteProp<{ BookTable: { restaurantId: string } }, 'BookTable'>;
@@ -20,7 +20,8 @@ type BookTableScreenProps = {
 export function BookTableScreen({ route }: BookTableScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].booking;
-  const restaurant = getRestaurantById(route.params.restaurantId);
+  const { getRestaurantById: getCatalogRestaurantById } = useRestaurantCatalog();
+  const restaurant = getCatalogRestaurantById(route.params.restaurantId) ?? getRestaurantById(route.params.restaurantId);
   const [selectedDateId, setSelectedDateId] = useState(bookingDates[0]?.id ?? '');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
