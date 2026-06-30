@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { StickyAppHeader } from '../components/common/StickyAppHeader';
 import { useI18n } from '../i18n/I18nProvider';
@@ -20,6 +21,7 @@ import { HistoryScreen } from '../screens/HistoryScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { MarketScreen } from '../screens/MarketScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { ProfileEditScreen } from '../screens/ProfileEditScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StoryDetailScreen } from '../screens/StoryDetailScreen';
@@ -124,7 +126,7 @@ function FavoritesStackNavigator() {
   return (
     <FavoritesStack.Navigator screenOptions={stackScreenOptions}>
       <FavoritesStack.Screen name="FavoritesMain" component={FavoritesScreen} />
-      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} />
+      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} options={{ headerShown: false }} />
       <FavoritesStack.Screen name="CreateStory" component={CreateStoryScreen} />
       <FavoritesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />
@@ -140,6 +142,7 @@ function ProfileStackNavigator() {
   return (
     <ProfileStack.Navigator screenOptions={stackScreenOptions}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStack.Screen name="EditProfile" component={ProfileEditScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
       <ProfileStack.Screen name="History" component={HistoryScreen} />
       <ProfileStack.Screen name="Help" component={HelpScreen} />
@@ -151,13 +154,21 @@ function ProfileStackNavigator() {
 export function TabsNavigator() {
   const { language } = useI18n();
   const copy = nativeCopy[language].tabs;
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            bottom: 10 + Math.min(insets.bottom, 10),
+            height: 82,
+            paddingBottom: 12,
+          },
+        ],
         sceneStyle: styles.scene,
         tabBarActiveTintColor: theme.colors.surface,
         tabBarInactiveTintColor: theme.colors.tabInactive,
@@ -193,10 +204,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 12,
     right: 12,
-    bottom: 10,
-    height: 82,
     paddingTop: 10,
-    paddingBottom: 12,
     borderRadius: 30,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.18)',

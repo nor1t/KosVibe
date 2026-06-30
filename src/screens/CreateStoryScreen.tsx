@@ -3,6 +3,7 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories } from '../lib/stories-state';
@@ -156,8 +157,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 88,
-    paddingBottom: 140,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   headerRow: {
     flexDirection: 'row',

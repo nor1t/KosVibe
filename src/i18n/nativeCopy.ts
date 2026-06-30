@@ -60,6 +60,17 @@ export const nativeCopy: Record<
       title: string;
       fallbackName: string;
       bio: string;
+      editButton: string;
+      editTitle: string;
+      editSubtitle: string;
+      fullNameLabel: string;
+      bioLabel: string;
+      avatarLabel: string;
+      avatarHint: string;
+      uploadPhoto: string;
+      removePhoto: string;
+      saveChanges: string;
+      savingChanges: string;
       stats: {
         saved: string;
         stories: string;
@@ -196,6 +207,19 @@ export const nativeCopy: Record<
       title: 'Profile',
       fallbackName: 'KosVibe Member',
       bio: 'Curating restaurants, monuments, and city stories with a modern Kosovo state of mind.',
+      editButton: 'Edit Profile',
+      editTitle: 'Edit your profile',
+      editSubtitle:
+        'Update your name, bio, and avatar now so the profile can plug into your database later.',
+      fullNameLabel: 'Full name',
+      bioLabel: 'Bio',
+      avatarLabel: 'Profile photo',
+      avatarHint:
+        'Upload a photo or paste an avatar URL. We will store the data in auth metadata for now.',
+      uploadPhoto: 'Upload photo',
+      removePhoto: 'Remove photo',
+      saveChanges: 'Save changes',
+      savingChanges: 'Saving...',
       stats: {
         saved: 'Saved spots',
         stories: 'Stories',
@@ -376,6 +400,19 @@ export const nativeCopy: Record<
       title: 'Profili',
       fallbackName: 'Anetar i KosVibe',
       bio: 'Kuron restorante, monumente dhe storje qyteti me fryme moderne te Kosoves.',
+      editButton: 'Ndrysho profilin',
+      editTitle: 'Ndrysho profilin tend',
+      editSubtitle:
+        'Perditeso emrin, biografin dhe avataren tani qe profili te lidhet me databazen me vone.',
+      fullNameLabel: 'Emri i plote',
+      bioLabel: 'Biografia',
+      avatarLabel: 'Foto e profilit',
+      avatarHint:
+        'Ngarko nje foto ose vendos nje URL avatari. Per momentin i ruajme ne metadata te auth.',
+      uploadPhoto: 'Ngarko foto',
+      removePhoto: 'Hiq foton',
+      saveChanges: 'Ruaj ndryshimet',
+      savingChanges: 'Duke ruajtur...',
       stats: {
         saved: 'Vende te ruajtura',
         stories: 'Storje',

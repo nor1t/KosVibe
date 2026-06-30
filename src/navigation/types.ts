@@ -57,6 +57,7 @@ export type FavoritesStackParamList = {
 
 export type ProfileStackParamList = {
   ProfileMain: undefined;
+  EditProfile: undefined;
   Settings: undefined;
   History: undefined;
   Help: undefined;

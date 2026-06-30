@@ -16,12 +16,19 @@ type SignUpParams = {
   password: string;
 };
 
+type UpdateProfileParams = {
+  fullName: string;
+  bio: string | null;
+  avatarUrl: string | null;
+};
+
 type AuthContextValue = {
   session: Session | null;
   user: User | null;
   isAuthReady: boolean;
   signInWithPassword: (params: SignInParams) => Promise<Session | null>;
   signUpWithPassword: (params: SignUpParams) => Promise<Session | null>;
+  updateProfile: (params: UpdateProfileParams) => Promise<User>;
   signOut: () => Promise<void>;
 };
 
@@ -115,6 +122,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return data.session;
+    },
+    async updateProfile({ fullName, bio, avatarUrl }) {
+      const { data, error } = await supabase.auth.updateUser({
+        data: {
+          full_name: fullName.trim(),
+          bio: bio?.trim() || null,
+          avatar_url: avatarUrl?.trim() || null,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.user;
     },
     async signOut() {
       const { error } = await supabase.auth.signOut();

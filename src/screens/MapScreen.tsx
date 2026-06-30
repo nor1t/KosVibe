@@ -18,6 +18,7 @@ import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { openDirectionsToPlace } from '../lib/maps';
 import { useScrollBehavior } from '../lib/scroll-behavior';
+import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { theme } from '../theme';
 
 type MapScreenProps = {
@@ -1110,7 +1111,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    bottom: 120,
+    bottom: Math.max(PAGE_BOTTOM_PADDING + 6, 104),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

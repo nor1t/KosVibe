@@ -18,6 +18,7 @@ const pageLabelMap: Record<string, string> = {
   TavolinaMain: 'Events',
   FavoritesMain: 'Rural Market',
   ProfileMain: 'Profile',
+  EditProfile: 'Edit Profile',
   RestaurantDetails: 'Restaurant',
   BookTable: 'Booking',
   Settings: 'Settings',

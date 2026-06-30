@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories, type StoryItem } from '../lib/stories-state';
@@ -135,8 +136,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 88,
-    paddingBottom: 140,
+    paddingTop: PAGE_TOP_PADDING + 20,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   header: {
     marginBottom: 24,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   createFab: {
     position: 'absolute',
     right: 20,
-    bottom: 104,
+    bottom: Math.max(PAGE_BOTTOM_PADDING + 4, 100),
     width: 64,
     height: 64,
     borderRadius: 32,

@@ -24,6 +24,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { openDirectionsToPlace } from '../lib/maps';
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import type { HomeStackParamList } from '../navigation/types';
 import { theme } from '../theme';
 
@@ -40,7 +41,7 @@ const monumentSpots = [
     titleSq: 'Ura e Gurit',
     location: 'Prizren',
     locationSq: 'Prizren',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/PrizrenStoneBridge.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/PrizrenStoneBridge.jpg',
     coordinate: { latitude: 42.20965, longitude: 20.74034 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -55,7 +56,7 @@ const monumentSpots = [
     titleSq: 'Kalaja e Prizrenit',
     location: 'Prizren',
     locationSq: 'Prizren',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/The%20Prizren%20Fortress%2009.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/2/29/The_Prizren_Fortress_09.jpg',
     coordinate: { latitude: 42.2069, longitude: 20.7465 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -70,7 +71,7 @@ const monumentSpots = [
     titleSq: 'Lidhja e Prizrenit',
     location: 'Prizren',
     locationSq: 'Prizren',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/2011%20Prizren%2C%20Budynek%20Ligi%20Prizre%C5%84skiej%2001.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/2011_Prizren%2C_Budynek_Ligi_Prizre%C5%84skiej_01.jpg',
     coordinate: { latitude: 42.211467, longitude: 20.743825 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -85,7 +86,7 @@ const monumentSpots = [
     titleSq: 'Monumenti Newborn',
     location: 'Prishtina',
     locationSq: 'Prishtine',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Kosovo%20Feb%202020%2022%2004%2058%20224000.jpeg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Kosovo_Feb_2020_22_04_58_224000.jpeg',
     coordinate: { latitude: 42.6607, longitude: 21.1583 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -100,7 +101,7 @@ const monumentSpots = [
     titleSq: 'Biblioteka Kombetare',
     location: 'Prishtina',
     locationSq: 'Prishtine',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/National%20Library%20of%20Kosovo.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/4/42/National_Library_of_Kosovo.jpg',
     coordinate: { latitude: 42.6575, longitude: 21.162297 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -115,7 +116,7 @@ const monumentSpots = [
     titleSq: 'Ulpiana',
     location: 'Near Gracanica',
     locationSq: 'Afer Gracanices',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Ulpiana%20%28lokaliteti%20arkeologjik%29%20nga%20ajri.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Ulpiana_%28lokaliteti_arkeologjik%29_nga_ajri.jpg',
     coordinate: { latitude: 42.596892, longitude: 21.174387 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -130,7 +131,7 @@ const monumentSpots = [
     titleSq: 'Shpella e Gadimes',
     location: 'Lipjan',
     locationSq: 'Lipjan',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Crystals%20from%20inside%20the%20Marble%20Cave%20in%20Kosovo%2013.JPG?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Crystals_from_inside_the_Marble_Cave_in_Kosovo_13.JPG',
     coordinate: { latitude: 42.47809, longitude: 21.20757 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -145,7 +146,7 @@ const monumentSpots = [
     titleSq: 'Gryka e Rugoves',
     location: 'Peja',
     locationSq: 'Peje',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Rugova%20Canyon%20Kosovo.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Rugova_Canyon_Kosovo.jpg',
     coordinate: { latitude: 42.692222, longitude: 20.168611 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -160,7 +161,7 @@ const monumentSpots = [
     titleSq: 'Ujevarat e Mirushes',
     location: 'Kline / Malisheve',
     locationSq: 'Kline / Malisheve',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Waterfall%20Mirusha.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Waterfall_Mirusha.jpg',
     coordinate: { latitude: 42.523889, longitude: 20.583056 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -175,7 +176,7 @@ const monumentSpots = [
     titleSq: 'Ujevara e Drinit te Bardhe',
     location: 'Peje',
     locationSq: 'Peje',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/White%20Drin%20Waterfall%20in%20June.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/White_Drin_Waterfall_in_June.jpg',
     coordinate: { latitude: 42.738056, longitude: 20.305833 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -190,7 +191,7 @@ const monumentSpots = [
     titleSq: 'Parku i Germise',
     location: 'Prishtina',
     locationSq: 'Prishtine',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Germia%20Park%20during%20Spring%20Season%20in%20Prishtina%2C%20Kosovo.jpg?width=900',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Germia_Park_during_Spring_Season_in_Prishtina%2C_Kosovo.jpg',
     coordinate: { latitude: 42.66887, longitude: 21.15345 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -205,7 +206,7 @@ const monumentSpots = [
     titleSq: 'Malet e Sharrit',
     location: 'South Kosovo',
     locationSq: 'Jugu i Kosoves',
-    image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Man%20herding%20a%20flock%20of%20sheep%20in%20the%20top%20of%20Sharr%20Mountains%2C%20Kosovo.jpg?width=900',
+    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
     coordinate: { latitude: 42.1744, longitude: 20.9614 },
     photoCredit: 'Wikimedia Commons',
     detail:
@@ -657,8 +658,8 @@ const styles = StyleSheet.create({
   },
   restaurantsContent: {
     paddingHorizontal: 24,
-    paddingTop: 75,
-    paddingBottom: 140,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   restaurantHero: {
     marginTop: 8,
@@ -839,8 +840,8 @@ const styles = StyleSheet.create({
   },
   monumentsContent: {
     paddingHorizontal: 20,
-    paddingTop: 80,
-    paddingBottom: 144,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   centerHeader: {
     alignItems: 'center',
@@ -856,7 +857,7 @@ const styles = StyleSheet.create({
   assistantLauncher: {
     position: 'absolute',
     right: 18,
-    bottom: 120,
+    bottom: Math.max(PAGE_BOTTOM_PADDING + 6, 104),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

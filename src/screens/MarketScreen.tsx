@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
@@ -91,7 +92,7 @@ const marketCopy = {
           family: 'Gashi Wood & Lahuta Workshop',
           address: 'Junik Center, Junik',
           phone: '+383 49 520 733',
-          image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Lahuta%20QKVF.jpg?width=900',
+          image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80',
           description:
             'A family workshop producing carved wooden trays, shepherd items, and string instruments inspired by local tradition.',
         },
@@ -100,7 +101,7 @@ const marketCopy = {
           address: 'Gjakova Old Bazaar, Gjakove',
           phone: '+383 44 398 551',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Bak%C4%B1r%20bardak%201.jpg?width=900',
+            'https://images.unsplash.com/photo-1457530378978-8bac673b57c3?auto=format&fit=crop&w=900&q=80',
           description:
             'Hand-finished copper coffee sets, serving pieces, and practical home objects rooted in old bazaar craft.',
         },
@@ -109,7 +110,7 @@ const marketCopy = {
           address: 'Isniq, Decan',
           phone: '+383 48 703 992',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Handmade%20wooden%20spoons.jpg?width=900',
+            'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80',
           description:
             'Rural maker focused on handmade spoons, loom parts, and useful small tools that reflect village life.',
         },
@@ -120,7 +121,7 @@ const marketCopy = {
           address: 'Prizren outskirts, Prizren',
           phone: '+383 49 340 226',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Woven%20Leather%20Belt%20-%20Macro%20%2849851869996%29.jpg?width=900',
+            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80',
           description:
             'Traditional aprons, woven belts, and embroidered textile pieces made in a small family weaving space.',
         },
@@ -129,7 +130,7 @@ const marketCopy = {
           address: 'Peje Old Town, Peje',
           phone: '+383 45 916 448',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/27%20Gjakov%C3%AB%20-%20Qeleshepunues%20-%20Woolen%20white%20hats.jpg?width=900',
+            'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80',
           description:
             'Local family preserving ceremonial clothing details, plis caps, and stitched vest pieces for visitors and events.',
         },
@@ -138,7 +139,7 @@ const marketCopy = {
           address: 'Gjakova artisan quarter, Gjakove',
           phone: '+383 44 280 519',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Veshje%20nuseje%20tradicionale.jpg?width=900',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
           description:
             'Traditional clothing accents, hand embroidery, and custom-made pieces based on regional Albanian dress motifs.',
         },
@@ -244,7 +245,7 @@ const marketCopy = {
           family: 'Punishtja e Drurit dhe Lahutes Gashi',
           address: 'Qendra e Junikut, Junik',
           phone: '+383 49 520 733',
-          image: 'https://commons.wikimedia.org/wiki/Special:FilePath/Lahuta%20QKVF.jpg?width=900',
+          image: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80',
           description:
             'Punishte familjare me tabaka druri, sende bariu dhe instrumente me frymezim nga tradita lokale.',
         },
@@ -253,7 +254,7 @@ const marketCopy = {
           address: 'Carshia e Madhe, Gjakove',
           phone: '+383 44 398 551',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Bak%C4%B1r%20bardak%201.jpg?width=900',
+            'https://images.unsplash.com/photo-1457530378978-8bac673b57c3?auto=format&fit=crop&w=900&q=80',
           description:
             'Servise bakri per kafe, pjese servirjeje dhe objekte praktike te lidhura me zanatin e vjeter.',
         },
@@ -262,7 +263,7 @@ const marketCopy = {
           address: 'Isniq, Decan',
           phone: '+383 48 703 992',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Handmade%20wooden%20spoons.jpg?width=900',
+            'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=900&q=80',
           description:
             'Punues rural i fokusuar ne luga dore, pjese te vekut dhe vegla te vogla qe pasqyrojne jeten e fshatit.',
         },
@@ -273,7 +274,7 @@ const marketCopy = {
           address: 'Periferi e Prizrenit, Prizren',
           phone: '+383 49 340 226',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Woven%20Leather%20Belt%20-%20Macro%20%2849851869996%29.jpg?width=900',
+            'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80',
           description:
             'Perparese tradicionale, rripa te endur dhe tekstile te qendisura ne nje hapesire te vogel familjare.',
         },
@@ -282,7 +283,7 @@ const marketCopy = {
           address: 'Qyteti i Vjeter, Peje',
           phone: '+383 45 916 448',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/27%20Gjakov%C3%AB%20-%20Qeleshepunues%20-%20Woolen%20white%20hats.jpg?width=900',
+            'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80',
           description:
             'Familje lokale qe ruan detaje ceremoniale te veshjeve, plisa dhe pjese jelekesh per vizitore e ngjarje.',
         },
@@ -291,7 +292,7 @@ const marketCopy = {
           address: 'Lagjja artizanale, Gjakove',
           phone: '+383 44 280 519',
           image:
-            'https://commons.wikimedia.org/wiki/Special:FilePath/Veshje%20nuseje%20tradicionale.jpg?width=900',
+            'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80',
           description:
             'Aksesorë te veshjeve tradicionale, qendisje me dore dhe pjese sipas motiveve shqiptare rajonale.',
         },
@@ -445,8 +446,8 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 88,
-    paddingBottom: 140,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   hero: {
     borderRadius: 28,

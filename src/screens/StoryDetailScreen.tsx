@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories } from '../lib/stories-state';
@@ -12,11 +12,10 @@ import { theme } from '../theme';
 type StoryDetailRoute = RouteProp<{ StoryDetail: { storyId: string } }, 'StoryDetail'>;
 
 type StoryDetailScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
   route: StoryDetailRoute;
 };
 
-export function StoryDetailScreen({ navigation, route }: StoryDetailScreenProps) {
+export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
   const { getStoryById } = useStories();
@@ -25,9 +24,6 @@ export function StoryDetailScreen({ navigation, route }: StoryDetailScreenProps)
   if (!story) {
     return (
       <View style={styles.emptyScreen}>
-        <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
         <Text style={styles.emptyTitle}>{copy.notFound}</Text>
       </View>
     );
@@ -39,18 +35,7 @@ export function StoryDetailScreen({ navigation, route }: StoryDetailScreenProps)
         <LinearGradient
           colors={['rgba(7,8,16,0.08)', 'rgba(7,8,16,0.58)', 'rgba(7,8,16,0.96)']}
           style={styles.heroOverlay}>
-          <View style={styles.topRow}>
-            <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-            </Pressable>
-            <View style={styles.topRightActions}>
-              <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
-              <View style={styles.categoryPill}>
-                <Text style={styles.categoryLabel}>{story.category}</Text>
-              </View>
-            </View>
-          </View>
-
+          <View style={styles.heroSpacer} />
           <View>
             <Text style={styles.location}>{story.location}</Text>
             <Text style={styles.title}>{story.title}</Text>
@@ -88,7 +73,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    paddingBottom: 140,
+    paddingBottom: PAGE_BOTTOM_PADDING,
+    paddingTop: PAGE_TOP_PADDING,
   },
   heroImage: {
     height: 520,
@@ -97,42 +83,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 56,
+    paddingTop: PAGE_TOP_PADDING - 60,
     paddingBottom: 30,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  topRightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  iconButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,179,0,0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,179,0,0.32)',
-  },
-  categoryLabel: {
-    color: '#FFD787',
-    fontSize: 12,
-    fontWeight: '900',
+  heroSpacer: {
+    height: 84,
   },
   location: {
     color: theme.colors.secondary,
@@ -204,7 +159,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme.spacing.xl,
     padding: 20,
-    paddingTop: 56,
+    paddingTop: PAGE_TOP_PADDING,
     backgroundColor: theme.colors.background,
   },
   emptyTitle: {

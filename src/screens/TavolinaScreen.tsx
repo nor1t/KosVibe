@@ -16,6 +16,7 @@ import {
 import { tavolinaInvites, type TavolinaInvite } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { usePageSpacing } from '../components/Screen';
 import { useScrollBehavior } from '../lib/scroll-behavior';
 import { theme } from '../theme';
 
@@ -130,6 +131,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const copy = nativeCopy[language].tavolina;
   const modalCopy = formCopy[language];
   const composerTypeOptionsForLanguage = composerTypeOptions[language] ?? composerTypeOptions.en;
+  const pageSpacing = usePageSpacing();
   const [events, setEvents] = useState<EventInvite[]>(tavolinaInvites);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventInvite | null>(null);
@@ -226,7 +228,14 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
     <View style={styles.screen}>
       <ScrollView
         style={styles.container}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingHorizontal: pageSpacing.horizontalPadding,
+            paddingTop: pageSpacing.topPadding,
+            paddingBottom: pageSpacing.bottomPadding,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         onScroll={(event) => setScrollOffset(event.nativeEvent.contentOffset.y)}
         scrollEventThrottle={16}>
@@ -302,7 +311,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
 
       <Pressable
         accessibilityLabel={modalCopy.modalTitle}
-        style={styles.createFab}
+        style={[styles.createFab, { bottom: Math.max(pageSpacing.bottomPadding + 8, 104) }]}
         onPress={() => setIsComposerOpen(true)}>
         <Ionicons name="add" size={30} color={theme.colors.surface} />
       </Pressable>
@@ -517,9 +526,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 120,
-    paddingBottom: 160,
   },
   header: {
     marginBottom: 24,
@@ -708,7 +714,6 @@ const styles = StyleSheet.create({
   createFab: {
     position: 'absolute',
     right: 20,
-    bottom: 104,
     width: 66,
     height: 66,
     borderRadius: 33,

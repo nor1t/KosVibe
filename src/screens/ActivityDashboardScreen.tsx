@@ -9,6 +9,7 @@ import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
+import { usePageSpacing } from '../components/Screen';
 import { theme } from '../theme';
 
 type ActivityDashboardScreenProps = {
@@ -206,6 +207,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const billboardAnim = useRef(new Animated.Value(0)).current;
   const assistantPromptAnim = useRef(new Animated.Value(1)).current;
   const [isAssistantPromptVisible, setIsAssistantPromptVisible] = useState(true);
+  const pageSpacing = usePageSpacing();
   const visibleRestaurants = filterRestaurantsByDiscovery(restaurants, selectedLocationId, '');
   const trending = visibleRestaurants.slice(0, 2);
   const topPick = visibleRestaurants[2] ?? visibleRestaurants[0];
@@ -227,7 +229,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
     ? {
         opacity: fadeAnim.interpolate({
           inputRange: [0, 1],
-          outputRange: [1, 0.18],
+          outputRange: [1, 0],
         }),
       }
     : null;
@@ -324,7 +326,16 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
           colors={['rgba(7,8,16,0.18)', 'rgba(7,8,16,0.58)', 'rgba(7,8,16,0.82)', 'rgba(7,8,16,0.9)']}
           locations={[0, 0.44, 0.74, 1]}
           style={styles.overlay}>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.content,
+              {
+                paddingHorizontal: pageSpacing.horizontalPadding,
+                paddingTop: pageSpacing.topPadding,
+                paddingBottom: pageSpacing.bottomPadding,
+              },
+            ]}>
             <View style={styles.heroCopy}>
               <Text style={styles.heroTitle}>
                 {copy.heroTitle} <Text style={styles.heroAccent}>{copy.heroAccent}</Text>
@@ -420,7 +431,12 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
           </ScrollView>
         </LinearGradient>
 
-        <Pressable style={styles.assistantLauncher} onPress={openChat}>
+        <Pressable
+          style={[
+            styles.assistantLauncher,
+            { bottom: Math.max(pageSpacing.bottomPadding + 12, 112) },
+          ]}
+          onPress={openChat}>
           {isAssistantPromptVisible ? (
             <Animated.Text
               style={[
@@ -476,9 +492,6 @@ const styles = StyleSheet.create({
   },
   content: {
     minHeight: '100%',
-    paddingHorizontal: 16,
-    paddingTop: 120,
-    paddingBottom: 160,
   },
   heroCopy: {
     maxWidth: 360,
@@ -650,7 +663,6 @@ const styles = StyleSheet.create({
   assistantLauncher: {
     position: 'absolute',
     right: 18,
-    bottom: 140,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

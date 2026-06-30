@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -23,39 +25,76 @@ function getDisplayName(
   return fallbackName;
 }
 
-export function ProfileScreen() {
+type ProfileScreenProps = {
+  navigation: NavigationProp<ParamListBase>;
+};
+
+export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].profile;
   const { user } = useAuth();
   const fullName =
     typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
+  const bio = typeof user?.user_metadata?.bio === 'string' ? user.user_metadata.bio : copy.bio;
+  const avatarUrl =
+    typeof user?.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null;
   const displayName = getDisplayName(fullName, user?.email, copy.fallbackName);
   const stats = [
     { id: 'saved', value: '28', label: copy.stats.saved },
     { id: 'stories', value: '12', label: copy.stats.stories },
     { id: 'events', value: '05', label: copy.stats.events },
   ];
+  const parentNavigation = navigation.getParent() as any;
+
+  const openProfileEditor = () => {
+    navigation.navigate('EditProfile' as never);
+  };
+
+  const openAction = (index: number) => {
+    if (index === 0) {
+      parentNavigation?.navigate('FavoritesTab');
+      return;
+    }
+
+    if (index === 1) {
+      parentNavigation?.navigate('HomeTab', { screen: 'Market' });
+      return;
+    }
+
+    if (index === 2) {
+      parentNavigation?.navigate('HomeTab', {
+        screen: 'Category',
+        params: { category: 'Culture' },
+      });
+      return;
+    }
+
+    navigation.navigate('Settings' as never);
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>{copy.title}</Text>
-      </View>
-
       <LinearGradient colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
-        <View style={styles.avatarWrap}>
+        <Pressable style={styles.avatarWrap} onPress={openProfileEditor}>
           <LinearGradient colors={theme.gradients.sunset} style={styles.avatarRing}>
             <View style={styles.avatarCore}>
-              <Ionicons name="person" size={34} color={theme.colors.surface} />
+              {avatarUrl ? (
+                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+              ) : (
+                <Ionicons name="person" size={34} color={theme.colors.surface} />
+              )}
             </View>
           </LinearGradient>
-        </View>
+        </Pressable>
 
         <Text style={styles.name}>{displayName}</Text>
         <Text style={styles.email}>{user?.email ?? 'member@kosvibe.app'}</Text>
-        <Text style={styles.bio}>
-          {copy.bio}
-        </Text>
+        <Text style={styles.bio}>{bio}</Text>
+
+        <Pressable style={styles.editButton} onPress={openProfileEditor}>
+          <Ionicons name="create-outline" size={18} color={theme.colors.surface} />
+          <Text style={styles.editButtonText}>{copy.editButton}</Text>
+        </Pressable>
       </LinearGradient>
 
       <View style={styles.statsRow}>
@@ -70,7 +109,7 @@ export function ProfileScreen() {
       <Text style={styles.sectionHeading}>{copy.section}</Text>
       <View style={styles.actionList}>
         {copy.actions.map((action, index) => (
-          <Pressable key={action} style={styles.actionCard}>
+          <Pressable key={action} style={styles.actionCard} onPress={() => openAction(index)}>
             <View style={[styles.actionIcon, index % 2 === 0 ? styles.actionIconRed : styles.actionIconGold]}>
               <Ionicons
                 name={index === 0 ? 'heart-outline' : index === 1 ? 'sparkles-outline' : index === 2 ? 'business-outline' : 'settings-outline'}
@@ -102,20 +141,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 88,
-    paddingBottom: 140,
-  },
-  headerRow: {
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: theme.colors.heading,
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: -1,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   heroCard: {
-    marginTop: 20,
+    marginTop: 25,
     padding: 24,
     borderRadius: 30,
     alignItems: 'center',
@@ -139,6 +169,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#121522',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   name: {
     color: theme.colors.heading,
@@ -158,6 +193,24 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     textAlign: 'center',
     maxWidth: 290,
+  },
+  editButton: {
+    marginTop: 18,
+    paddingHorizontal: 18,
+    minHeight: 48,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  editButtonText: {
+    color: theme.colors.surface,
+    fontSize: 14,
+    fontWeight: '900',
   },
   statsRow: {
     flexDirection: 'row',

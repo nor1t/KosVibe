@@ -6,7 +6,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { OptionListCard } from '../components/cards/OptionListCard';
 import { SectionTitle } from '../components/common/SectionTitle';
 import { ToggleSwitch } from '../components/common/ToggleSwitch';
-import { Screen } from '../components/Screen';
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING, Screen } from '../components/Screen';
 import {
   type LanguageOption,
   type NotificationOption,
@@ -229,17 +229,35 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   };
 
   const handleAccountPress = async (item: QuickLink) => {
-    if (item.id !== 'logout') {
+    if (item.id === 'profile') {
+      navigation.getParent()?.navigate('ProfileTab' as never);
       return;
     }
 
-    try {
-      await signOut();
-    } catch (error) {
-      Alert.alert(
-        copy.signOutErrorTitle,
-        error instanceof Error ? error.message : copy.signOutErrorFallback
-      );
+    if (item.id === 'addresses') {
+      navigation.getParent()?.navigate('MapTab' as never);
+      return;
+    }
+
+    if (item.id === 'payments') {
+      navigation.navigate('Exchange' as never);
+      return;
+    }
+
+    if (item.id === 'help') {
+      navigation.navigate('Help' as never);
+      return;
+    }
+
+    if (item.id === 'logout') {
+      try {
+        await signOut();
+      } catch (error) {
+        Alert.alert(
+          copy.signOutErrorTitle,
+          error instanceof Error ? error.message : copy.signOutErrorFallback
+        );
+      }
     }
   };
 
@@ -293,8 +311,8 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
 const styles = StyleSheet.create({
   content: {
     gap: 24,
-    paddingTop: 80,
-    paddingBottom: 100,
+    paddingTop: PAGE_TOP_PADDING - 20,
+    paddingBottom: PAGE_BOTTOM_PADDING,
   },
   heroCard: {
     marginHorizontal: 24,
