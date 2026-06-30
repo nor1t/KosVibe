@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
@@ -22,6 +22,7 @@ type FunActivity = {
   id: string;
   title: string;
   subtitle: string;
+  summary: string;
   city: string;
   icon: keyof typeof Ionicons.glyphMap;
   accentColor: string;
@@ -57,6 +58,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-prishtina-mall',
     title: 'Prishtina Mall',
     subtitle: 'Shopping, cinema, food court, and easy indoor hangout energy.',
+    summary:
+      'A simple indoor plan for shopping, movies, coffee, and food with friends. Good for rainy days or relaxed evening hangouts.',
     city: 'Prishtina',
     icon: 'bag-handle-outline',
     accentColor: '#FFB300',
@@ -66,6 +69,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-germia-park',
     title: 'Germia Park',
     subtitle: 'Forest walks, bike rides, fresh air, and a quick city escape.',
+    summary:
+      'A green escape close to the city with trails, picnic spots, cycling routes, and plenty of space for an easy outdoor reset.',
     city: 'Prishtina',
     icon: 'bicycle-outline',
     accentColor: '#42D98C',
@@ -75,6 +80,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-1-tetori',
     title: '1 Tetori Sports Hall',
     subtitle: 'Sports events, training sessions, and an active local crowd.',
+    summary:
+      'A practical stop for sports games, local events, and active meetups, especially when you want something energetic indoors.',
     city: 'Prishtina',
     icon: 'basketball-outline',
     accentColor: '#FF6138',
@@ -84,6 +91,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-newborn',
     title: 'Newborn Walk',
     subtitle: 'Photo stop, coffee nearby, and quick city-center exploring.',
+    summary:
+      "A quick central walk around one of Prishtina's most recognizable landmarks, with cafes and city sights nearby.",
     city: 'Prishtina',
     icon: 'camera-outline',
     accentColor: '#FF5EBE',
@@ -93,15 +102,41 @@ const funActivities: FunActivity[] = [
     id: 'fun-bear-sanctuary',
     title: 'Bear Sanctuary',
     subtitle: 'Nature visit and an easy half-day trip outside the city.',
+    summary:
+      'A calm half-day visit outside Prishtina where you can walk, learn about rescued bears, and enjoy a nature-focused stop.',
     city: 'Prishtina',
     icon: 'leaf-outline',
     accentColor: '#20C56C',
     backgroundColor: 'rgba(32, 197, 108, 0.16)',
   },
   {
+    id: 'fun-padel-court',
+    title: 'Padel Court',
+    subtitle: 'Fast rallies, easy group matches, and sporty evening plans.',
+    summary:
+      'A fun social sport option for pairs or small groups. Book a court, play quick matches, and turn it into an active hangout.',
+    city: 'Prishtina',
+    icon: 'tennisball-outline',
+    accentColor: '#00D4B8',
+    backgroundColor: 'rgba(0, 212, 184, 0.16)',
+  },
+  {
+    id: 'fun-batllava-fishing',
+    title: 'Batllava Lake Fishing',
+    subtitle: 'Quiet lakeside fishing, views, and a slow outdoor day.',
+    summary:
+      'A peaceful lake trip near Prishtina for fishing, fresh air, and a slower day by the water. Best for a calm weekend plan.',
+    city: 'Prishtina',
+    icon: 'fish-outline',
+    accentColor: '#4FC3FF',
+    backgroundColor: 'rgba(79, 195, 255, 0.16)',
+  },
+  {
     id: 'fun-brezovica',
     title: 'Brezovica',
     subtitle: 'Mountain views, snow-season fun, and a classic weekend trip.',
+    summary:
+      'A mountain getaway for winter sports, scenic drives, and fresh air. It works well as a day trip or weekend plan.',
     city: 'Prizren',
     icon: 'snow-outline',
     accentColor: '#5DA7FF',
@@ -111,6 +146,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-prizren-fortress',
     title: 'Prizren Fortress',
     subtitle: 'Sunset views, old-town steps, and a classic panorama.',
+    summary:
+      'A classic Prizren climb with wide views over the old town, especially beautiful near sunset if you want photos.',
     city: 'Prizren',
     icon: 'business-outline',
     accentColor: '#FFB300',
@@ -120,6 +157,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-shadervan',
     title: 'Shadervan Night',
     subtitle: 'Dessert, music, and relaxed evening walks in the old town.',
+    summary:
+      "An easy evening plan in Prizren's old town with dessert, music, people-watching, and short walks around the square.",
     city: 'Prizren',
     icon: 'musical-notes-outline',
     accentColor: '#D66BFF',
@@ -129,6 +168,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-lumbardhi',
     title: 'Lumbardhi Walk',
     subtitle: 'River views, bridge photos, and a calm cafe route.',
+    summary:
+      'A gentle route by the river with bridge views, nearby cafes, and lots of good little photo moments through town.',
     city: 'Prizren',
     icon: 'walk-outline',
     accentColor: '#42D98C',
@@ -138,6 +179,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-rugova',
     title: 'Rugova Canyon',
     subtitle: 'Adventure routes, scenic drives, and outdoor adrenaline near Peje.',
+    summary:
+      'A dramatic canyon area near Peje for scenic drives, hiking, viewpoints, and bigger outdoor adventure plans.',
     city: 'Peje',
     icon: 'trail-sign-outline',
     accentColor: '#8F7CFF',
@@ -147,6 +190,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-via-ferrata',
     title: 'Via Ferrata',
     subtitle: 'Guided cliff routes and big Rugova canyon energy.',
+    summary:
+      'A guided climbing-style route for adventure seekers who want canyon views, safety gear, and a more memorable challenge.',
     city: 'Peje',
     icon: 'fitness-outline',
     accentColor: '#FF6138',
@@ -156,6 +201,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-patriarchate',
     title: 'Patriarchate Visit',
     subtitle: 'A peaceful cultural stop close to the mountain road.',
+    summary:
+      'A quiet cultural visit near Peje with historic architecture, peaceful grounds, and an easy stop before Rugova.',
     city: 'Peje',
     icon: 'book-outline',
     accentColor: '#5DA7FF',
@@ -165,6 +212,8 @@ const funActivities: FunActivity[] = [
     id: 'fun-white-drini',
     title: 'White Drini',
     subtitle: 'Waterfall photos, fresh air, and a scenic short drive.',
+    summary:
+      'A short scenic trip for waterfall views, photos, fresh air, and a relaxed stop outside the city.',
     city: 'Peje',
     icon: 'water-outline',
     accentColor: '#42D98C',
@@ -203,11 +252,14 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const { language } = useI18n();
   const copy = nativeCopy[language].dashboard;
   const { openChat, selectedLocation, selectedLocationId } = useDiscovery();
-  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
-  const [incomingHeroIndex, setIncomingHeroIndex] = useState<number | null>(null);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const activeHeroIndexRef = useRef(0);
+  const isHeroTransitioningRef = useRef(false);
+  const heroOpacityAnims = useRef(
+    heroSlides.map((_, index) => new Animated.Value(index === 0 ? 1 : 0))
+  ).current;
   const billboardAnim = useRef(new Animated.Value(0)).current;
   const assistantPromptAnim = useRef(new Animated.Value(1)).current;
+  const [selectedActivity, setSelectedActivity] = useState<FunActivity | null>(null);
   const [isAssistantPromptVisible, setIsAssistantPromptVisible] = useState(true);
   const pageSpacing = usePageSpacing();
   const visibleRestaurants = filterRestaurantsByDiscovery(restaurants, selectedLocationId, '');
@@ -225,49 +277,41 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
     () => [...visibleFunActivities, ...visibleFunActivities],
     [visibleFunActivities]
   );
-  const activeHero = heroSlides[activeHeroIndex];
-  const incomingHero = incomingHeroIndex === null ? null : heroSlides[incomingHeroIndex];
-  const activeHeroStyle = incomingHero
-    ? {
-        opacity: fadeAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [1, 0],
-        }),
-      }
-    : null;
-  const incomingHeroStyle = incomingHero
-    ? {
-        opacity: fadeAnim,
-      }
-    : null;
-
   useEffect(() => {
     const interval = setInterval(() => {
-      setIncomingHeroIndex((currentIncomingIndex) => {
-        if (currentIncomingIndex !== null) {
-          return currentIncomingIndex;
-        }
+      if (isHeroTransitioningRef.current) {
+        return;
+      }
 
-        const nextIndex = (activeHeroIndex + 1) % heroSlides.length;
-        fadeAnim.setValue(0);
+      const currentIndex = activeHeroIndexRef.current;
+      const nextIndex = (currentIndex + 1) % heroSlides.length;
+      isHeroTransitioningRef.current = true;
+      heroOpacityAnims[nextIndex].setValue(0);
 
-        Animated.timing(fadeAnim, {
+      Animated.parallel([
+        Animated.timing(heroOpacityAnims[currentIndex], {
+          toValue: 0,
+          duration: 1200,
+          easing: Easing.inOut(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(heroOpacityAnims[nextIndex], {
           toValue: 1,
           duration: 1200,
           easing: Easing.inOut(Easing.cubic),
           useNativeDriver: true,
-        }).start(() => {
-          setActiveHeroIndex(nextIndex);
-          setIncomingHeroIndex(null);
-          fadeAnim.setValue(0);
-        });
+        }),
+      ]).start(({ finished }) => {
+        if (finished) {
+          activeHeroIndexRef.current = nextIndex;
+        }
 
-        return nextIndex;
+        isHeroTransitioningRef.current = false;
       });
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [activeHeroIndex, fadeAnim]);
+  }, [heroOpacityAnims]);
 
   useEffect(() => {
     if (!billboardDistance) {
@@ -310,20 +354,15 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   return (
     <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
       <View style={styles.background}>
-        <Animated.Image
-          source={activeHero.image}
-          style={[styles.heroImage, activeHeroStyle]}
-          resizeMode="cover"
-          fadeDuration={0}
-        />
-        {incomingHero ? (
+        {heroSlides.map((hero, index) => (
           <Animated.Image
-            source={incomingHero.image}
-            style={[styles.heroImage, styles.heroImageOverlay, incomingHeroStyle]}
+            key={hero.id}
+            source={hero.image}
+            style={[styles.heroImage, { opacity: heroOpacityAnims[index] }]}
             resizeMode="cover"
             fadeDuration={0}
           />
-        ) : null}
+        ))}
         <LinearGradient
           colors={['rgba(7,8,16,0.18)', 'rgba(7,8,16,0.58)', 'rgba(7,8,16,0.82)', 'rgba(7,8,16,0.9)']}
           locations={[0, 0.44, 0.74, 1]}
@@ -430,18 +469,21 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
                     },
                   ]}>
                   {billboardItems.map((activity, index) => (
-                    <View key={`${activity.id}-${index}`} style={styles.funActivityCard}>
-                    <View
-                      style={[
-                        styles.funActivityIconWrap,
-                        { backgroundColor: activity.backgroundColor },
-                      ]}>
-                      <Ionicons name={activity.icon} size={24} color={activity.accentColor} />
-                    </View>
-                    <Text style={styles.funActivityCity}>{activity.city}</Text>
-                    <Text style={styles.funActivityTitle}>{activity.title}</Text>
-                    <Text style={styles.funActivitySubtitle}>{activity.subtitle}</Text>
-                  </View>
+                    <Pressable
+                      key={`${activity.id}-${index}`}
+                      style={styles.funActivityCard}
+                      onPress={() => setSelectedActivity(activity)}>
+                      <View
+                        style={[
+                          styles.funActivityIconWrap,
+                          { backgroundColor: activity.backgroundColor },
+                        ]}>
+                        <Ionicons name={activity.icon} size={24} color={activity.accentColor} />
+                      </View>
+                      <Text style={styles.funActivityCity}>{activity.city}</Text>
+                      <Text style={styles.funActivityTitle}>{activity.title}</Text>
+                      <Text style={styles.funActivitySubtitle}>{activity.subtitle}</Text>
+                    </Pressable>
                   ))}
                 </Animated.View>
               </View>
@@ -484,6 +526,38 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
             <Ionicons name="sparkles-outline" size={24} color={theme.colors.surface} />
           </View>
         </Pressable>
+
+        <Modal
+          visible={selectedActivity !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedActivity(null)}>
+          <Pressable style={styles.activityModalBackdrop} onPress={() => setSelectedActivity(null)}>
+            {selectedActivity ? (
+              <Pressable style={styles.activityModalCard} onPress={(event) => event.stopPropagation()}>
+                <View
+                  style={[
+                    styles.activityModalIcon,
+                    { backgroundColor: selectedActivity.backgroundColor },
+                  ]}>
+                  <Ionicons
+                    name={selectedActivity.icon}
+                    size={26}
+                    color={selectedActivity.accentColor}
+                  />
+                </View>
+                <Text style={styles.activityModalCity}>{selectedActivity.city}</Text>
+                <Text style={styles.activityModalTitle}>{selectedActivity.title}</Text>
+                <Text style={styles.activityModalSummary}>{selectedActivity.summary}</Text>
+                <Pressable
+                  style={styles.activityModalClose}
+                  onPress={() => setSelectedActivity(null)}>
+                  <Text style={styles.activityModalCloseText}>Close</Text>
+                </Pressable>
+              </Pressable>
+            ) : null}
+          </Pressable>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -500,9 +574,6 @@ const styles = StyleSheet.create({
   heroImage: {
     ...StyleSheet.absoluteFillObject,
     transform: [{ scale: 1.025 }],
-  },
-  heroImageOverlay: {
-    zIndex: 1,
   },
   overlay: {
     flex: 1,
@@ -682,6 +753,60 @@ const styles = StyleSheet.create({
     color: '#E3E5F0',
     fontSize: 12,
     lineHeight: 17,
+  },
+  activityModalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 22,
+    backgroundColor: 'rgba(7,8,16,0.72)',
+  },
+  activityModalCard: {
+    borderRadius: 24,
+    padding: 22,
+    backgroundColor: 'rgba(18,20,32,0.98)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  activityModalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activityModalCity: {
+    marginTop: 16,
+    color: theme.colors.secondary,
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  activityModalTitle: {
+    marginTop: 6,
+    color: theme.colors.heading,
+    fontSize: 26,
+    lineHeight: 32,
+    fontWeight: '900',
+  },
+  activityModalSummary: {
+    marginTop: 10,
+    color: '#E3E5F0',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  activityModalClose: {
+    marginTop: 20,
+    alignSelf: 'flex-start',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: theme.colors.primary,
+  },
+  activityModalCloseText: {
+    color: theme.colors.surface,
+    fontSize: 14,
+    fontWeight: '900',
   },
   assistantLauncher: {
     position: 'absolute',
