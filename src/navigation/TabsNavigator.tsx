@@ -1,18 +1,22 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import type { ComponentProps } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StyleSheet } from 'react-native';
+import type { ComponentProps } from 'react';
+import { StyleSheet, View } from 'react-native';
 
+import { StickyAppHeader } from '../components/common/StickyAppHeader';
+import { useI18n } from '../i18n/I18nProvider';
+import { nativeCopy } from '../i18n/nativeCopy';
 import { ActivityDashboardScreen } from '../screens/ActivityDashboardScreen';
 import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
 import { ExchangeScreen } from '../screens/ExchangeScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
-import { HistoryScreen } from '../screens/HistoryScreen';
 import { HelpScreen } from '../screens/HelpScreen';
+import { HistoryScreen } from '../screens/HistoryScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { MarketScreen } from '../screens/MarketScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -20,8 +24,6 @@ import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StoryDetailScreen } from '../screens/StoryDetailScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
-import { useI18n } from '../i18n/I18nProvider';
-import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
 import type {
     FavoritesStackParamList,
@@ -39,12 +41,15 @@ const TavolinaStack = createNativeStackNavigator<TavolinaStackParamList>();
 const FavoritesStack = createNativeStackNavigator<FavoritesStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
-const stackScreenOptions = {
-  headerShown: false,
+const stackScreenOptions = ({ navigation }: { navigation: NavigationProp<ParamListBase> }) => ({
+  headerShown: true,
+  headerTransparent: true,
+  headerShadowVisible: false,
+  header: () => <StickyAppHeader navigation={navigation} />,
   contentStyle: {
     backgroundColor: theme.colors.background,
   },
-};
+});
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -154,12 +159,18 @@ export function TabsNavigator() {
         tabBarShowLabel: true,
         tabBarStyle: styles.tabBar,
         sceneStyle: styles.scene,
-        tabBarLabelStyle: styles.tabBarLabel,
         tabBarActiveTintColor: theme.colors.surface,
         tabBarInactiveTintColor: theme.colors.tabInactive,
         tabBarHideOnKeyboard: true,
         tabBarBackground: () => (
-          <LinearGradient colors={['rgba(8,10,18,0.98)', 'rgba(13,13,26,0.98)']} style={StyleSheet.absoluteFill} />
+          <View style={styles.tabBarBackground}>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.18)', 'rgba(255,255,255,0.06)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          </View>
         ),
         tabBarIcon: ({ color, size }) => (
           <TabIcon routeName={route.name as keyof RootTabParamList} color={color} size={size} />
@@ -168,11 +179,7 @@ export function TabsNavigator() {
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: copy.home }} />
       <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: copy.explore }} />
       <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: copy.events }} />
-      <Tab.Screen
-        name="FavoritesTab"
-        component={FavoritesStackNavigator}
-        options={{ title: copy.stories }}
-      />
+      <Tab.Screen name="FavoritesTab" component={FavoritesStackNavigator} options={{ title: copy.stories }} />
       <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: copy.profile }} />
     </Tab.Navigator>
   );
@@ -183,11 +190,31 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   tabBar: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: 10,
     height: 82,
     paddingTop: 10,
     paddingBottom: 12,
-    borderTopColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
     backgroundColor: 'transparent',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOpacity: 0.26,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+  tabBarBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(10,14,25,0.72)',
+    borderRadius: 30,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.16)',
   },
   tabBarLabel: {
     fontSize: 11,

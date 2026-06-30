@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -36,16 +35,10 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
       <ImageBackground source={{ uri: restaurant.heroImage }} style={styles.heroImage}>
         <LinearGradient colors={['rgba(7,8,16,0.15)', 'rgba(7,8,16,0.78)', 'rgba(7,8,16,0.96)']} style={styles.heroOverlay}>
           <View style={styles.heroActions}>
-            <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
+            <View style={styles.heroSpacer} />
+            <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
+              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
             </Pressable>
-
-            <View style={styles.heroActionGroup}>
-              <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
-              <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
-                <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
-              </Pressable>
-            </View>
           </View>
 
           <View style={styles.heroCopy}>
@@ -176,10 +169,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
   },
-  heroActionGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  heroSpacer: {
+    flex: 1,
   },
   iconButton: {
     width: 46,

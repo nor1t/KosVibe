@@ -4,7 +4,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -17,7 +16,7 @@ type BookTableScreenProps = {
   route: BookTableRoute;
 };
 
-export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
+export function BookTableScreen({ route }: BookTableScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].booking;
   const restaurant = getRestaurantById(route.params.restaurantId);
@@ -27,14 +26,10 @@ export function BookTableScreen({ navigation, route }: BookTableScreenProps) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
-        <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
         <View style={styles.headerCopy}>
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{restaurant?.name ?? copy.fallbackRestaurant}</Text>
         </View>
-        <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.2)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
@@ -104,23 +99,13 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
-  },
-  iconButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerCopy: {
     flex: 1,

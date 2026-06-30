@@ -3,21 +3,18 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { OptionListCard } from '../components/cards/OptionListCard';
+import { SectionTitle } from '../components/common/SectionTitle';
+import { ToggleSwitch } from '../components/common/ToggleSwitch';
+import { Screen } from '../components/Screen';
 import {
   type LanguageOption,
   type NotificationOption,
   type QuickLink,
 } from '../data/mockData';
-import { OptionListCard } from '../components/cards/OptionListCard';
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
-import { IconCircleButton } from '../components/common/IconCircleButton';
-import { SectionTitle } from '../components/common/SectionTitle';
-import { ToggleSwitch } from '../components/common/ToggleSwitch';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import type { SupportedLanguage } from '../i18n/messages';
-import { GradientHeaderShell } from '../components/layout/GradientHeaderShell';
-import { Screen } from '../components/layout/Screen';
 import { theme } from '../theme';
 
 type SettingsScreenProps = {
@@ -247,20 +244,7 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   };
 
   return (
-    <Screen contentContainerStyle={styles.content}>
-      <GradientHeaderShell
-        bottomRadius={theme.radius.lg}
-        contentStyle={styles.headerContent}
-        topPadding={0}>
-        <View style={styles.headerRow}>
-          <IconCircleButton onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back-outline" size={24} color={theme.colors.surface} />
-          </IconCircleButton>
-          <Text style={styles.headerTitle}>{copy.title}</Text>
-          <WeatherSettingsButton navigation={navigation} showSettings={false} compact collapseInfoActions showWeather={false} />
-        </View>
-      </GradientHeaderShell>
-
+    <Screen scrollable contentContainerStyle={styles.content}>
       <View style={styles.section}>
         <SectionTitle
           title={copy.languageTitle}
@@ -308,27 +292,50 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
 
 const styles = StyleSheet.create({
   content: {
-    gap: theme.spacing.xxxl,
+    gap: 24,
+    paddingTop: 80,
+    paddingBottom: 100,
   },
-  headerRow: {
+  heroCard: {
+    marginHorizontal: 24,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: theme.spacing.lg,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
-  headerContent: {
-    paddingBottom: theme.spacing.xs,
+  heroIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(93,167,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(93,167,255,0.3)',
   },
-  headerTitle: {
-    color: theme.colors.surface,
-    fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '800',
+  heroCopy: {
     flex: 1,
-    marginLeft: theme.spacing.lg,
+    gap: 4,
+  },
+  heroTitle: {
+    color: theme.colors.heading,
+    fontSize: 22,
+    lineHeight: 26,
+    fontWeight: '800',
+  },
+  heroSubtitle: {
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    lineHeight: 20,
   },
   section: {
-    gap: theme.spacing.xl,
-    paddingHorizontal: theme.spacing.xxl,
+    gap: 16,
+    paddingHorizontal: 24,
   },
   card: {
     backgroundColor: 'rgba(255,255,255,0.04)',
@@ -342,9 +349,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   languageCard: {
-    minHeight: 86,
-    paddingHorizontal: theme.spacing.xl,
-    paddingVertical: theme.spacing.lg,
+    minHeight: 74,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -370,9 +377,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
   },
   languageBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 42,
+    height: 42,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
@@ -413,8 +420,8 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   notificationRow: {
-    minHeight: 100,
-    paddingHorizontal: theme.spacing.xxl,
+    minHeight: 84,
+    paddingHorizontal: theme.spacing.xl,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -437,8 +444,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: 'center',
-    gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.xxl,
+    gap: 8,
+    paddingHorizontal: 24,
+    marginTop: 12,
   },
   footerBrand: {
     fontSize: 18,

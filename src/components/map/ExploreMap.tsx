@@ -20,6 +20,9 @@ type ExploreMapProps = {
   selectedMarkerId?: string | null;
   onMarkerPress?: (markerId: string) => void;
   onMapInteractionStart?: () => void;
+  mapType?: 'standard' | 'hybrid';
+  showsUserLocation?: boolean;
+  showsMyLocationButton?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -28,7 +31,7 @@ export function ExploreMap({ style }: ExploreMapProps) {
     <View style={[styles.wrap, style]}>
       <EmptyState
         title="Map preview unavailable here"
-        description="The live Explore map now uses the native iOS and Android map view."
+        description="The live Explore map uses the native iOS and Android map view, including your location when permission is allowed."
       />
     </View>
   );

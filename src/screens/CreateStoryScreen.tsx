@@ -3,7 +3,6 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories } from '../lib/stories-state';
@@ -52,14 +51,10 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
-        <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
         <View style={styles.headerCopy}>
           <Text style={styles.eyebrow}>{copy.creatorEyebrow}</Text>
           <Text style={styles.title}>{copy.createTitle}</Text>
         </View>
-        <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
       </View>
 
       <View style={styles.imageChooser}>
@@ -161,23 +156,13 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
   },
   headerRow: {
     flexDirection: 'row',
     gap: 14,
     alignItems: 'center',
-  },
-  iconButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerCopy: {
     flex: 1,

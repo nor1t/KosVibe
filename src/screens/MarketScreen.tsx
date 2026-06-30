@@ -2,9 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
@@ -323,7 +322,7 @@ const marketCopy = {
   },
 };
 
-export function MarketScreen({ navigation }: MarketScreenProps) {
+export function MarketScreen() {
   const { language } = useI18n();
   const copy = marketCopy[language];
   const [selectedCategory, setSelectedCategory] = useState<MarketCategoryKey>('food');
@@ -335,25 +334,22 @@ export function MarketScreen({ navigation }: MarketScreenProps) {
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
-        <WeatherSettingsButton
-          navigation={navigation}
-          compact
-          collapseInfoActions
-          showWeather={false}
-        />
-      </View>
-
-      <LinearGradient colors={['rgba(255,179,0,0.22)', 'rgba(66,217,140,0.12)']} style={styles.hero}>
+      <LinearGradient colors={['rgba(255,179,0,0.2)', 'rgba(66,217,140,0.12)']} style={styles.hero}>
         <View style={styles.heroIcon}>
           <Ionicons name="storefront-outline" size={28} color={theme.colors.surface} />
         </View>
         <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
         <Text style={styles.title}>{copy.title}</Text>
         <Text style={styles.subtitle}>{copy.subtitle}</Text>
+
+        <View style={styles.searchWrap}>
+          <Ionicons name="search-outline" size={20} color="rgba(255,255,255,0.7)" />
+          <TextInput
+            placeholder={language === 'sq' ? 'Kerko nga tregu rural' : 'Search the rural market'}
+            placeholderTextColor="rgba(255,255,255,0.52)"
+            style={styles.searchInput}
+          />
+        </View>
 
         <View style={styles.badgeRow}>
           {copy.categories.map((category) => {
@@ -438,7 +434,6 @@ export function MarketScreen({ navigation }: MarketScreenProps) {
           </View>
         ))}
       </View>
-
     </ScrollView>
   );
 }
@@ -450,31 +445,15 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 18,
-  },
-  backButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   hero: {
     borderRadius: 28,
     padding: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...theme.shadow.card,
   },
   heroIcon: {
     width: 54,
@@ -503,6 +482,24 @@ const styles = StyleSheet.create({
     color: '#E4E7F3',
     fontSize: 14,
     lineHeight: 21,
+  },
+  searchWrap: {
+    marginTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  searchInput: {
+    flex: 1,
+    color: theme.colors.surface,
+    fontSize: 14,
+    fontWeight: '600',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -546,16 +543,18 @@ const styles = StyleSheet.create({
   categoryIntroCard: {
     padding: 18,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,179,0,0.08)',
+    backgroundColor: 'rgba(255,179,0,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,179,0,0.14)',
+    borderColor: 'rgba(255,179,0,0.2)',
+    ...theme.shadow.card,
   },
   collectionCard: {
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
+    ...theme.shadow.card,
   },
   sellerImage: {
     width: '100%',
@@ -594,7 +593,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: 'rgba(255,179,0,0.14)',
+    backgroundColor: 'rgba(255,179,0,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -620,9 +619,10 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
     borderRadius: 22,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    ...theme.shadow.card,
   },
   routeAccent: {
     width: 6,

@@ -1,22 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  Alert,
-  ImageBackground,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Alert,
+    ImageBackground,
+    Modal,
+    Pressable,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { tavolinaInvites, type TavolinaInvite } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useScrollBehavior } from '../lib/scroll-behavior';
 import { theme } from '../theme';
 
 type TavolinaScreenProps = {
@@ -25,6 +25,35 @@ type TavolinaScreenProps = {
 
 type EventInvite = Omit<TavolinaInvite, 'restaurantId'> & {
   restaurantId?: string;
+};
+
+type EventType = 'food' | 'culture' | 'nightlife';
+
+type ComposerEventType = EventType;
+
+const moodKeys = ['all', 'food', 'culture', 'nightlife'] as const;
+type MoodKey = (typeof moodKeys)[number];
+
+const eventTypeLabelIndex: Record<EventType, number> = {
+  food: 1,
+  culture: 2,
+  nightlife: 3,
+};
+
+const composerTypeOptions: Record<
+  string,
+  { id: ComposerEventType; label: string }[]
+> = {
+  en: [
+    { id: 'food', label: 'Food' },
+    { id: 'culture', label: 'Culture' },
+    { id: 'nightlife', label: 'Nightlife' },
+  ],
+  sq: [
+    { id: 'food', label: 'Ushqim' },
+    { id: 'culture', label: 'Kulture' },
+    { id: 'nightlife', label: 'Nate' },
+  ],
 };
 
 const eventImages = [
@@ -97,18 +126,32 @@ function formatSpotsLabel(spotsLabel: string, joined: boolean) {
 
 export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const { language } = useI18n();
+  const { setScrollOffset } = useScrollBehavior();
   const copy = nativeCopy[language].tavolina;
   const modalCopy = formCopy[language];
+  const composerTypeOptionsForLanguage = composerTypeOptions[language] ?? composerTypeOptions.en;
   const [events, setEvents] = useState<EventInvite[]>(tavolinaInvites);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventInvite | null>(null);
   const [joinedEventIds, setJoinedEventIds] = useState<Set<string>>(() => new Set());
+  const [selectedMoodIndex, setSelectedMoodIndex] = useState(0);
   const [eventName, setEventName] = useState('');
   const [city, setCity] = useState('');
   const [day, setDay] = useState('');
   const [time, setTime] = useState('');
   const [description, setDescription] = useState('');
   const [selectedImage, setSelectedImage] = useState(eventImages[0]);
+  const [selectedComposerType, setSelectedComposerType] = useState<ComposerEventType>('food');
+
+  const visibleEvents = useMemo(() => {
+    const selectedMood = moodKeys[selectedMoodIndex] ?? 'all';
+
+    if (selectedMood === 'all') {
+      return events;
+    }
+
+    return events.filter((invite) => invite.eventType === selectedMood);
+  }, [events, selectedMoodIndex]);
 
   const canPublish =
     eventName.trim().length > 2 &&
@@ -124,6 +167,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
     setTime('');
     setDescription('');
     setSelectedImage(eventImages[0]);
+    setSelectedComposerType('food');
   };
 
   const closeComposer = () => {
@@ -142,10 +186,11 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       city: city.trim(),
       day: day.trim(),
       time: time.trim(),
+      eventType: selectedComposerType,
       creator: 'KosVibe',
       creatorAvatar: selectedImage,
       description: description.trim(),
-      tags: [modalCopy.spots, city.trim()],
+      tags: [copy.moods[eventTypeLabelIndex[selectedComposerType]], city.trim()],
       spotsLabel: language === 'sq' ? '0/8 vende' : '0/8 spots',
       image: selectedImage,
     };
@@ -179,11 +224,13 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
 
   return (
     <View style={styles.screen}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={(event) => setScrollOffset(event.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={16}>
         <View style={styles.header}>
-          <View style={styles.headerTopRow}>
-            <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
-          </View>
           <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{copy.subtitle}</Text>
@@ -191,21 +238,31 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
 
         <View style={styles.actionBar}>
           {copy.moods.map((mood, index) => (
-            <Pressable key={mood} style={[styles.moodChip, index === 0 && styles.moodChipActive]}>
-              <Text style={[styles.moodLabel, index === 0 && styles.moodLabelActive]}>{mood}</Text>
+            <Pressable
+              key={mood}
+              style={[styles.moodChip, index === selectedMoodIndex && styles.moodChipActive]}
+              onPress={() => setSelectedMoodIndex(index)}>
+              <Text style={[styles.moodLabel, index === selectedMoodIndex && styles.moodLabelActive]}>
+                {mood}
+              </Text>
             </Pressable>
           ))}
         </View>
 
         <Text style={styles.sectionHeading}>{copy.communityDrops}</Text>
         <View style={styles.inviteList}>
-          {events.map((invite, index) => (
+          {visibleEvents.map((invite, index) => (
             <Pressable
               key={invite.id}
               style={styles.inviteCard}
               onPress={() => setSelectedEvent(invite)}>
               <ImageBackground source={{ uri: invite.image }} style={styles.inviteImage}>
                 <View style={styles.imageShade} />
+                <View style={styles.inviteTypeBadge}>
+                  <Text style={styles.inviteTypeBadgeText}>
+                    {copy.moods[eventTypeLabelIndex[invite.eventType]]}
+                  </Text>
+                </View>
                 <View style={[styles.inviteBadge, index % 2 === 0 ? styles.inviteRed : styles.inviteGold]}>
                   <Ionicons
                     name={index % 2 === 0 ? 'flame-outline' : 'sparkles-outline'}
@@ -280,6 +337,26 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                 );
               })}
             </ScrollView>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>{language === 'sq' ? 'Lloji i aktivitetit' : 'Activity type'}</Text>
+              <View style={styles.typeRow}>
+                {composerTypeOptionsForLanguage.map((option) => {
+                  const active = selectedComposerType === option.id;
+
+                  return (
+                    <Pressable
+                      key={option.id}
+                      style={[styles.typeChip, active && styles.typeChipActive]}
+                      onPress={() => setSelectedComposerType(option.id)}>
+                      <Text style={[styles.typeChipText, active && styles.typeChipTextActive]}>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
 
             <View style={styles.form}>
               <View style={styles.field}>
@@ -382,6 +459,11 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                 <Text style={styles.eventDetailMeta}>
                   {selectedEvent.day} | {selectedEvent.time} | {selectedEvent.city}
                 </Text>
+                <View style={styles.eventTypePill}>
+                  <Text style={styles.eventTypePillText}>
+                    {copy.moods[eventTypeLabelIndex[selectedEvent.eventType]]}
+                  </Text>
+                </View>
 
                 <View style={styles.hostRow}>
                   <ImageBackground source={{ uri: selectedEvent.creatorAvatar }} style={styles.hostAvatar} />
@@ -436,17 +518,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
-    paddingBottom: 140,
+    paddingTop: 120,
+    paddingBottom: 160,
   },
   header: {
-    marginBottom: 22,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    marginBottom: 22,
+    marginBottom: 24,
   },
   eyebrow: {
     color: theme.colors.secondary,
@@ -473,6 +549,7 @@ const styles = StyleSheet.create({
   },
   actionBar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
   },
   moodChip: {
@@ -516,6 +593,26 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'flex-end',
     padding: 14,
+  },
+  inviteTypeBadge: {
+    alignSelf: 'flex-start',
+    position: 'absolute',
+    left: 14,
+    top: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(7,8,16,0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    zIndex: 2,
+  },
+  inviteTypeBadgeText: {
+    color: theme.colors.heading,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
@@ -582,6 +679,31 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     fontSize: 12,
     fontWeight: '700',
+  },
+  typeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  typeChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  typeChipActive: {
+    backgroundColor: 'rgba(255,31,61,0.22)',
+    borderColor: 'rgba(255,31,61,0.38)',
+  },
+  typeChipText: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  typeChipTextActive: {
+    color: theme.colors.heading,
   },
   createFab: {
     position: 'absolute',
@@ -772,6 +894,22 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     fontSize: 14,
     fontWeight: '800',
+  },
+  eventTypePill: {
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,179,0,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.24)',
+  },
+  eventTypePillText: {
+    color: '#FFD787',
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
   },
   hostRow: {
     marginTop: 18,

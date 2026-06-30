@@ -3,6 +3,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { ChatAssistantModal } from '../components/common/ChatAssistantModal';
 import { useAuth } from '../features/auth/AuthProvider';
+import { ScrollBehaviorProvider } from '../lib/scroll-behavior';
 import { navigationTheme, theme } from '../theme';
 import { AuthNavigator } from './AuthNavigator';
 import { TabsNavigator } from './TabsNavigator';
@@ -11,19 +12,21 @@ export function AppNavigator() {
   const { isAuthReady, session } = useAuth();
 
   return (
-    <NavigationContainer theme={navigationTheme}>
-      {!isAuthReady ? (
-        <View style={styles.loadingScreen}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading KosVibe...</Text>
-        </View>
-      ) : (
-        <>
-          {session ? <TabsNavigator /> : <AuthNavigator />}
-          {session ? <ChatAssistantModal /> : null}
-        </>
-      )}
-    </NavigationContainer>
+    <ScrollBehaviorProvider>
+      <NavigationContainer theme={navigationTheme}>
+        {!isAuthReady ? (
+          <View style={styles.loadingScreen}>
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+            <Text style={styles.loadingText}>Loading KosVibe...</Text>
+          </View>
+        ) : (
+          <>
+            {session ? <TabsNavigator /> : <AuthNavigator />}
+            {session ? <ChatAssistantModal /> : null}
+          </>
+        )}
+      </NavigationContainer>
+    </ScrollBehaviorProvider>
   );
 }
 

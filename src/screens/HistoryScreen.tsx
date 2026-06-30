@@ -1,15 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
-
-type HistoryScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
 
 const historyCopy = {
   en: {
@@ -120,19 +114,12 @@ const historyCopy = {
   },
 };
 
-export function HistoryScreen({ navigation }: HistoryScreenProps) {
+export function HistoryScreen() {
   const { language } = useI18n();
   const copy = historyCopy[language];
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
-        <WeatherSettingsButton navigation={navigation} showHistory={false} compact collapseInfoActions showWeather={false} />
-      </View>
-
       <LinearGradient colors={['rgba(255,179,0,0.22)', 'rgba(93,167,255,0.12)']} style={styles.hero}>
         <View style={styles.bookMark}>
           <Ionicons name="book-outline" size={28} color={theme.colors.surface} />
@@ -175,31 +162,15 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 18,
-  },
-  backButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   hero: {
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...theme.shadow.card,
   },
   bookMark: {
     width: 54,
@@ -236,9 +207,10 @@ const styles = StyleSheet.create({
   factCard: {
     padding: 16,
     borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderColor: 'rgba(255,255,255,0.09)',
+    ...theme.shadow.card,
   },
   factLabel: {
     color: theme.colors.secondary,
@@ -259,9 +231,10 @@ const styles = StyleSheet.create({
   historyCard: {
     padding: 18,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...theme.shadow.card,
   },
   cardTopRow: {
     flexDirection: 'row',

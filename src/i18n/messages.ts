@@ -39,12 +39,12 @@ export const messages = {
     },
     auth: {
       badge: 'Welcome back',
-      signInTitle: 'Your restaurant shortlist starts here.',
+      signInTitle: 'Your Kosovo journey starts here.',
       signInSubtitle:
-        'Sign in to keep favorites, preferences, and future recommendations in one place.',
+        'Sign in to keep your saved places, map preferences, and local discoveries together.',
       createAccountTitle: 'Create your KosVibe profile.',
       createAccountSubtitle:
-        'Set up the account layer now so future Supabase auth can plug in without reshaping the screens.',
+        'Set up your profile to save places, personalize the map, and continue where you left off.',
       email: 'Email address',
       emailPlaceholder: 'name@example.com',
       password: 'Password',
@@ -62,7 +62,7 @@ export const messages = {
       noAccount: 'Need an account?',
       haveAccount: 'Already registered?',
       serviceNotice:
-        'Supabase Auth is wired in. Replace only the surrounding product logic as the app grows.',
+        'Your account is secured with Supabase Auth.',
       signUpSuccess:
         'Account created. Check your email to confirm the account if confirmation is enabled in Supabase.',
       invalidCredentials: 'Incorrect email or password.',
@@ -195,12 +195,12 @@ export const messages = {
     },
     auth: {
       badge: 'Mirë se u ktheve',
-      signInTitle: 'Lista jote e restoranteve fillon këtu.',
+      signInTitle: 'Udhëtimi yt në Kosovë fillon këtu.',
       signInSubtitle:
-        'Kyçu për të ruajtur favoritët, preferencat dhe rekomandimet e ardhshme.',
+        'Kyçu për të ruajtur vendet, preferencat e hartës dhe zbulimet lokale.',
       createAccountTitle: 'Krijo profilin tënd në KosVibe.',
       createAccountSubtitle:
-        'Përgatite shtresën e llogarisë tani që Supabase të lidhet pastër më vonë.',
+        'Përgatit profilin tënd për të ruajtur vende, për të personalizuar hartën dhe për të vazhduar aty ku ke mbetur.',
       email: 'Email adresa',
       emailPlaceholder: 'emri@example.com',
       password: 'Fjalëkalimi',
@@ -218,7 +218,7 @@ export const messages = {
       noAccount: 'Nuk ke llogari?',
       haveAccount: 'Ke llogari?',
       serviceNotice:
-        'Supabase Auth është i lidhur. Logjika përreth mund të zgjerohet më vonë pa prishur ekranet.',
+        'Llogaria jote është e siguruar me Supabase Auth.',
       signUpSuccess:
         'Llogaria u krijua. Kontrollo emailin për konfirmim nëse ai opsion është aktiv në Supabase.',
       invalidCredentials: 'Emaili ose fjalëkalimi nuk janë të sakta.',

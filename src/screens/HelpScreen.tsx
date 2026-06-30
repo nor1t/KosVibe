@@ -1,15 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
-
-type HelpScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
 
 type HelpSectionId = 'government' | 'taxi' | 'guides';
 
@@ -108,7 +102,7 @@ function phoneUrl(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, '')}`;
 }
 
-export function HelpScreen({ navigation }: HelpScreenProps) {
+export function HelpScreen() {
   const { language } = useI18n();
   const copy = helpCopy[language];
   const [activeSection, setActiveSection] = useState<HelpSectionId>('government');
@@ -116,13 +110,6 @@ export function HelpScreen({ navigation }: HelpScreenProps) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
-        <WeatherSettingsButton navigation={navigation} showHelp={false} compact collapseInfoActions showWeather={false} />
-      </View>
-
       <View style={styles.hero}>
         <View style={styles.helpIcon}>
           <Ionicons name="help-outline" size={28} color={theme.colors.surface} />
@@ -181,32 +168,16 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 18,
-  },
-  backButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   hero: {
     padding: 20,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...theme.shadow.card,
   },
   helpIcon: {
     width: 54,
@@ -240,9 +211,9 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   tabActive: {
     backgroundColor: 'rgba(255,31,61,0.22)',
@@ -266,9 +237,10 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...theme.shadow.card,
   },
   contactIcon: {
     width: 44,

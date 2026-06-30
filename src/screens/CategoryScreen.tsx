@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Animated,
   GestureResponderEvent,
   Image,
   ImageBackground,
@@ -18,7 +19,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { filterRestaurantsByDiscovery, restaurants } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
@@ -243,15 +243,61 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
   const [cameraAnalysisSpot, setCameraAnalysisSpot] = useState<(typeof monumentSpots)[number] | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
+  const [showCameraHint, setShowCameraHint] = useState(false);
+  const cameraHintAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     setSelectedFilter(copy.filters[0]);
   }, [copy.filters]);
 
-  const visibleRestaurants = useMemo(
-    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery),
-    [searchQuery, selectedLocationId]
-  );
+  useEffect(() => {
+    if (category !== 'Culture') {
+      return;
+    }
+
+    setShowCameraHint(true);
+    const timer = setTimeout(() => setShowCameraHint(false), 3000);
+    return () => clearTimeout(timer);
+  }, [category]);
+
+  useEffect(() => {
+    Animated.timing(cameraHintAnim, {
+      toValue: showCameraHint ? 1 : 0,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+  }, [cameraHintAnim, showCameraHint]);
+
+  const visibleRestaurants = useMemo(() => {
+    const discoveryFiltered = filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery);
+    const selectedFilterValue = selectedFilter.toLowerCase();
+
+    return discoveryFiltered.filter((restaurant) => {
+      if (selectedFilterValue === 'all') {
+        return true;
+      }
+
+      const cuisineText = restaurant.cuisine.toLowerCase();
+
+      if (selectedFilterValue === 'traditional') {
+        return /traditional|kosovo|grill|mezze|mediterranean|steakhouse/.test(cuisineText);
+      }
+
+      if (selectedFilterValue === 'cafe') {
+        return /cafe|breakfast|bakery|dessert|coffee/.test(cuisineText);
+      }
+
+      if (selectedFilterValue === 'street food') {
+        return /street|burger|pizza|taco|sushi|grill/.test(cuisineText);
+      }
+
+      if (selectedFilterValue === 'fine dining') {
+        return /fine|european|bistro|steakhouse|restaurant/.test(cuisineText);
+      }
+
+      return cuisineText.includes(selectedFilterValue);
+    });
+  }, [searchQuery, selectedFilter, selectedLocationId]);
 
   const cultureLabels = {
     monument: language === 'sq' ? 'Monument' : 'Monument',
@@ -281,6 +327,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   };
 
   const openCameraAnalyzer = async (spot?: (typeof monumentSpots)[number]) => {
+    setShowCameraHint(false);
     setCameraTargetSpot(spot ?? monumentSpots.find((item) => item.id === expandedSpotId) ?? monumentSpots[0]);
     setCapturedPhotoUri(null);
     setCameraAnalysisSpot(null);
@@ -322,14 +369,6 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.monumentsContent}>
-          <View style={styles.monumentsActions}>
-            <Pressable style={styles.cameraActionButton} onPress={() => void openCameraAnalyzer()}>
-              <Ionicons name="camera-outline" size={18} color={theme.colors.surface} />
-              <Text style={styles.cameraActionText}>{cultureLabels.camera}</Text>
-            </Pressable>
-            <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
-          </View>
-
           <View style={styles.centerHeader}>
             <Text style={styles.monumentsTitle}>{copy.cultureTitle}</Text>
             <Text style={styles.monumentsSubtitle}>{copy.cultureSubtitle}</Text>
@@ -415,6 +454,36 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
           </View>
         </ScrollView>
 
+        <Pressable style={styles.assistantLauncher} onPress={() => void openCameraAnalyzer()}>
+          <Animated.View
+            pointerEvents={showCameraHint ? 'auto' : 'none'}
+            style={[
+              styles.assistantPrompt,
+              {
+                opacity: cameraHintAnim,
+                transform: [
+                  {
+                    translateY: cameraHintAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [10, 0],
+                    }),
+                  },
+                  {
+                    scale: cameraHintAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.94, 1],
+                    }),
+                  },
+                ],
+              },
+            ]}>
+            <Text style={styles.assistantPromptText}>{cultureLabels.scan}</Text>
+          </Animated.View>
+          <View style={styles.assistantOrb}>
+            <Ionicons name="camera-outline" size={24} color={theme.colors.surface} />
+          </View>
+        </Pressable>
+
         <Modal
           visible={isCameraOpen}
           animationType="slide"
@@ -485,11 +554,6 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.restaurantsContent}>
-        <View style={styles.categoryActions}>
-          <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
-        </View>
-        <Text style={styles.brandWordmark}>KosVibe</Text>
-
         <View style={styles.restaurantHero}>
           <Text style={styles.restaurantHeroTitle}>{copy.restaurantTitle}</Text>
           <Text style={styles.restaurantHeroSubtitle}>
@@ -593,17 +657,11 @@ const styles = StyleSheet.create({
   },
   restaurantsContent: {
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 75,
     paddingBottom: 140,
   },
-  brandWordmark: {
-    color: 'rgba(255,255,255,0.86)',
-    fontSize: 26,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
   restaurantHero: {
-    marginTop: 18,
+    marginTop: 8,
   },
   restaurantHeroTitle: {
     color: theme.colors.heading,
@@ -651,6 +709,8 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(255,31,61,0.38)',
     overflow: 'hidden',
   },
   filterChipActive: {
@@ -661,8 +721,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     backgroundColor: 'rgba(255,255,255,0.04)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,31,61,0.3)',
   },
   filterLabel: {
     color: theme.colors.mutedText,
@@ -781,7 +839,7 @@ const styles = StyleSheet.create({
   },
   monumentsContent: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 80,
     paddingBottom: 144,
   },
   centerHeader: {
@@ -795,32 +853,41 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textAlign: 'center',
   },
-  categoryActions: {
-    alignItems: 'flex-end',
-    marginBottom: 12,
-  },
-  monumentsActions: {
+  assistantLauncher: {
+    position: 'absolute',
+    right: 18,
+    bottom: 120,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 18,
+    gap: 10,
+    zIndex: 4,
   },
-  cameraActionButton: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: 'rgba(93,167,255,0.2)',
+  assistantPrompt: {
+    maxWidth: 170,
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: 'rgba(93,167,255,0.18)',
     borderWidth: 1,
-    borderColor: 'rgba(93,167,255,0.32)',
+    borderColor: 'rgba(93,167,255,0.34)',
   },
-  cameraActionText: {
+  assistantPromptText: {
     color: theme.colors.surface,
     fontSize: 13,
-    fontWeight: '900',
+    lineHeight: 18,
+    fontWeight: '700',
+    textAlign: 'right',
+  },
+  assistantOrb: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#5DA7FF',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    ...theme.shadow.floating,
   },
   monumentsSubtitle: {
     marginTop: 8,

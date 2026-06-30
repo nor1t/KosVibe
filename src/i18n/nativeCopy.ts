@@ -212,7 +212,7 @@ export const nativeCopy: Record<
       eyebrow: 'KosVibe Events',
       title: 'Create the next big vibe.',
       subtitle: 'Start a cultural night, dinner plan, or city meetup and let the community join in.',
-      moods: ['Tonight', 'Culture', 'Food Crew'],
+      moods: ['All', 'Food', 'Culture', 'Nightlife'],
       creatorOptions: [
         {
           id: 'host-dinner',
@@ -392,7 +392,7 @@ export const nativeCopy: Record<
       eyebrow: 'Evente KosVibe',
       title: 'Krijo viben e radhes.',
       subtitle: 'Fillo nje nate kulture, darke ose takim qyteti dhe fto komunitetin.',
-      moods: ['Sonte', 'Kulture', 'Ekip ushqimi'],
+      moods: ['Te gjitha', 'Ushqim', 'Kulture', 'Nate'],
       creatorOptions: [
         {
           id: 'host-dinner',

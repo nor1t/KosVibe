@@ -1,46 +1,46 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
-type ExchangeScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
-
 type RateResponse = {
-  date: string;
+  time_last_update_utc?: string;
+  date?: string;
   rates: Record<string, number>;
 };
 
-const currencies = ['USD', 'GBP', 'CHF', 'TRY', 'CAD', 'AUD', 'SEK', 'NOK', 'DKK', 'PLN'] as const;
+const currencies = ['USD', 'GBP', 'CHF', 'TRY', 'CAD', 'AUD', 'SEK', 'ALL', 'DKK', 'PLN'] as const;
 type CurrencyCode = (typeof currencies)[number];
 
 const exchangeCopy = {
   en: {
     title: 'Exchange to Euro',
-    subtitle: 'Kosovo uses the euro. Convert common currencies into EUR with daily ECB reference rates.',
+    subtitle: 'Kosovo uses the euro. Convert common currencies, including Albanian lek, into EUR.',
     amount: 'Amount',
     updated: 'Updated',
-    source: 'Rates source: Frankfurter / ECB reference rates',
+    source: 'Rates source: open EUR market rates',
     unavailable: 'Rates unavailable right now',
     resultPrefix: 'equals',
+    destination: 'Destination currency',
+    homeCurrency: 'Kosovo uses EUR',
   },
   sq: {
     title: 'Kembimi ne Euro',
-    subtitle: 'Kosova perdor euron. Kthe valuta te zakonshme ne EUR me kurset ditore te BQE-se.',
+    subtitle: 'Kosova perdor euron. Kthe valuta te zakonshme, perfshire lekun shqiptar, ne EUR.',
     amount: 'Shuma',
     updated: 'Perditesuar',
-    source: 'Burimi i kurseve: Frankfurter / kurset referente te BQE-se',
+    source: 'Burimi i kurseve: kurse te hapura tregu me baze EUR',
     unavailable: 'Kurset nuk jane te disponueshme tani',
     resultPrefix: 'baraz me',
+    destination: 'Valuta e destinacionit',
+    homeCurrency: 'Kosova perdor EUR',
   },
 };
 
-export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
+export function ExchangeScreen() {
   const { language } = useI18n();
   const copy = exchangeCopy[language];
   const [rates, setRates] = useState<Record<string, number>>({});
@@ -52,7 +52,7 @@ export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
   useEffect(() => {
     let active = true;
 
-    fetch(`https://api.frankfurter.dev/v1/latest?from=EUR&to=${currencies.join(',')}`)
+    fetch('https://open.er-api.com/v6/latest/EUR')
       .then((response) => response.json())
       .then((data: RateResponse) => {
         if (!active) {
@@ -60,7 +60,7 @@ export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
         }
 
         setRates(data.rates ?? {});
-        setDate(data.date ?? '');
+        setDate(data.time_last_update_utc ?? data.date ?? '');
       })
       .catch(() => {
         if (active) {
@@ -90,20 +90,23 @@ export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.topRow}>
-        <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back-outline" size={22} color={theme.colors.surface} />
-        </Pressable>
-        <WeatherSettingsButton navigation={navigation} showExchange={false} compact collapseInfoActions showWeather={false} />
-      </View>
-
-      <View style={styles.hero}>
+      <LinearGradient colors={theme.gradients.fire} style={styles.hero}>
         <View style={styles.moneyIcon}>
           <Ionicons name="logo-euro" size={30} color={theme.colors.surface} />
         </View>
         <Text style={styles.title}>{copy.title}</Text>
         <Text style={styles.subtitle}>{copy.subtitle}</Text>
-      </View>
+        <View style={styles.heroMetaRow}>
+          <View style={styles.heroChip}>
+            <Ionicons name="location-outline" size={14} color={theme.colors.surface} />
+            <Text style={styles.heroChipText}>{copy.homeCurrency}</Text>
+          </View>
+          <View style={styles.heroChip}>
+            <Ionicons name="cash-outline" size={14} color={theme.colors.surface} />
+            <Text style={styles.heroChipText}>{copy.destination}</Text>
+          </View>
+        </View>
+      </LinearGradient>
 
       <View style={styles.converterCard}>
         <Text style={styles.label}>{copy.amount}</Text>
@@ -117,6 +120,10 @@ export function ExchangeScreen({ navigation }: ExchangeScreenProps) {
             style={styles.amountInput}
           />
           <Text style={styles.currencyBadge}>{selectedCurrency}</Text>
+        </View>
+
+        <View style={styles.swapIcon}>
+          <Ionicons name="swap-vertical-outline" size={18} color={theme.colors.secondary} />
         </View>
 
         <View style={styles.resultBox}>
@@ -160,32 +167,15 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
-  },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 18,
-  },
-  backButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   hero: {
     padding: 20,
     borderRadius: 28,
-    backgroundColor: 'rgba(255,179,0,0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255,179,0,0.18)',
+    borderColor: 'rgba(255,255,255,0.14)',
+    ...theme.shadow.card,
   },
   moneyIcon: {
     width: 56,
@@ -193,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,31,61,0.28)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     marginBottom: 18,
   },
   title: {
@@ -204,9 +194,31 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 10,
-    color: theme.colors.mutedText,
+    color: 'rgba(255,255,255,0.82)',
     fontSize: 16,
     lineHeight: 24,
+  },
+  heroMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 18,
+  },
+  heroChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: theme.radius.round,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  heroChipText: {
+    color: theme.colors.surface,
+    fontSize: 12,
+    fontWeight: '800',
   },
   converterCard: {
     marginTop: 18,
@@ -214,7 +226,8 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.07)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...theme.shadow.card,
   },
   label: {
     color: theme.colors.secondary,
@@ -236,7 +249,7 @@ const styles = StyleSheet.create({
     color: theme.colors.heading,
     fontSize: 24,
     fontWeight: '900',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
@@ -246,11 +259,24 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     paddingHorizontal: 14,
   },
+  swapIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: -2,
+    backgroundColor: theme.colors.goldSoft,
+  },
   resultBox: {
     marginTop: 14,
     padding: 16,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,31,61,0.14)',
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,179,0,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.16)',
   },
   resultLabel: {
     color: theme.colors.mutedText,
@@ -272,14 +298,14 @@ const styles = StyleSheet.create({
   currencyCard: {
     width: '47.8%',
     padding: 14,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   currencyCardActive: {
-    backgroundColor: 'rgba(255,179,0,0.16)',
-    borderColor: 'rgba(255,179,0,0.34)',
+    backgroundColor: theme.colors.primarySoft,
+    borderColor: 'rgba(255,31,61,0.42)',
   },
   currencyCode: {
     color: theme.colors.heading,

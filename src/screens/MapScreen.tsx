@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { ExploreMap, type ExploreMapMarker } from '../components/map/ExploreMap';
 import {
     filterRestaurantsByDiscovery,
@@ -17,6 +17,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { openDirectionsToPlace } from '../lib/maps';
+import { useScrollBehavior } from '../lib/scroll-behavior';
 import { theme } from '../theme';
 
 type MapScreenProps = {
@@ -389,8 +390,18 @@ function getFocusedRegion(coordinate: Coordinates, fallbackRegion: MapRegion): M
   };
 }
 
+function getUserRegion(coordinate: Coordinates): MapRegion {
+  return {
+    latitude: coordinate.latitude,
+    longitude: coordinate.longitude,
+    latitudeDelta: 0.03,
+    longitudeDelta: 0.03,
+  };
+}
+
 export function MapScreen({ navigation }: MapScreenProps) {
   const { language } = useI18n();
+  const { setScrollOffset } = useScrollBehavior();
   const copy = nativeCopy[language].map;
   const { selectedCategory, selectedLocation, selectedLocationId } = useDiscovery();
   const [activeCategory, setActiveCategory] = useState<ActivityKey>(() =>
@@ -400,6 +411,10 @@ export function MapScreen({ navigation }: MapScreenProps) {
   const [isSheetVisible, setIsSheetVisible] = useState(true);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [mapRegion, setMapRegion] = useState<MapRegion>(selectedLocation.region);
+  const [mapType, setMapType] = useState<'standard' | 'hybrid'>('standard');
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [isLocatingUser, setIsLocatingUser] = useState(false);
 
   const visibleRestaurants = useMemo(
     () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, ''),
@@ -510,11 +525,68 @@ export function MapScreen({ navigation }: MapScreenProps) {
   }, [selectedCategory]);
 
   useEffect(() => {
+    let active = true;
+
+    const syncLocation = async () => {
+      try {
+        const currentPermission = await Location.getForegroundPermissionsAsync();
+
+        if (!active) {
+          return;
+        }
+
+        const granted = currentPermission.status === Location.PermissionStatus.GRANTED;
+        setHasLocationPermission(granted);
+
+        if (!granted) {
+          return;
+        }
+
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        if (!active) {
+          return;
+        }
+
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      } catch {
+        if (active) {
+          setHasLocationPermission(false);
+          setUserLocation(null);
+        }
+      }
+    };
+
+    void syncLocation();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setMapRegion(defaultRegion);
     setSelectedMarkerId(null);
-    setIsSheetVisible(true);
     setIsCategoryMenuOpen(false);
   }, [defaultRegion]);
+
+  const openCategoryMenu = () => {
+    setIsCategoryMenuOpen((current) => {
+      const next = !current;
+      setIsSheetVisible(!next);
+      return next;
+    });
+  };
+
+  const toggleMapType = () => {
+    setIsCategoryMenuOpen(false);
+    setMapType((current) => (current === 'standard' ? 'hybrid' : 'standard'));
+  };
 
   const hideSheetForMap = () => {
     setIsSheetVisible(false);
@@ -535,18 +607,61 @@ export function MapScreen({ navigation }: MapScreenProps) {
   const handleCategorySelect = (category: ActivityKey) => {
     setActiveCategory(category);
     setIsCategoryMenuOpen(false);
-    setIsSheetVisible(true);
+    setIsSheetVisible(false);
   };
 
   const handleRevealSheet = () => {
+    setIsCategoryMenuOpen(false);
     setIsSheetVisible(true);
     setMapRegion(defaultRegion);
   };
 
   const handleLocatePress = () => {
-    setSelectedMarkerId(null);
-    setMapRegion(defaultRegion);
-    setIsSheetVisible(true);
+    const requestLocation = async () => {
+      try {
+        setIsCategoryMenuOpen(false);
+        setIsSheetVisible(true);
+        setIsLocatingUser(true);
+
+        let permission = await Location.getForegroundPermissionsAsync();
+
+        if (permission.status !== Location.PermissionStatus.GRANTED) {
+          permission = await Location.requestForegroundPermissionsAsync();
+        }
+
+        const granted = permission.status === Location.PermissionStatus.GRANTED;
+        setHasLocationPermission(granted);
+
+        if (!granted) {
+          setUserLocation(null);
+          setSelectedMarkerId(null);
+          setMapRegion(defaultRegion);
+          Alert.alert(
+            'Location not enabled',
+            'Turn on location access if you want KosVibe to center the map on where you are.'
+          );
+          return;
+        }
+
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        const coordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        setUserLocation(coordinates);
+        setSelectedMarkerId(null);
+        setMapRegion(getUserRegion(coordinates));
+      } catch {
+        setMapRegion(defaultRegion);
+      } finally {
+        setIsLocatingUser(false);
+      }
+    };
+
+    void requestLocation();
   };
 
   return (
@@ -557,23 +672,24 @@ export function MapScreen({ navigation }: MapScreenProps) {
         selectedMarkerId={selectedMarkerId}
         onMarkerPress={handleMarkerPress}
         onMapInteractionStart={hideSheetForMap}
+        mapType={mapType}
+        showsMyLocationButton={false}
+        showsUserLocation={hasLocationPermission && userLocation !== null}
         style={StyleSheet.absoluteFillObject}
       />
 
       <View style={styles.header}>
         <View style={styles.headerTopRow}>
           <View style={styles.headerCopy}>
-            <Text style={styles.headerTitle}>{copy.title}</Text>
             <Text style={styles.headerSubtitle}>{selectedLocation.label}</Text>
           </View>
-          <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
         </View>
       </View>
 
       <View style={styles.controls}>
         <Pressable
           style={styles.categoryButton}
-          onPress={() => setIsCategoryMenuOpen((current) => !current)}>
+          onPress={openCategoryMenu}>
           <LinearGradient colors={currentOption.colors} style={styles.categoryIconWrap}>
             <Ionicons name={currentOption.icon as never} size={18} color={theme.colors.surface} />
           </LinearGradient>
@@ -590,8 +706,26 @@ export function MapScreen({ navigation }: MapScreenProps) {
           />
         </Pressable>
 
-        <Pressable style={styles.headerButton} onPress={handleLocatePress}>
-          <Ionicons name="locate-outline" size={22} color={theme.colors.surface} />
+        <Pressable
+          accessibilityLabel={`Switch map to ${mapType === 'standard' ? 'satellite' : 'standard'}`}
+          style={styles.headerButton}
+          onPress={toggleMapType}>
+          <Ionicons
+            name={mapType === 'standard' ? 'layers-outline' : 'map-outline'}
+            size={20}
+            color={theme.colors.surface}
+          />
+        </Pressable>
+
+        <Pressable
+          accessibilityLabel="Use my location"
+          style={styles.headerButton}
+          onPress={handleLocatePress}>
+          <Ionicons
+            name={hasLocationPermission ? 'locate' : 'locate-outline'}
+            size={22}
+            color={isLocatingUser ? theme.colors.secondary : theme.colors.surface}
+          />
         </Pressable>
       </View>
 
@@ -652,7 +786,9 @@ export function MapScreen({ navigation }: MapScreenProps) {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sheetRow}>
+              contentContainerStyle={styles.sheetRow}
+              onScroll={(event) => setScrollOffset(event.nativeEvent.contentOffset.x)}
+              scrollEventThrottle={16}>
               {sheetItems.map((item) => {
                 const isSelected = item.markerId === selectedMarkerId;
 
@@ -716,7 +852,7 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 62,
+    top: 78,
     left: 20,
     right: 20,
   },
@@ -728,6 +864,7 @@ const styles = StyleSheet.create({
   },
   headerCopy: {
     flex: 1,
+    marginRight: 8,
   },
   headerTitle: {
     color: theme.colors.heading,
@@ -742,7 +879,7 @@ const styles = StyleSheet.create({
   },
   controls: {
     position: 'absolute',
-    top: 128,
+    top: 144,
     left: 20,
     right: 20,
     flexDirection: 'row',
@@ -855,7 +992,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 14,
     right: 14,
-    bottom: 108,
+    bottom: 140,
     padding: 20,
     borderRadius: 30,
     backgroundColor: 'rgba(15,17,28,0.94)',
@@ -973,7 +1110,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 20,
     right: 20,
-    bottom: 40,
+    bottom: 120,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

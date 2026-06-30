@@ -158,6 +158,7 @@ export type TavolinaInvite = {
   city: string;
   day: string;
   time: string;
+  eventType: 'food' | 'culture' | 'nightlife';
   creator: string;
   creatorAvatar: string;
   description: string;
@@ -1935,6 +1936,7 @@ export const tavolinaInvites: TavolinaInvite[] = [
     city: 'Prishtina',
     day: 'Friday',
     time: '20:00',
+    eventType: 'food',
     creator: 'Arta K.',
     creatorAvatar: visuals.tavolinaCreator,
     description: 'Who wants to join for dinner? I booked a table for 4 people.',
@@ -1949,12 +1951,28 @@ export const tavolinaInvites: TavolinaInvite[] = [
     city: 'Prishtina',
     day: 'Saturday',
     time: '19:30',
+    eventType: 'food',
     creator: 'Rina D.',
     creatorAvatar: visuals.tavolinaCreator,
     description: 'Looking for two people for sushi night and good conversation.',
     tags: ['Sushi', 'Friendly'],
     spotsLabel: '1/3 spots',
     image: visuals.sushiTray,
+  },
+  {
+    id: 'invite-prizren-walk',
+    restaurantId: pishatRestaurant.id,
+    restaurantName: 'Prizren Old Town Walk',
+    city: 'Prizren',
+    day: 'Sunday',
+    time: '18:30',
+    eventType: 'culture',
+    creator: 'Dren A.',
+    creatorAvatar: visuals.tavolinaCreator,
+    description: 'Come for a sunset walk, street photos, and a relaxed old-town stop.',
+    tags: ['Culture', 'Walk'],
+    spotsLabel: '4/6 spots',
+    image: visuals.brunch,
   },
 ];
 

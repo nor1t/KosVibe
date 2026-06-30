@@ -1,17 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { theme } from '../theme';
-
-type ProfileScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
 
 function getDisplayName(
   fullName: string | null | undefined,
@@ -29,7 +23,7 @@ function getDisplayName(
   return fallbackName;
 }
 
-export function ProfileScreen({ navigation }: ProfileScreenProps) {
+export function ProfileScreen() {
   const { language } = useI18n();
   const copy = nativeCopy[language].profile;
   const { user } = useAuth();
@@ -46,7 +40,6 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>{copy.title}</Text>
-        <WeatherSettingsButton navigation={navigation} collapseInfoActions showWeather={false} />
       </View>
 
       <LinearGradient colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']} style={styles.heroCard}>
@@ -109,13 +102,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     color: theme.colors.heading,

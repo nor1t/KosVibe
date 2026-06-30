@@ -13,6 +13,9 @@ type ExploreMapProps = {
   selectedMarkerId?: string | null;
   onMarkerPress?: (markerId: string) => void;
   onMapInteractionStart?: () => void;
+  mapType?: 'standard' | 'hybrid';
+  showsUserLocation?: boolean;
+  showsMyLocationButton?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -22,6 +25,9 @@ export function ExploreMap({
   selectedMarkerId,
   onMarkerPress,
   onMapInteractionStart,
+  mapType = 'standard',
+  showsUserLocation = false,
+  showsMyLocationButton = false,
   style,
 }: ExploreMapProps) {
   const mapRef = useRef<MapView | null>(null);
@@ -41,8 +47,9 @@ export function ExploreMap({
       showsCompass={false}
       toolbarEnabled={false}
       showsPointsOfInterest={false}
-      showsUserLocation
-      showsMyLocationButton>
+      mapType={mapType}
+      showsUserLocation={showsUserLocation}
+      showsMyLocationButton={showsMyLocationButton}>
       {markers.map((marker) => (
         <Marker
           key={marker.id}

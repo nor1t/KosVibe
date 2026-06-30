@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { WeatherSettingsButton } from '../components/common/WeatherSettingsButton';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories, type StoryItem } from '../lib/stories-state';
@@ -40,9 +39,6 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
     <View style={styles.screen}>
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <WeatherSettingsButton navigation={navigation} compact collapseInfoActions showWeather={false} />
-          </View>
           <Text style={styles.eyebrow}>{copy.eyebrow}</Text>
           <Text style={styles.title}>{copy.title}</Text>
           <Text style={styles.subtitle}>{copy.subtitle}</Text>
@@ -139,17 +135,11 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 88,
     paddingBottom: 140,
   },
   header: {
     marginBottom: 24,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-    marginBottom: 22,
   },
   eyebrow: {
     color: theme.colors.secondary,
