@@ -15,6 +15,7 @@ import {
     View,
 } from 'react-native';
 
+import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { usePageSpacing } from '../components/Screen';
@@ -76,31 +77,15 @@ const eventImages = [
 ];
 
 const fallbackHostProfile = {
-  rating: 4.6,
-  eventCount: 8,
-  confirmedGuests: 42,
-  reliability: 'Reliable host',
-  badges: ['Verified vibe', 'Fast replies'],
-  recentPraise: ['Clear plan', 'Friendly group'],
+  rating: 0,
+  eventCount: 0,
+  confirmedGuests: 0,
+  reliability: 'New host',
+  badges: ['New to KosVibe'],
+  recentPraise: ['Welcome them to the community!'],
 };
 
-const hostProfileOverrides: Record<string, Partial<CreatorProfile>> = {
-  'Arta K.': {
-    rating: 4.9, eventCount: 18, confirmedGuests: 96, reliability: 'Top food host',
-    badges: ['Dinner pro', 'On-time', 'Warm tables'],
-    recentPraise: ['Booked exactly as promised', 'Made newcomers feel welcome'],
-  },
-  'Rina D.': {
-    rating: 4.8, eventCount: 12, confirmedGuests: 58, reliability: 'Trusted organizer',
-    badges: ['Small groups', 'Great taste'],
-    recentPraise: ['Good communication', 'Easy-going host'],
-  },
-  'Dren A.': {
-    rating: 4.7, eventCount: 10, confirmedGuests: 74, reliability: 'Culture guide',
-    badges: ['Local routes', 'Photo walks'],
-    recentPraise: ['Great route planning', 'Kept everyone together'],
-  },
-};
+const hostProfileOverrides: Record<string, Partial<CreatorProfile>> = {};
 
 function formatSpotsLabel(spotsLabel: string, joined: boolean) {
   const match = spotsLabel.match(/^(\d+)\/(\d+)(.*)$/);
@@ -128,6 +113,15 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const copy = nativeCopy[language].tavolina;
   const createCopy = copy.createEvent;
   const pageSpacing = usePageSpacing();
+  const { user } = useAuth();
+  const currentUserName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : user?.email?.split('@')[0];
+  const currentUserAvatar =
+    typeof user?.user_metadata?.avatar_url === 'string'
+      ? user.user_metadata.avatar_url
+      : undefined;
   const [events, setEvents] = useState<EventInvite[]>([]);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventInvite | null>(null);
@@ -250,7 +244,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       day: day.trim(),
       time: time.trim(),
       eventType: selectedComposerType,
-      creatorName: 'KosVibe',
+      creatorName: currentUserName || 'KosVibe',
       creatorAvatar: displayImage,
       description: description.trim(),
       tags: [copy.moods[eventTypeLabelIndex[selectedComposerType]], city.trim()],

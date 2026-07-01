@@ -29,12 +29,39 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
   const stories = favoritesRepository.getFavoriteStories(language);
-  const featuredStory = stories[0];
+  const featuredStory = stories[0] ?? null;
   const latestStories = stories.slice(1);
 
   const openStory = (storyId: string) => {
     navigation.navigate('StoryDetail', { storyId });
   };
+
+  if (stories.length === 0) {
+    const isEmptyTitle = language === 'sq' ? 'Ende pa tregime' : 'No stories yet';
+    const isEmptyDescription =
+      language === 'sq'
+        ? 'Behu i pari qe ndan nje tregim per Kosoven. Prek butonin me poshte per te filluar.'
+        : 'Be the first to share a story about Kosovo. Tap the button below to get started.';
+    const isEmptyCta = language === 'sq' ? 'Krijo tregimin tend' : 'Create your story';
+
+    return (
+      <View style={styles.screen}>
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIconWrap}>
+            <Ionicons name="book-outline" size={44} color={theme.colors.mutedText} />
+          </View>
+          <Text style={styles.emptyHeading}>{isEmptyTitle}</Text>
+          <Text style={styles.emptyDescription}>{isEmptyDescription}</Text>
+          <Pressable
+            style={styles.emptyAction}
+            onPress={() => navigation.navigate('CreateStory')}>
+            <Ionicons name="add-circle-outline" size={20} color={theme.colors.surface} />
+            <Text style={styles.emptyActionText}>{isEmptyCta}</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -45,24 +72,26 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
           <Text style={styles.subtitle}>{copy.subtitle}</Text>
         </View>
 
-        <Pressable style={styles.heroCard} onPress={() => openStory(featuredStory.id)}>
-          <ImageBackground source={{ uri: featuredStory.image }} style={styles.heroImage}>
-            <View style={styles.heroOverlay} />
-            <View style={styles.heroContent}>
-              <View style={styles.featuredBadge}>
-                <Ionicons name="sparkles-outline" size={14} color={theme.colors.surface} />
-                <Text style={styles.featuredLabel}>{copy.featured}</Text>
+        {featuredStory ? (
+          <Pressable style={styles.heroCard} onPress={() => openStory(featuredStory.id)}>
+            <ImageBackground source={{ uri: featuredStory.image }} style={styles.heroImage}>
+              <View style={styles.heroOverlay} />
+              <View style={styles.heroContent}>
+                <View style={styles.featuredBadge}>
+                  <Ionicons name="sparkles-outline" size={14} color={theme.colors.surface} />
+                  <Text style={styles.featuredLabel}>{copy.featured}</Text>
+                </View>
+                <Text style={styles.heroTitle}>{featuredStory.title}</Text>
+                <StoryMeta story={featuredStory} />
+                <Text style={styles.heroSubtitle}>{featuredStory.subtitle}</Text>
+                <View style={styles.openRow}>
+                  <Text style={styles.openLabel}>{copy.openStory}</Text>
+                  <Ionicons name="arrow-forward" size={18} color={theme.colors.surface} />
+                </View>
               </View>
-              <Text style={styles.heroTitle}>{featuredStory.title}</Text>
-              <StoryMeta story={featuredStory} />
-              <Text style={styles.heroSubtitle}>{featuredStory.subtitle}</Text>
-              <View style={styles.openRow}>
-                <Text style={styles.openLabel}>{copy.openStory}</Text>
-                <Ionicons name="arrow-forward" size={18} color={theme.colors.surface} />
-              </View>
-            </View>
-          </ImageBackground>
-        </Pressable>
+            </ImageBackground>
+          </Pressable>
+        ) : null}
 
         <View style={styles.statsStrip}>
           <View style={styles.statBlock}>
@@ -363,5 +392,53 @@ const styles = StyleSheet.create({
     color: theme.colors.subtle,
     fontSize: 12,
     fontWeight: '700',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
+    gap: 16,
+  },
+  emptyIconWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  emptyHeading: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  emptyDescription: {
+    color: theme.colors.mutedText,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    maxWidth: 280,
+  },
+  emptyAction: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 22,
+    paddingVertical: 14,
+    borderRadius: 999,
+    backgroundColor: theme.colors.primary,
+  },
+  emptyActionText: {
+    color: theme.colors.surface,
+    fontSize: 15,
+    fontWeight: '900',
   },
 });

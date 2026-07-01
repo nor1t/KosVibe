@@ -9,23 +9,19 @@ import type { IProfileRepository, ProfileData, Activity, QuickLink, BookingDate 
  */
 
 const profileStats = [
-  { id: 'bookings', icon: 'calendar-outline', value: '24', label: 'Bookings' },
-  { id: 'favorites', icon: 'heart-outline', value: '8', label: 'Favorites' },
-  { id: 'reviews', icon: 'star-outline', value: '12', label: 'Reviews' },
+  { id: 'bookings', icon: 'calendar-outline', value: '0', label: 'Bookings' },
+  { id: 'favorites', icon: 'heart-outline', value: '0', label: 'Favorites' },
+  { id: 'reviews', icon: 'star-outline', value: '0', label: 'Reviews' },
 ];
 
 const profileAchievements = [
-  { id: 'first-booking', icon: 'star' as const, title: 'First Booking', subtitle: 'Made your first reservation', status: 'Unlocked!', unlocked: true },
-  { id: 'food-lover', icon: 'heart' as const, title: 'Food Lover', subtitle: '10+ favorites', status: 'Unlocked!', unlocked: true },
-  { id: 'reviewer', icon: 'create' as const, title: 'Reviewer', subtitle: '5+ reviews', status: 'Unlocked!', unlocked: true },
-  { id: 'vip', icon: 'diamond' as const, title: 'VIP Member', subtitle: '25 bookings', status: 'Almost there', unlocked: false },
+  { id: 'first-booking', icon: 'star' as const, title: 'First Booking', subtitle: 'Make your first reservation', status: 'Locked', unlocked: false },
+  { id: 'food-lover', icon: 'heart' as const, title: 'Food Lover', subtitle: 'Save 10+ favorites', status: 'Locked', unlocked: false },
+  { id: 'reviewer', icon: 'create' as const, title: 'Reviewer', subtitle: 'Write 5+ reviews', status: 'Locked', unlocked: false },
+  { id: 'vip', icon: 'diamond' as const, title: 'VIP Member', subtitle: 'Book 25 tables', status: 'Locked', unlocked: false },
 ];
 
-const recentActivity: Activity[] = [
-  { id: 'activity-pishat', icon: 'calendar-outline', title: 'Pishat Restaurant', subtitle: 'Reservation: Today, 19:00', accentColor: '#316CFF', backgroundColor: '#E7F0FF', status: 'Confirmed' },
-  { id: 'activity-sushi', icon: 'star-outline', title: 'Sushi Bar Tokio', subtitle: 'Left 5-star review • 2 days ago', accentColor: '#C99000', backgroundColor: '#FFF4B8' },
-  { id: 'activity-pizza', icon: 'heart-outline', title: 'Pizza Napoli', subtitle: 'Added to favorites • 1 week ago', accentColor: '#E13E92', backgroundColor: '#FFE4F0' },
-];
+const recentActivity: Activity[] = [];
 
 const profileQuickLinks: QuickLink[] = [
   { id: 'favorites', icon: 'heart-outline', label: 'My Favorites' },

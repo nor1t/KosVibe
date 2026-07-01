@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useAuth } from '../features/auth/AuthProvider';
 import { useStories } from '../lib/stories-state';
 import { theme } from '../theme';
 
@@ -21,10 +22,18 @@ type CreateStoryScreenProps = {
 
 const categoryOptions = ['Food', 'Coffee', 'Culture', 'Night Walk', 'Nature', 'Other'];
 
+function getDisplayName(userMeta: { full_name?: unknown } | null, email: string | null): string | undefined {
+  if (typeof userMeta?.full_name === 'string' && userMeta.full_name.trim()) return userMeta.full_name.trim();
+  if (email) return email.split('@')[0];
+  return undefined;
+}
+
 export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
   const { createStory, imageTemplates } = useStories();
+  const { user } = useAuth();
+  const displayName = getDisplayName(user?.user_metadata ?? null, user?.email ?? null);
   const [title, setTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [body, setBody] = useState('');
@@ -97,6 +106,8 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
       image: displayImage,
       imageUri: localImageUri || undefined,
       postedAt: copy.justNow,
+      authorName: displayName,
+      authorId: user?.id,
     });
 
     navigation.navigate('StoryDetail', { storyId: story.id });

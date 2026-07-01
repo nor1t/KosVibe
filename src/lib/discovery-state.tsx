@@ -100,7 +100,7 @@ const initialMessages: ChatMessage[] = [
 ];
 
 export function DiscoveryProvider({ children }: { children: ReactNode }) {
-  const [selectedLocationId, setSelectedLocationId] = useState('prishtine');
+  const [selectedLocationId, setSelectedLocationId] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState<DiscoveryContextValue['selectedCategory']>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);

@@ -60,6 +60,50 @@ export class FavoritesRepository implements IFavoritesRepository {
     return restaurants.filter((r): r is Restaurant => Boolean(r));
   }
 
+  async isRestaurantFavorite(userId: string, restaurantId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('saved_restaurants')
+      .select('restaurant_id')
+      .eq('user_id', userId)
+      .eq('restaurant_id', restaurantId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to check favorite status', error);
+      return false;
+    }
+
+    return !!data;
+  }
+
+  async addFavorite(userId: string, restaurantId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('saved_restaurants')
+      .insert({ user_id: userId, restaurant_id: restaurantId });
+
+    if (error) {
+      console.error('Failed to add favorite', error);
+      return false;
+    }
+
+    return true;
+  }
+
+  async removeFavorite(userId: string, restaurantId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('saved_restaurants')
+      .delete()
+      .eq('user_id', userId)
+      .eq('restaurant_id', restaurantId);
+
+    if (error) {
+      console.error('Failed to remove favorite', error);
+      return false;
+    }
+
+    return true;
+  }
+
   getFavoriteStories(language: SupportedLanguage): StoryItem[] {
     return storiesRepository.getStories(language);
   }

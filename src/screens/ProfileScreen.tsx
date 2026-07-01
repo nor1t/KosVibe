@@ -56,7 +56,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
 
   const openAction = (index: number) => {
     if (index === 0) {
-      parentNavigation?.navigate('FavoritesTab');
+      navigation.navigate('FavoriteRestaurants' as never);
       return;
     }
 
@@ -92,7 +92,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
         </Pressable>
 
         <Text style={styles.name}>{displayName}</Text>
-        <Text style={styles.email}>{user?.email ?? 'member@kosvibe.app'}</Text>
+        <Text style={styles.email}>{user?.email ?? ''}</Text>
         <Text style={styles.bio}>{bio}</Text>
 
         <Pressable style={styles.editButton} onPress={openProfileEditor}>

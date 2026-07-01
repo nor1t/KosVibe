@@ -149,11 +149,11 @@ function buildRestaurant(
         image: (primarySpecial.image_url as string) ?? imageUrl,
       }
     : {
-        name: `${place.name as string} Special`,
-        description: place.description as string ?? `A featured dish from ${place.name as string}.`,
-        originalPrice: '€10',
-        price: '€8',
-        discount: '-20%',
+        name: '',
+        description: '',
+        originalPrice: '',
+        price: '',
+        discount: '',
         image: imageUrl,
       };
 
@@ -416,10 +416,22 @@ export class RestaurantsRepository implements IRestaurantsRepository {
   }
 
   getNearbyVibes(): Restaurant[] {
-    // Synchronous access — lazy-load from cached details
-    return nearbyVibesRestaurantSlugs
-      .map((slug) => this.detailCache.get(slug))
-      .filter((r): r is Restaurant => Boolean(r));
+    // Return restaurants from the detail cache
+    const cached = [...this.detailCache.values()];
+    if (cached.length === 0) return [];
+
+    // Match featured catalog slugs to cached details
+    const vibes: Restaurant[] = [];
+    for (const item of this.catalog) {
+      if (nearbyVibesRestaurantSlugs.includes(item.slug as typeof nearbyVibesRestaurantSlugs[number])) {
+        const detail = this.detailCache.get(item.id);
+        if (detail) vibes.push(detail);
+      }
+    }
+
+    // Fallback: return first few cached restaurants if no featured match
+    if (vibes.length === 0) return cached.slice(0, 6);
+    return vibes;
   }
 
   getFeaturedMenuItems(): FeaturedMenuItem[] {

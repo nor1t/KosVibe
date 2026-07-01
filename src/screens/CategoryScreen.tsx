@@ -28,209 +28,15 @@ import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseC
 import { RestaurantListCard } from '../components/common/RestaurantListCard';
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import type { HomeStackParamList } from '../navigation/types';
+import { placesRepository } from '../repositories/placesRepository';
 import { restaurantsRepository } from '../repositories/restaurantsRepository';
+import type { MonumentSpot } from '../repositories/types';
 import { theme } from '../theme';
 
 type CategoryScreenProps = {
   navigation: NavigationProp<ParamListBase>;
   route: RouteProp<HomeStackParamList, 'Category'>;
 };
-
-const monumentSpots = [
-  {
-    id: 'prizren-bridge',
-    type: 'monument',
-    title: 'Stone Bridge',
-    titleSq: 'Ura e Gurit',
-    location: 'Prizren',
-    locationSq: 'Prizren',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/e/e0/PrizrenStoneBridge.jpg',
-    coordinate: { latitude: 42.20965, longitude: 20.74034 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Built during the Ottoman period and rebuilt after the 1979 flood, the Stone Bridge is one of Prizren city symbols. For locals it is more than a crossing: it is the meeting point between the old bazaar, the river, and everyday city memory.',
-    detailSq:
-      'E ndertuar ne periudhen osmane dhe e rindertuar pas vershimit te vitit 1979, Ura e Gurit eshte nje nga simbolet e Prizrenit. Per vendasit eshte me shume se nje kalim: eshte pika ku takohen pazari i vjeter, lumi dhe kujtesa e perditshme e qytetit.',
-  },
-  {
-    id: 'prizren-fortress',
-    type: 'monument',
-    title: 'Prizren Fortress',
-    titleSq: 'Kalaja e Prizrenit',
-    location: 'Prizren',
-    locationSq: 'Prizren',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/2/29/The_Prizren_Fortress_09.jpg',
-    coordinate: { latitude: 42.2069, longitude: 20.7465 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Kalaja rises above Prizren on layers of medieval and Ottoman history. Locals value it as the city balcony: a proud viewpoint where the whole old town, mosques, churches, rooftops, and Sharr mountains come into one frame.',
-    detailSq:
-      'Kalaja ngrihet mbi Prizren mbi shtresa historie mesjetare dhe osmane. Vendasit e shohin si ballkonin e qytetit: nje pike krenare ku qyteti i vjeter, xhamite, kishat, kulmet dhe malet e Sharrit duken ne nje pamje.',
-  },
-  {
-    id: 'league-prizren',
-    type: 'monument',
-    title: 'League of Prizren',
-    titleSq: 'Lidhja e Prizrenit',
-    location: 'Prizren',
-    locationSq: 'Prizren',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/2011_Prizren%2C_Budynek_Ligi_Prizre%C5%84skiej_01.jpg',
-    coordinate: { latitude: 42.211467, longitude: 20.743825 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'This memorial complex marks the Albanian League of Prizren, founded in 1878. To many locals it represents political awakening, cultural identity, and the long effort to protect Albanian lands, language, and self-rule.',
-    detailSq:
-      'Ky kompleks memorial lidhet me Lidhjen Shqiptare te Prizrenit, te themeluar ne vitin 1878. Per shume vendas perfaqeson zgjimin politik, identitetin kulturor dhe perpjekjen e gjate per te mbrojtur trojet, gjuhen dhe veteqeverisjen shqiptare.',
-  },
-  {
-    id: 'newborn',
-    type: 'monument',
-    title: 'Newborn Monument',
-    titleSq: 'Monumenti Newborn',
-    location: 'Prishtina',
-    locationSq: 'Prishtine',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Kosovo_Feb_2020_22_04_58_224000.jpeg',
-    coordinate: { latitude: 42.6607, longitude: 21.1583 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Unveiled on 17 February 2008, Newborn celebrates Kosovo declaration of independence. Its repainting over the years keeps it alive for locals as a public message board of pride, protest, remembrance, and hope.',
-    detailSq:
-      'I zbuluar me 17 shkurt 2008, Newborn shenon shpalljen e pavaresise se Kosoves. Ngjyrosjet e tij nder vite e mbajne te gjalle per vendasit si nje hapesire publike krenarie, proteste, kujtese dhe shprese.',
-  },
-  {
-    id: 'national-library',
-    type: 'monument',
-    title: 'National Library',
-    titleSq: 'Biblioteka Kombetare',
-    location: 'Prishtina',
-    locationSq: 'Prishtine',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/42/National_Library_of_Kosovo.jpg',
-    coordinate: { latitude: 42.6575, longitude: 21.162297 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'The National Library of Kosovo is one of Prishtina most recognizable buildings, known for its domes and metal lattice skin. Locals often see it as bold, unusual, and unmistakably theirs: a landmark of learning and debate.',
-    detailSq:
-      'Biblioteka Kombetare e Kosoves eshte nje nga ndertesat me te dallueshme te Prishtines, e njohur per kupolat dhe rrjeten metalike. Vendasit shpesh e shohin si te guximshme, te vecante dhe krejtesisht te tyren: nje shenje e dijes dhe debatit.',
-  },
-  {
-    id: 'ulpiana',
-    type: 'monument',
-    title: 'Ulpiana',
-    titleSq: 'Ulpiana',
-    location: 'Near Gracanica',
-    locationSq: 'Afer Gracanices',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/Ulpiana_%28lokaliteti_arkeologjik%29_nga_ajri.jpg',
-    coordinate: { latitude: 42.596892, longitude: 21.174387 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Ulpiana was an important Roman and early Byzantine city in ancient Dardania. For locals it connects modern Kosovo with a much older story, showing that the land has held roads, trade, faith, and urban life for centuries.',
-    detailSq:
-      'Ulpiana ishte qytet i rendesishem romak dhe i hershem bizantin ne Dardanine antike. Per vendasit e lidh Kosoven moderne me nje histori shume me te vjeter, duke treguar se kjo toke ka pasur rruge, tregti, besim dhe jete urbane per shekuj.',
-  },
-  {
-    id: 'gadime-cave',
-    type: 'nature',
-    title: 'Gadime Cave',
-    titleSq: 'Shpella e Gadimes',
-    location: 'Lipjan',
-    locationSq: 'Lipjan',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/Crystals_from_inside_the_Marble_Cave_in_Kosovo_13.JPG',
-    coordinate: { latitude: 42.47809, longitude: 21.20757 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Gadime Cave feels hidden and crystalline, with marble passages, mineral shapes, and cool underground light. Its beauty is quiet and otherworldly, a place where Kosovo landscape turns from mountain air into stone, shimmer, and silence.',
-    detailSq:
-      'Shpella e Gadimes ndihet e fshehur dhe kristalore, me korridore mermeri, forma minerale dhe drite te ftohte nentokesore. Bukuria e saj eshte e qete dhe e pazakonte, aty ku peizazhi i Kosoves kthehet ne gur, shkelqim dhe heshtje.',
-  },
-  {
-    id: 'rugova',
-    type: 'nature',
-    title: 'Rugova Canyon',
-    titleSq: 'Gryka e Rugoves',
-    location: 'Peja',
-    locationSq: 'Peje',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Rugova_Canyon_Kosovo.jpg',
-    coordinate: { latitude: 42.692222, longitude: 20.168611 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Rugova Canyon is dramatic Kosovo nature at full volume: steep limestone walls, mountain roads, cold water, and clean alpine air. The beauty is in the scale, where every turn feels carved by time.',
-    detailSq:
-      'Gryka e Rugoves eshte natyre dramatike e Kosoves ne forme te plote: mure te thepisura gelqerore, rruge malore, uje i ftohte dhe ajer i paster alpin. Bukuria qendron te madhesia, ku cdo kthese duket e gdhendur nga koha.',
-  },
-  {
-    id: 'mirusha',
-    type: 'nature',
-    title: 'Mirusha Waterfalls',
-    titleSq: 'Ujevarat e Mirushes',
-    location: 'Kline / Malisheve',
-    locationSq: 'Kline / Malisheve',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Waterfall_Mirusha.jpg',
-    coordinate: { latitude: 42.523889, longitude: 20.583056 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Mirusha is a chain of waterfalls, pools, and pale rock walls. Its beauty is fresh and cinematic: green water, sunlit cliffs, narrow paths, and the sound of falls echoing through the canyon.',
-    detailSq:
-      'Mirusha eshte nje varg ujevaresh, pishinash natyrore dhe shkembinjsh te hapur. Bukuria e saj eshte e fresket dhe filmike: uje i gjelber, shkembinj me diell, shtigje te ngushta dhe zhurma e ujit qe jehon ne gryke.',
-  },
-  {
-    id: 'white-drin',
-    type: 'nature',
-    title: 'White Drin Waterfall',
-    titleSq: 'Ujevara e Drinit te Bardhe',
-    location: 'Peje',
-    locationSq: 'Peje',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/9/9c/White_Drin_Waterfall_in_June.jpg',
-    coordinate: { latitude: 42.738056, longitude: 20.305833 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'The White Drin Waterfall near Radavc is bright, cold, and green around the edges. Its beauty comes from the rush of white water, forest shade, and the way the river seems to appear from stone.',
-    detailSq:
-      'Ujevara e Drinit te Bardhe prane Radavcit eshte e ndritshme, e ftohte dhe e rrethuar me gjelberim. Bukuria e saj vjen nga vrulli i ujit te bardhe, hija e pyllit dhe menyra si lumi duket sikur del nga guri.',
-  },
-  {
-    id: 'germia',
-    type: 'nature',
-    title: 'Germia Park',
-    titleSq: 'Parku i Germise',
-    location: 'Prishtina',
-    locationSq: 'Prishtine',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Germia_Park_during_Spring_Season_in_Prishtina%2C_Kosovo.jpg',
-    coordinate: { latitude: 42.66887, longitude: 21.15345 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'Germia is Prishtina green escape, with wooded trails, rolling paths, and soft seasonal colors. Its beauty is close and easy: fresh air, quiet trees, and a reset just outside the busy city.',
-    detailSq:
-      'Germia eshte arratisja e gjelber e Prishtines, me shtigje pyjore, rruge te buta dhe ngjyra te qeta sezonale. Bukuria e saj eshte afer dhe e lehte: ajer i fresket, peme te qeta dhe pushim pak jashte qytetit.',
-  },
-  {
-    id: 'sharr',
-    type: 'nature',
-    title: 'Sharr Mountains',
-    titleSq: 'Malet e Sharrit',
-    location: 'South Kosovo',
-    locationSq: 'Jugu i Kosoves',
-    image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=80',
-    coordinate: { latitude: 42.1744, longitude: 20.9614 },
-    photoCredit: 'Wikimedia Commons',
-    detail:
-      'The Sharr Mountains stretch across southern Kosovo with high pastures, ridgelines, and wide-open sky. Their beauty is pastoral and powerful, mixing snow, grass, villages, and long mountain horizons.',
-    detailSq:
-      'Malet e Sharrit shtrihen ne jug te Kosoves me kullosa te larta, kreshta dhe qiell te hapur. Bukuria e tyre eshte baritore dhe e fuqishme, me bore, bar, fshatra dhe horizonte te gjata malore.',
-  },
-];
-
-const storyReviews = [
-  {
-    id: 'rev-1',
-    author: 'Peter Comments',
-    summary: 'Absolutely fire. Best traditional pasta spot after sunset.',
-  },
-  {
-    id: 'rev-2',
-    author: 'Soulmaal Review',
-    summary: 'The late-night energy and plating both feel editorial and alive.',
-  },
-];
 
 export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   const insets = useSafeAreaInsets();
@@ -240,13 +46,16 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
   const { searchQuery, setSearchQuery } = useDiscovery();
   const { restaurants: catalogRestaurants, loading: restaurantsLoading, error: restaurantsError } = useRestaurantCatalog();
   const [selectedFilter, setSelectedFilter] = useState(copy.filters[0]);
-  const [expandedSpotId, setExpandedSpotId] = useState<string | null>(monumentSpots[0].id);
+
+  // Monument spots from DB
+  const monumentSpots = useMemo(() => placesRepository.getMonumentSpots(), []);
+  const [expandedSpotId, setExpandedSpotId] = useState<string | null>(monumentSpots[0]?.id ?? null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView | null>(null);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [cameraTargetSpot, setCameraTargetSpot] = useState<(typeof monumentSpots)[number] | null>(null);
+  const [cameraTargetSpot, setCameraTargetSpot] = useState<MonumentSpot | null>(null);
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string | null>(null);
-  const [cameraAnalysisSpot, setCameraAnalysisSpot] = useState<(typeof monumentSpots)[number] | null>(null);
+  const [cameraAnalysisSpot, setCameraAnalysisSpot] = useState<MonumentSpot | null>(null);
   const [isAnalyzingPhoto, setIsAnalyzingPhoto] = useState(false);
   const [showCameraHint, setShowCameraHint] = useState(false);
   const cameraHintAnim = useRef(new Animated.Value(0)).current;
@@ -331,20 +140,21 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
     retake: language === 'sq' ? 'Bej foto tjeter' : 'Retake',
   };
 
-  const getSpotCopy = (spot: (typeof monumentSpots)[number]) => ({
+  const getSpotCopy = (spot: MonumentSpot) => ({
     title: language === 'sq' ? spot.titleSq : spot.title,
     location: language === 'sq' ? spot.locationSq : spot.location,
     detail: language === 'sq' ? spot.detailSq : spot.detail,
   });
 
-  const openSpotDirections = (event: GestureResponderEvent, spot: (typeof monumentSpots)[number]) => {
+  const openSpotDirections = (event: GestureResponderEvent, spot: MonumentSpot) => {
     event.stopPropagation();
     void openDirectionsToPlace({ label: getSpotCopy(spot).title, coordinate: spot.coordinate });
   };
 
-  const openCameraAnalyzer = async (spot?: (typeof monumentSpots)[number]) => {
+  const openCameraAnalyzer = async (spot?: MonumentSpot) => {
     setShowCameraHint(false);
-    setCameraTargetSpot(spot ?? monumentSpots.find((item) => item.id === expandedSpotId) ?? monumentSpots[0]);
+    const target = spot ?? monumentSpots.find((item) => item.id === expandedSpotId) ?? monumentSpots[0];
+    setCameraTargetSpot(target);
     setCapturedPhotoUri(null);
     setCameraAnalysisSpot(null);
     setIsAnalyzingPhoto(false);
@@ -375,8 +185,10 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
 
     const matchedSpot = cameraTargetSpot ?? monumentSpots[0];
     setTimeout(() => {
-      setCameraAnalysisSpot(matchedSpot);
-      setExpandedSpotId(matchedSpot.id);
+      if (matchedSpot) {
+        setCameraAnalysisSpot(matchedSpot);
+        setExpandedSpotId(matchedSpot.id);
+      }
       setIsAnalyzingPhoto(false);
     }, 900);
   };
@@ -390,84 +202,92 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
             <Text style={styles.monumentsSubtitle}>{copy.cultureSubtitle}</Text>
           </View>
 
-          <View style={styles.monumentsGrid}>
-            {monumentSpots.map((spot) => {
-              const expanded = expandedSpotId === spot.id;
-              const isMonument = spot.type === 'monument';
-              const localizedSpot = getSpotCopy(spot);
+          {monumentSpots.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Ionicons name="business-outline" size={32} color={theme.colors.mutedText} />
+              <Text style={styles.emptyTitle}>No monuments yet</Text>
+              <Text style={styles.emptyDescription}>Cultural spots will appear here once added to the database.</Text>
+            </View>
+          ) : (
+            <View style={styles.monumentsGrid}>
+              {monumentSpots.map((spot) => {
+                const expanded = expandedSpotId === spot.id;
+                const isMonument = spot.type === 'monument';
+                const localizedSpot = getSpotCopy(spot);
 
-              return (
-                <Pressable
-                  key={spot.id}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${localizedSpot.title}, ${expanded ? cultureLabels.close : cultureLabels.open}`}
-                  onPress={() => setExpandedSpotId(expanded ? null : spot.id)}
-                  style={[styles.monumentCard, expanded && styles.monumentCardExpanded]}>
-                  <ImageBackground
-                    source={{ uri: spot.image }}
-                    style={[styles.monumentImage, expanded && styles.monumentImageExpanded]}>
-                    <LinearGradient
-                      colors={['rgba(13,13,26,0.02)', 'rgba(13,13,26,0.88)']}
-                      style={styles.monumentOverlay}>
-                      <View style={styles.monumentTopRow}>
-                        <View style={[styles.monumentTypePill, isMonument ? styles.historyPill : styles.naturePill]}>
-                          <Ionicons
-                            name={isMonument ? 'business-outline' : 'leaf-outline'}
-                            size={13}
-                            color={theme.colors.surface}
-                          />
-                          <Text style={styles.monumentTypeText}>
-                            {isMonument ? cultureLabels.monument : cultureLabels.nature}
-                          </Text>
+                return (
+                  <Pressable
+                    key={spot.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${localizedSpot.title}, ${expanded ? cultureLabels.close : cultureLabels.open}`}
+                    onPress={() => setExpandedSpotId(expanded ? null : spot.id)}
+                    style={[styles.monumentCard, expanded && styles.monumentCardExpanded]}>
+                    <ImageBackground
+                      source={{ uri: spot.image }}
+                      style={[styles.monumentImage, expanded && styles.monumentImageExpanded]}>
+                      <LinearGradient
+                        colors={['rgba(13,13,26,0.02)', 'rgba(13,13,26,0.88)']}
+                        style={styles.monumentOverlay}>
+                        <View style={styles.monumentTopRow}>
+                          <View style={[styles.monumentTypePill, isMonument ? styles.historyPill : styles.naturePill]}>
+                            <Ionicons
+                              name={isMonument ? 'business-outline' : 'leaf-outline'}
+                              size={13}
+                              color={theme.colors.surface}
+                            />
+                            <Text style={styles.monumentTypeText}>
+                              {isMonument ? cultureLabels.monument : cultureLabels.nature}
+                            </Text>
+                          </View>
+                          <Pressable
+                            accessibilityLabel={`${cultureLabels.directions}: ${localizedSpot.title}`}
+                            style={styles.monumentExpandButton}
+                            onPress={(event) => openSpotDirections(event, spot)}>
+                            <Ionicons
+                              name="navigate-outline"
+                              size={16}
+                              color={theme.colors.secondary}
+                            />
+                          </Pressable>
                         </View>
+                        <View>
+                          <Text style={styles.monumentName}>{localizedSpot.title}</Text>
+                          <View style={styles.monumentLocationRow}>
+                            <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
+                            <Text style={styles.monumentLocation}>{localizedSpot.location}</Text>
+                          </View>
+                        </View>
+                      </LinearGradient>
+                    </ImageBackground>
+
+                    {expanded ? (
+                      <View style={styles.monumentDetailPanel}>
+                        <Text style={styles.monumentDetail}>{localizedSpot.detail}</Text>
                         <Pressable
-                          accessibilityLabel={`${cultureLabels.directions}: ${localizedSpot.title}`}
-                          style={styles.monumentExpandButton}
+                          style={styles.directionsButton}
                           onPress={(event) => openSpotDirections(event, spot)}>
-                          <Ionicons
-                            name="navigate-outline"
-                            size={16}
-                            color={theme.colors.secondary}
-                          />
+                          <Ionicons name="map-outline" size={17} color={theme.colors.surface} />
+                          <Text style={styles.directionsLabel}>{cultureLabels.directions}</Text>
                         </Pressable>
+                        <Pressable
+                          style={styles.scanButton}
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            void openCameraAnalyzer(spot);
+                          }}>
+                          <Ionicons name="camera-outline" size={17} color={theme.colors.surface} />
+                          <Text style={styles.directionsLabel}>{cultureLabels.scan}</Text>
+                        </Pressable>
+                        <Text style={styles.monumentPhotoCredit}>
+                          {cultureLabels.photo}: {spot.photoCredit}
+                        </Text>
                       </View>
-                      <View>
-                        <Text style={styles.monumentName}>{localizedSpot.title}</Text>
-                        <View style={styles.monumentLocationRow}>
-                          <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
-                          <Text style={styles.monumentLocation}>{localizedSpot.location}</Text>
-                        </View>
-                      </View>
-                    </LinearGradient>
-                  </ImageBackground>
-
-                  {expanded ? (
-                    <View style={styles.monumentDetailPanel}>
-                      <Text style={styles.monumentDetail}>{localizedSpot.detail}</Text>
-                      <Pressable
-                        style={styles.directionsButton}
-                        onPress={(event) => openSpotDirections(event, spot)}>
-                        <Ionicons name="map-outline" size={17} color={theme.colors.surface} />
-                        <Text style={styles.directionsLabel}>{cultureLabels.directions}</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.scanButton}
-                        onPress={(event) => {
-                          event.stopPropagation();
-                          void openCameraAnalyzer(spot);
-                        }}>
-                        <Ionicons name="camera-outline" size={17} color={theme.colors.surface} />
-                        <Text style={styles.directionsLabel}>{cultureLabels.scan}</Text>
-                      </Pressable>
-                      <Text style={styles.monumentPhotoCredit}>
-                        {cultureLabels.photo}: {spot.photoCredit}
-                      </Text>
-                    </View>
-                  ) : null}
-                </Pressable>
-              );
-            })}
-          </View>
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
         </ScrollView>
 
         <Pressable style={styles.assistantLauncher} onPress={() => void openCameraAnalyzer()}>
@@ -638,35 +458,6 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
             />
           ))}
         </View>
-
-        <View style={styles.reviewPanel}>
-          <View style={styles.ratingSummary}>
-            <View style={styles.ratingBadge}>
-              <Ionicons name="person" size={16} color={theme.colors.surface} />
-            </View>
-            <View style={styles.starsRow}>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <Ionicons key={`summary-${index}`} name="star" size={18} color={theme.colors.secondary} />
-              ))}
-            </View>
-          </View>
-
-          {storyReviews.map((review) => (
-            <View key={review.id} style={styles.reviewCard}>
-              <Text style={styles.reviewTitle}>{review.author}</Text>
-              <Text style={styles.reviewText}>{review.summary}</Text>
-            </View>
-          ))}
-
-          <Text style={styles.communityHeading}>{copy.communityReviews}</Text>
-          <View style={styles.avatarRow}>
-            {['A', 'M', 'R', 'D', 'L'].map((label, index) => (
-              <View key={label} style={[styles.avatarRing, index % 2 === 0 ? styles.avatarRed : styles.avatarGold]}>
-                <Text style={styles.avatarText}>{label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -783,78 +574,6 @@ const styles = StyleSheet.create({
   },
   restaurantList: {
     gap: 12,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 10,
-  },
-  reviewPanel: {
-    marginTop: 26,
-    padding: 18,
-    borderRadius: 28,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-  },
-  ratingSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  ratingBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,31,61,0.34)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reviewCard: {
-    marginTop: 18,
-  },
-  reviewTitle: {
-    color: theme.colors.heading,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  reviewText: {
-    marginTop: 6,
-    color: theme.colors.mutedText,
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  communityHeading: {
-    marginTop: 24,
-    color: theme.colors.heading,
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  avatarRow: {
-    marginTop: 16,
-    flexDirection: 'row',
-    gap: 10,
-  },
-  avatarRing: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-  },
-  avatarRed: {
-    borderColor: '#FF1F3D',
-    backgroundColor: 'rgba(255,31,61,0.14)',
-  },
-  avatarGold: {
-    borderColor: '#FFB300',
-    backgroundColor: 'rgba(255,179,0,0.14)',
-  },
-  avatarText: {
-    color: theme.colors.heading,
-    fontWeight: '900',
   },
   monumentsContent: {
     paddingHorizontal: 20,
@@ -1158,6 +877,26 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedText,
     fontSize: 16,
     lineHeight: 24,
+    textAlign: 'center',
+  },
+  emptyCard: {
+    padding: 40,
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  emptyTitle: {
+    color: theme.colors.heading,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  emptyDescription: {
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
   },
 });

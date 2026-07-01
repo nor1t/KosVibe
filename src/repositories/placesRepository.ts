@@ -168,13 +168,6 @@ export class PlacesRepository implements IPlacesRepository {
   }
 
   getFunActivities(): FunActivity[] {
-    if (this.funCache.length === 0) {
-      return [
-        { id: 'germia-park', title: 'Germia Park', subtitle: 'Forest walks, bike rides, fresh air', summary: 'Green escape close to the city', city: 'Prishtina', icon: 'bicycle-outline', accentColor: '#42D98C', backgroundColor: 'rgba(66,217,140,0.16)' },
-        { id: 'prizren-fortress', title: 'Prizren Fortress', subtitle: 'Sunset views, old-town steps', summary: 'Classic Prizren climb', city: 'Prizren', icon: 'business-outline', accentColor: '#FFB300', backgroundColor: 'rgba(255,179,0,0.16)' },
-        { id: 'rugova-canyon', title: 'Rugova Canyon', subtitle: 'Adventure routes, scenic drives', summary: 'Dramatic canyon near Peje', city: 'Peje', icon: 'trail-sign-outline', accentColor: '#8F7CFF', backgroundColor: 'rgba(143,124,255,0.16)' },
-      ];
-    }
     return this.funCache.map((a) => ({ ...a }));
   }
 

@@ -40,18 +40,6 @@ type ActivityOption = {
   emptyDescription: string;
 };
 
-type ExploreSpot = {
-  id: string;
-  category: Exclude<ActivityKey, 'eat'>;
-  title: string;
-  subtitle: string;
-  city: string;
-  distance: string;
-  coordinate: Coordinates;
-  color: string;
-  accentLabel: string;
-};
-
 type ExploreCardItem = {
   id: string;
   markerId: string;
@@ -127,207 +115,6 @@ const activityOptions: ActivityOption[] = [
     sheetTitle: 'Kosovo Icons',
     sheetDescription: 'Signature landmarks for first-timers and quick detours.',
     emptyDescription: 'No landmark pins are available for this city yet.',
-  },
-];
-
-const exploreSpots: ExploreSpot[] = [
-  {
-    id: 'coffee-prishtine',
-    category: 'coffee',
-    title: 'Soma Book Station',
-    subtitle: 'Relaxed coffee and laptop tables',
-    city: 'Prishtina',
-    distance: '0.5 km',
-    coordinate: { latitude: 42.6608, longitude: 21.1605 },
-    color: '#FFB300',
-    accentLabel: 'Good for meetups',
-  },
-  {
-    id: 'coffee-prizren',
-    category: 'coffee',
-    title: 'Stone Bridge Espresso',
-    subtitle: 'Coffee stop with old-town energy',
-    city: 'Prizren',
-    distance: '0.4 km',
-    coordinate: { latitude: 42.2099, longitude: 20.7419 },
-    color: '#FFB300',
-    accentLabel: 'Historic center',
-  },
-  {
-    id: 'coffee-peje',
-    category: 'coffee',
-    title: 'Rugova Roast Lab',
-    subtitle: 'Specialty coffee before the mountain drive',
-    city: 'Peje',
-    distance: '0.9 km',
-    coordinate: { latitude: 42.6599, longitude: 20.2904 },
-    color: '#FFB300',
-    accentLabel: 'Roastery vibe',
-  },
-  {
-    id: 'nightlife-prishtine',
-    category: 'nightlife',
-    title: 'Zone Rooftop',
-    subtitle: 'Sunset drinks and a late DJ set',
-    city: 'Prishtina',
-    distance: '1.2 km',
-    coordinate: { latitude: 42.6624, longitude: 21.1592 },
-    color: '#FF6138',
-    accentLabel: 'Late-night favorite',
-  },
-  {
-    id: 'nightlife-prizren',
-    category: 'nightlife',
-    title: 'Lumbardhi Nights',
-    subtitle: 'Cocktails close to the river walk',
-    city: 'Prizren',
-    distance: '0.7 km',
-    coordinate: { latitude: 42.2118, longitude: 20.7392 },
-    color: '#FF6138',
-    accentLabel: 'Best after 21:00',
-  },
-  {
-    id: 'nightlife-peje',
-    category: 'nightlife',
-    title: 'Peja Rooftop',
-    subtitle: 'City lights and a social crowd',
-    city: 'Peje',
-    distance: '1.1 km',
-    coordinate: { latitude: 42.6618, longitude: 20.2887 },
-    color: '#FF6138',
-    accentLabel: 'Weekend hotspot',
-  },
-  {
-    id: 'culture-prishtine',
-    category: 'culture',
-    title: 'National Library Plaza',
-    subtitle: 'Architecture and student energy',
-    city: 'Prishtina',
-    distance: '0.8 km',
-    coordinate: { latitude: 42.6575, longitude: 21.162297 },
-    color: '#5DA7FF',
-    accentLabel: 'Creative district',
-  },
-  {
-    id: 'culture-prizren',
-    category: 'culture',
-    title: 'Prizren Fortress',
-    subtitle: 'Old stone walls and city views',
-    city: 'Prizren',
-    distance: '1.4 km',
-    coordinate: { latitude: 42.2069, longitude: 20.7465 },
-    color: '#5DA7FF',
-    accentLabel: 'Golden-hour stop',
-  },
-  {
-    id: 'culture-peje',
-    category: 'culture',
-    title: 'Dukagjini Heritage Court',
-    subtitle: 'Historic facades and gallery stops',
-    city: 'Peje',
-    distance: '0.6 km',
-    coordinate: { latitude: 42.6611, longitude: 20.2881 },
-    color: '#5DA7FF',
-    accentLabel: 'Photo-ready route',
-  },
-  {
-    id: 'nature-prishtine',
-    category: 'nature',
-    title: 'Germia Trail Gate',
-    subtitle: 'Easy access to forest paths',
-    city: 'Prishtina',
-    distance: '2.1 km',
-    coordinate: { latitude: 42.66887, longitude: 21.15345 },
-    color: '#42D98C',
-    accentLabel: 'Morning reset',
-  },
-  {
-    id: 'nature-prizren',
-    category: 'nature',
-    title: 'Sharr Vista Point',
-    subtitle: 'Mountain air with a wide valley view',
-    city: 'Prizren',
-    distance: '3.3 km',
-    coordinate: { latitude: 42.1744, longitude: 20.9614 },
-    color: '#42D98C',
-    accentLabel: 'Scenic drive',
-  },
-  {
-    id: 'nature-peje',
-    category: 'nature',
-    title: 'Rugova Canyon Start',
-    subtitle: 'Gateway to the most dramatic outdoor route nearby',
-    city: 'Peje',
-    distance: '4.5 km',
-    coordinate: { latitude: 42.692222, longitude: 20.168611 },
-    color: '#42D98C',
-    accentLabel: 'Weekend adventure',
-  },
-  {
-    id: 'study-prishtine',
-    category: 'study',
-    title: 'Innovation Centre Kosovo',
-    subtitle: 'Quiet work tables and strong Wi-Fi',
-    city: 'Prishtina',
-    distance: '0.9 km',
-    coordinate: { latitude: 42.6551, longitude: 21.1633 },
-    color: '#8F7CFF',
-    accentLabel: 'Best for deep work',
-  },
-  {
-    id: 'study-prizren',
-    category: 'study',
-    title: 'Lumbardhi Work Loft',
-    subtitle: 'A calm corner near the cultural district',
-    city: 'Prizren',
-    distance: '0.8 km',
-    coordinate: { latitude: 42.2131, longitude: 20.7399 },
-    color: '#8F7CFF',
-    accentLabel: 'Laptop-friendly',
-  },
-  {
-    id: 'study-peje',
-    category: 'study',
-    title: 'Dukagjini Desk Hub',
-    subtitle: 'Focused work sessions near the center',
-    city: 'Peje',
-    distance: '0.7 km',
-    coordinate: { latitude: 42.6604, longitude: 20.2874 },
-    color: '#8F7CFF',
-    accentLabel: 'Quietest before noon',
-  },
-  {
-    id: 'icon-prishtine',
-    category: 'icons',
-    title: 'Newborn Monument',
-    subtitle: 'The city’s most recognizable landmark',
-    city: 'Prishtina',
-    distance: '1.0 km',
-    coordinate: { latitude: 42.6607, longitude: 21.1583 },
-    color: '#FFD166',
-    accentLabel: 'Must-see icon',
-  },
-  {
-    id: 'icon-prizren',
-    category: 'icons',
-    title: 'Stone Bridge',
-    subtitle: 'Classic old-town crossing and photo stop',
-    city: 'Prizren',
-    distance: '0.5 km',
-    coordinate: { latitude: 42.20965, longitude: 20.74034 },
-    color: '#FFD166',
-    accentLabel: 'Old-town favorite',
-  },
-  {
-    id: 'icon-peje',
-    category: 'icons',
-    title: 'Patriarchate View',
-    subtitle: 'A landmark route framed by mountain scenery',
-    city: 'Peje',
-    distance: '2.4 km',
-    coordinate: { latitude: 42.6775, longitude: 20.2669 },
-    color: '#FFD166',
-    accentLabel: 'Landmark detour',
   },
 ];
 
@@ -433,9 +220,11 @@ export function MapScreen({ navigation }: MapScreenProps) {
     [searchQuery, selectedLocationId]
   );
 
+  const allExploreSpots = useMemo(() => placesRepository.getExploreSpots(), []);
+
   const visibleSpots = useMemo(
     () =>
-      exploreSpots.filter((spot) => {
+      allExploreSpots.filter((spot) => {
         const normalizedQuery = searchQuery.trim().toLowerCase();
         const matchesLocation = selectedLocation.city ? spot.city === selectedLocation.city : true;
         const matchesQuery = normalizedQuery
@@ -447,7 +236,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
 
         return matchesLocation && matchesQuery;
       }),
-    [searchQuery, selectedLocation.city]
+    [allExploreSpots, searchQuery, selectedLocation.city]
   );
 
   const localizedActivityOptions = useMemo<ActivityOption[]>(

@@ -58,6 +58,8 @@ export type FavoritesStackParamList = {
 export type ProfileStackParamList = {
   ProfileMain: undefined;
   EditProfile: undefined;
+  FavoriteRestaurants: undefined;
+  RestaurantDetails: { restaurantId: string };
   Settings: undefined;
   History: undefined;
   Help: undefined;

@@ -102,7 +102,7 @@ export class StoriesRepository implements IStoriesRepository {
     const nextStory: StoryItem = {
       id: tempId,
       title: input.title.trim(),
-      author: '@you',
+      author: input.authorName ?? input.authorId ?? '@you',
       subtitle: input.subtitle.trim(),
       body: input.body.trim(),
       image: input.image,
@@ -177,13 +177,13 @@ export class StoriesRepository implements IStoriesRepository {
     return !error;
   }
 
-  async addComment(storyId: string, body: string): Promise<boolean> {
+  async addComment(storyId: string, body: string, authorName?: string): Promise<boolean> {
     const { error } = await supabase
       .from('story_comments')
       .insert({
         story_id: storyId,
         body,
-        author_name: 'User',
+        author_name: authorName || 'Community member',
       });
 
     return !error;

@@ -365,6 +365,8 @@ export type CreateStoryInput = {
   image: string;
   postedAt?: string;
   imageUri?: string;
+  authorName?: string;
+  authorId?: string;
 };
 
 export type StoriesData = {

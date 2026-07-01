@@ -1,14 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase, RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { openDirectionsToPlace } from '../lib/maps';
+import { favoritesRepository } from '../repositories/favoritesRepository';
 import { theme } from '../theme';
 
 type RestaurantDetailsRoute = RouteProp<
@@ -26,7 +28,39 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
   const copy = nativeCopy[language].restaurantDetails;
   const { getRestaurantById, loading } = useRestaurantCatalog();
   const restaurant = getRestaurantById(route.params.restaurantId);
+  const { user } = useAuth();
   const [saved, setSaved] = useState(false);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+
+  useEffect(() => {
+    if (!restaurant || !user) return;
+    let active = true;
+    void favoritesRepository.isRestaurantFavorite(user.id, restaurant.id).then((isSaved) => {
+      if (active) setSaved(isSaved);
+    });
+    return () => { active = false; };
+  }, [restaurant, user]);
+
+  const toggleFavorite = async () => {
+    if (!restaurant || !user || savingFavorite) return;
+    const previousState = saved;
+    setSavingFavorite(true);
+    // Optimistic update
+    setSaved(!previousState);
+
+    let success: boolean;
+    if (previousState) {
+      success = await favoritesRepository.removeFavorite(user.id, restaurant.id);
+    } else {
+      success = await favoritesRepository.addFavorite(user.id, restaurant.id);
+    }
+
+    if (!success) {
+      // Rollback on failure
+      setSaved(previousState);
+    }
+    setSavingFavorite(false);
+  };
 
   if (!restaurant && loading) {
     return (
@@ -47,8 +81,8 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
         <LinearGradient colors={['rgba(7,8,16,0.15)', 'rgba(7,8,16,0.78)', 'rgba(7,8,16,0.96)']} style={styles.heroOverlay}>
           <View style={styles.heroActions}>
             <View style={styles.heroSpacer} />
-            <Pressable style={styles.iconButton} onPress={() => setSaved((current) => !current)}>
-              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={theme.colors.surface} />
+            <Pressable style={styles.iconButton} onPress={toggleFavorite} disabled={savingFavorite}>
+              <Ionicons name={saved ? 'heart' : 'heart-outline'} size={22} color={saved ? theme.colors.primary : theme.colors.surface} />
             </Pressable>
           </View>
 

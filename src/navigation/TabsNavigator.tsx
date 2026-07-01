@@ -16,6 +16,7 @@ import { CategoryScreen } from '../screens/CategoryScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
 import { ExchangeScreen } from '../screens/ExchangeScreen';
 import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { FavoriteRestaurantsScreen } from '../screens/FavoriteRestaurantsScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { MapScreen } from '../screens/MapScreen';
@@ -144,6 +145,8 @@ function ProfileStackNavigator() {
     <ProfileStack.Navigator screenOptions={stackScreenOptions}>
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={ProfileEditScreen} />
+      <ProfileStack.Screen name="FavoriteRestaurants" component={FavoriteRestaurantsScreen} />
+      <ProfileStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
       <ProfileStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <ProfileStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
