@@ -1,9 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
+  Animated,
   KeyboardAvoidingView,
   Modal,
+  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -34,6 +36,45 @@ export function ChatAssistantModal() {
     sendMessage,
   } = useDiscovery();
   const [draft, setDraft] = useState('');
+  const sheetTranslateY = useRef(new Animated.Value(0)).current;
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
+      onPanResponderMove: (_, gestureState) => {
+        sheetTranslateY.setValue(Math.max(0, gestureState.dy));
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dy > 90 || gestureState.vy > 0.85) {
+          Animated.timing(sheetTranslateY, {
+            toValue: 420,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(({ finished }) => {
+            if (finished) {
+              closeChat();
+              sheetTranslateY.setValue(0);
+            }
+          });
+
+          return;
+        }
+
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 4,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 4,
+        }).start();
+      },
+    })
+  ).current;
 
   const handleSend = () => {
     if (!draft.trim()) {
@@ -49,80 +90,84 @@ export function ChatAssistantModal() {
       <View style={styles.overlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={closeChat} />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.sheetWrap}>
-          <LinearGradient
-            colors={['#171B28', '#0D1019']}
-            start={{ x: 0.2, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
-            style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
-            <View style={styles.handle} />
-            <View style={styles.header}>
-              <View style={styles.headerCopy}>
-                <View style={styles.badge}>
-                  <Ionicons name="sparkles-outline" size={14} color={theme.colors.secondary} />
-                  <Text style={styles.badgeText}>AI Guide</Text>
-                </View>
-                <Text style={styles.title}>KosVibe Assistant</Text>
-                <Text style={styles.subtitle}>Helping you discover {selectedLocation.label}</Text>
-              </View>
-              <Pressable onPress={closeChat} style={styles.closeButton}>
-                <Ionicons name="close" size={22} color={theme.colors.heading} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              style={styles.messagesScroll}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.messagesContent}>
-              <View style={styles.quickPromptsRow}>
-                {quickPrompts.map((prompt) => (
-                  <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
-                    <Text style={styles.quickPromptText}>{prompt}</Text>
+        <Animated.View style={[styles.sheetWrap, { transform: [{ translateY: sheetTranslateY }] }]}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.sheetKeyboardWrap}>
+            <LinearGradient
+              colors={['#171B28', '#0D1019']}
+              start={{ x: 0.2, y: 0 }}
+              end={{ x: 0.9, y: 1 }}
+              style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
+              <View {...panResponder.panHandlers}>
+                <View style={styles.handle} />
+                <View style={styles.header}>
+                  <View style={styles.headerCopy}>
+                    <View style={styles.badge}>
+                      <Ionicons name="sparkles-outline" size={14} color={theme.colors.secondary} />
+                      <Text style={styles.badgeText}>AI Guide</Text>
+                    </View>
+                    <Text style={styles.title}>KosVibe Assistant</Text>
+                    <Text style={styles.subtitle}>Helping you discover {selectedLocation.label}</Text>
+                  </View>
+                  <Pressable onPress={closeChat} style={styles.closeButton}>
+                    <Ionicons name="close" size={22} color={theme.colors.heading} />
                   </Pressable>
-                ))}
+                </View>
               </View>
 
-              {chatMessages.map((message) => (
-                <View
-                  key={message.id}
-                  style={[
-                    styles.messageBubble,
-                    message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
-                  ]}>
-                  <Text
+              <ScrollView
+                style={styles.messagesScroll}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.messagesContent}>
+                <View style={styles.quickPromptsRow}>
+                  {quickPrompts.map((prompt) => (
+                    <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
+                      <Text style={styles.quickPromptText}>{prompt}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {chatMessages.map((message) => (
+                  <View
+                    key={message.id}
                     style={[
-                      styles.messageText,
-                      message.role === 'assistant' ? styles.assistantText : styles.userText,
+                      styles.messageBubble,
+                      message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
                     ]}>
-                    {message.text}
-                  </Text>
-                </View>
-              ))}
+                    <Text
+                      style={[
+                        styles.messageText,
+                        message.role === 'assistant' ? styles.assistantText : styles.userText,
+                      ]}>
+                      {message.text}
+                    </Text>
+                  </View>
+                ))}
 
-              {isAssistantTyping ? (
-                <View style={[styles.messageBubble, styles.assistantBubble]}>
-                  <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
-                </View>
-              ) : null}
-            </ScrollView>
+                {isAssistantTyping ? (
+                  <View style={[styles.messageBubble, styles.assistantBubble]}>
+                    <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
+                  </View>
+                ) : null}
+              </ScrollView>
 
-            <View style={styles.inputRow}>
-              <TextInput
-                value={draft}
-                onChangeText={setDraft}
-                placeholder="Ask about Kosovo food, monuments, markets, or culture..."
-                placeholderTextColor={theme.colors.subtle}
-                style={styles.input}
-                multiline
-              />
-              <Pressable onPress={handleSend} style={styles.sendButton}>
-                <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
-              </Pressable>
-            </View>
-          </LinearGradient>
-        </KeyboardAvoidingView>
+              <View style={styles.inputRow}>
+                <TextInput
+                  value={draft}
+                  onChangeText={setDraft}
+                  placeholder="Ask about Kosovo food, monuments, markets, or culture..."
+                  placeholderTextColor={theme.colors.subtle}
+                  style={styles.input}
+                  multiline
+                />
+                <Pressable onPress={handleSend} style={styles.sendButton}>
+                  <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
+                </Pressable>
+              </View>
+            </LinearGradient>
+          </KeyboardAvoidingView>
+        </Animated.View>
       </View>
     </Modal>
   );
@@ -138,6 +183,9 @@ const styles = StyleSheet.create({
     height: '84%',
     maxHeight: '90%',
     minHeight: '72%',
+  },
+  sheetKeyboardWrap: {
+    flex: 1,
   },
   sheet: {
     flex: 1,

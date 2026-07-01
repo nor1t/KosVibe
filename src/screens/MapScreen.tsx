@@ -3,7 +3,7 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ExploreMap, type ExploreMapMarker } from '../components/map/ExploreMap';
 import {
@@ -404,11 +404,20 @@ export function MapScreen({ navigation }: MapScreenProps) {
   const { language } = useI18n();
   const { setScrollOffset } = useScrollBehavior();
   const copy = nativeCopy[language].map;
-  const { selectedCategory, selectedLocation, selectedLocationId } = useDiscovery();
+  const {
+    locationOptions,
+    searchQuery,
+    selectedCategory,
+    selectedLocation,
+    selectedLocationId,
+    setSearchQuery,
+    setSelectedLocationId,
+  } = useDiscovery();
   const [activeCategory, setActiveCategory] = useState<ActivityKey>(() =>
     mapDiscoveryCategory(selectedCategory)
   );
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
   const [isSheetVisible, setIsSheetVisible] = useState(true);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [mapRegion, setMapRegion] = useState<MapRegion>(selectedLocation.region);
@@ -416,18 +425,33 @@ export function MapScreen({ navigation }: MapScreenProps) {
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [isLocatingUser, setIsLocatingUser] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [draftSearchQuery, setDraftSearchQuery] = useState(searchQuery);
+
+  useEffect(() => {
+    setDraftSearchQuery(searchQuery);
+  }, [searchQuery]);
 
   const visibleRestaurants = useMemo(
-    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, ''),
-    [selectedLocationId]
+    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery),
+    [searchQuery, selectedLocationId]
   );
 
   const visibleSpots = useMemo(
     () =>
-      exploreSpots.filter((spot) =>
-        selectedLocation.city ? spot.city === selectedLocation.city : true
-      ),
-    [selectedLocation.city]
+      exploreSpots.filter((spot) => {
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+        const matchesLocation = selectedLocation.city ? spot.city === selectedLocation.city : true;
+        const matchesQuery = normalizedQuery
+          ? [spot.title, spot.subtitle, spot.city, spot.accentLabel, spot.category]
+              .join(' ')
+              .toLowerCase()
+              .includes(normalizedQuery)
+          : true;
+
+        return matchesLocation && matchesQuery;
+      }),
+    [searchQuery, selectedLocation.city]
   );
 
   const localizedActivityOptions = useMemo<ActivityOption[]>(
@@ -574,24 +598,42 @@ export function MapScreen({ navigation }: MapScreenProps) {
     setMapRegion(defaultRegion);
     setSelectedMarkerId(null);
     setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSearchOpen(false);
   }, [defaultRegion]);
 
   const openCategoryMenu = () => {
     setIsCategoryMenuOpen((current) => {
       const next = !current;
       setIsSheetVisible(!next);
+      setIsCityMenuOpen(false);
+      setIsSearchOpen(false);
+      return next;
+    });
+  };
+
+  const openCityMenu = () => {
+    setIsCityMenuOpen((current) => {
+      const next = !current;
+      setIsSheetVisible(!next);
+      setIsCategoryMenuOpen(false);
+      setIsSearchOpen(false);
       return next;
     });
   };
 
   const toggleMapType = () => {
     setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSearchOpen(false);
     setMapType((current) => (current === 'standard' ? 'hybrid' : 'standard'));
   };
 
   const hideSheetForMap = () => {
     setIsSheetVisible(false);
     setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSearchOpen(false);
   };
 
   const handleMarkerPress = (markerId: string) => {
@@ -608,11 +650,50 @@ export function MapScreen({ navigation }: MapScreenProps) {
   const handleCategorySelect = (category: ActivityKey) => {
     setActiveCategory(category);
     setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSearchOpen(false);
+    setIsSheetVisible(false);
+  };
+
+  const handleCitySelect = (locationId: string) => {
+    const nextLocation = locationOptions.find((location) => location.id === locationId);
+
+    setSelectedLocationId(locationId);
+    setIsCityMenuOpen(false);
+    setIsCategoryMenuOpen(false);
+    setIsSearchOpen(false);
+    setIsSheetVisible(true);
+    setSelectedMarkerId(null);
+
+    if (nextLocation) {
+      setMapRegion(nextLocation.region);
+    }
+  };
+
+  const submitSearch = () => {
+    setSearchQuery(draftSearchQuery.trim());
+    setIsSearchOpen(false);
+    setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSheetVisible(true);
+  };
+
+  const handleSearchPress = () => {
+    if (isSearchOpen) {
+      submitSearch();
+      return;
+    }
+
+    setIsSearchOpen(true);
+    setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
     setIsSheetVisible(false);
   };
 
   const handleRevealSheet = () => {
     setIsCategoryMenuOpen(false);
+    setIsCityMenuOpen(false);
+    setIsSearchOpen(false);
     setIsSheetVisible(true);
     setMapRegion(defaultRegion);
   };
@@ -621,6 +702,8 @@ export function MapScreen({ navigation }: MapScreenProps) {
     const requestLocation = async () => {
       try {
         setIsCategoryMenuOpen(false);
+        setIsCityMenuOpen(false);
+        setIsSearchOpen(false);
         setIsSheetVisible(true);
         setIsLocatingUser(true);
 
@@ -692,17 +775,38 @@ export function MapScreen({ navigation }: MapScreenProps) {
           style={styles.categoryButton}
           onPress={openCategoryMenu}>
           <LinearGradient colors={currentOption.colors} style={styles.categoryIconWrap}>
-            <Ionicons name={currentOption.icon as never} size={18} color={theme.colors.surface} />
+            <Ionicons name={currentOption.icon as never} size={16} color={theme.colors.surface} />
           </LinearGradient>
 
           <View style={styles.categoryCopy}>
             <Text style={styles.categoryEyebrow}>{copy.categoryEyebrow}</Text>
-            <Text style={styles.categoryValue}>{currentOption.label}</Text>
+            <Text style={styles.categoryValue} numberOfLines={1}>
+              {currentOption.label}
+            </Text>
           </View>
 
           <Ionicons
             name={isCategoryMenuOpen ? 'chevron-up-outline' : 'chevron-down-outline'}
-            size={18}
+            size={14}
+            color={theme.colors.surface}
+          />
+        </Pressable>
+
+        <Pressable
+          style={styles.cityButton}
+          onPress={openCityMenu}>
+          <LinearGradient colors={['#42D98C', '#1E9B63']} style={styles.cityIconWrap}>
+            <Ionicons name="location-outline" size={16} color={theme.colors.surface} />
+          </LinearGradient>
+          <View style={styles.cityCopy}>
+            <Text style={styles.categoryEyebrow}>{copy.cityEyebrow}</Text>
+            <Text style={styles.cityValue} numberOfLines={1}>
+              {selectedLocation.city ?? copy.allCities}
+            </Text>
+          </View>
+          <Ionicons
+            name={isCityMenuOpen ? 'chevron-up-outline' : 'chevron-down-outline'}
+            size={14}
             color={theme.colors.surface}
           />
         </Pressable>
@@ -728,7 +832,29 @@ export function MapScreen({ navigation }: MapScreenProps) {
             color={isLocatingUser ? theme.colors.secondary : theme.colors.surface}
           />
         </Pressable>
+
+        <Pressable
+          accessibilityLabel={copy.searchButton}
+          style={[styles.headerButton, isSearchOpen ? styles.headerButtonActive : undefined]}
+          onPress={handleSearchPress}>
+          <Ionicons name="search-outline" size={20} color={theme.colors.surface} />
+        </Pressable>
       </View>
+
+      {isSearchOpen ? (
+        <View style={styles.searchPanel}>
+          <TextInput
+            autoFocus
+            value={draftSearchQuery}
+            onChangeText={setDraftSearchQuery}
+            onSubmitEditing={submitSearch}
+            placeholder={copy.searchPlaceholder}
+            placeholderTextColor={theme.colors.mutedText}
+            returnKeyType="search"
+            style={styles.searchInput}
+          />
+        </View>
+      ) : null}
 
       {isCategoryMenuOpen ? (
         <View style={styles.dropdownPanel}>
@@ -763,6 +889,33 @@ export function MapScreen({ navigation }: MapScreenProps) {
               );
             })}
           </View>
+        </View>
+      ) : null}
+
+      {isCityMenuOpen ? (
+        <View style={styles.cityDropdownPanel}>
+          <Text style={styles.dropdownTitle}>{copy.cityDropdownTitle}</Text>
+          <ScrollView style={styles.cityOptionScroll} contentContainerStyle={styles.cityOptionList}>
+            {locationOptions.map((location) => {
+              const isActive = location.id === selectedLocationId;
+
+              return (
+                <Pressable
+                  key={location.id}
+                  style={[styles.cityOption, isActive ? styles.cityOptionActive : undefined]}
+                  onPress={() => handleCitySelect(location.id)}>
+                  <Ionicons
+                    name={location.city ? 'business-outline' : 'map-outline'}
+                    size={18}
+                    color={isActive ? theme.colors.surface : theme.colors.mutedText}
+                  />
+                  <Text style={[styles.cityOptionText, isActive ? styles.cityOptionTextActive : undefined]}>
+                    {location.city ?? copy.allCities}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
       ) : null}
 
@@ -881,32 +1034,36 @@ const styles = StyleSheet.create({
   controls: {
     position: 'absolute',
     top: 144,
-    left: 20,
-    right: 20,
+    left: 14,
+    right: 8,
     flexDirection: 'row',
-    gap: 12,
+    gap: 5,
     alignItems: 'center',
+    zIndex: 4,
   },
   categoryButton: {
-    flex: 1,
+    flex: 1.15,
+    minWidth: 132,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 12,
-    borderRadius: 22,
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 8,
+    borderRadius: 18,
     backgroundColor: 'rgba(15,17,28,0.9)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
   categoryIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   categoryCopy: {
     flex: 1,
+    minWidth: 0,
   },
   categoryEyebrow: {
     color: theme.colors.mutedText,
@@ -917,22 +1074,77 @@ const styles = StyleSheet.create({
   categoryValue: {
     marginTop: 2,
     color: theme.colors.heading,
-    fontSize: 18,
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  cityButton: {
+    flex: 1,
+    minWidth: 118,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 9,
+    borderRadius: 18,
+    backgroundColor: 'rgba(15,17,28,0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  cityCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cityIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cityValue: {
+    marginTop: 2,
+    color: theme.colors.heading,
+    fontSize: 13,
     fontWeight: '800',
   },
   headerButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: 'rgba(15,17,28,0.9)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerButtonActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  searchPanel: {
+    position: 'absolute',
+    top: 198,
+    left: 20,
+    right: 20,
+    minHeight: 52,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(15,17,28,0.96)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...theme.shadow.floating,
+    zIndex: 5,
+  },
+  searchInput: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '700',
+    paddingVertical: 12,
+  },
   dropdownPanel: {
     position: 'absolute',
-    top: 192,
+    top: 198,
     left: 20,
     right: 20,
     padding: 16,
@@ -941,6 +1153,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     ...theme.shadow.floating,
+    zIndex: 5,
   },
   dropdownTitle: {
     color: theme.colors.heading,
@@ -988,6 +1201,50 @@ const styles = StyleSheet.create({
     color: theme.colors.mutedText,
     fontSize: 12,
     fontWeight: '600',
+  },
+  cityDropdownPanel: {
+    position: 'absolute',
+    top: 204,
+    left: 20,
+    right: 20,
+    padding: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(12,14,24,0.97)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    ...theme.shadow.floating,
+    zIndex: 5,
+  },
+  cityOptionList: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  cityOptionScroll: {
+    marginTop: 14,
+    maxHeight: 330,
+  },
+  cityOption: {
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  cityOptionActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  cityOptionText: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  cityOptionTextActive: {
+    color: theme.colors.surface,
   },
   sheet: {
     position: 'absolute',

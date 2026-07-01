@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
@@ -105,12 +106,19 @@ function phoneUrl(phone: string) {
 
 export function HelpScreen() {
   const { language } = useI18n();
+  const insets = useSafeAreaInsets();
   const copy = helpCopy[language];
   const [activeSection, setActiveSection] = useState<HelpSectionId>('government');
   const contacts = copy.contacts[activeSection];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: Math.max(insets.top + 18, 34) },
+      ]}
+      showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.helpIcon}>
           <Ionicons name="help-outline" size={28} color={theme.colors.surface} />
@@ -169,7 +177,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: PAGE_TOP_PADDING,
     paddingBottom: PAGE_BOTTOM_PADDING,
   },
   hero: {

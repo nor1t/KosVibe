@@ -153,6 +153,11 @@ export const nativeCopy: Record<
       title: string;
       categoryEyebrow: string;
       dropdownTitle: string;
+      cityEyebrow: string;
+      cityDropdownTitle: string;
+      allCities: string;
+      searchPlaceholder: string;
+      searchButton: string;
       spotsLabel: string;
       emptyTitle: string;
       reveal: string;
@@ -351,8 +356,13 @@ export const nativeCopy: Record<
     },
     map: {
       title: 'Explore Kosovo',
-      categoryEyebrow: 'Explore category',
+      categoryEyebrow: 'Category',
       dropdownTitle: 'Choose the vibe you want on the map',
+      cityEyebrow: 'City',
+      cityDropdownTitle: 'Choose a city',
+      allCities: 'All Kosovo',
+      searchPlaceholder: 'Search places, vibes, cities...',
+      searchButton: 'Search',
       spotsLabel: 'spots',
       emptyTitle: 'Nothing pinned here yet',
       reveal: 'Show',
@@ -586,8 +596,13 @@ export const nativeCopy: Record<
     },
     map: {
       title: 'Eksploro Kosoven',
-      categoryEyebrow: 'Kategoria',
+      categoryEyebrow: 'Kategori',
       dropdownTitle: 'Zgjidh viben qe do ne harte',
+      cityEyebrow: 'Qyteti',
+      cityDropdownTitle: 'Zgjidh qytetin',
+      allCities: 'Gjithe Kosova',
+      searchPlaceholder: 'Kerko vende, vibe, qytete...',
+      searchButton: 'Kerko',
       spotsLabel: 'vende',
       emptyTitle: 'Ende nuk ka vende ketu',
       reveal: 'Shfaq',

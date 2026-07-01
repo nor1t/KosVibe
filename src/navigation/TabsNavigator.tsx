@@ -42,6 +42,7 @@ const MapStack = createNativeStackNavigator<MapStackParamList>();
 const TavolinaStack = createNativeStackNavigator<TavolinaStackParamList>();
 const FavoritesStack = createNativeStackNavigator<FavoritesStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const noHeaderOptions = { headerShown: false };
 
 const stackScreenOptions = ({ navigation }: { navigation: NavigationProp<ParamListBase> }) => ({
   headerShown: true,
@@ -87,9 +88,9 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
-      <HomeStack.Screen name="History" component={HistoryScreen} />
-      <HomeStack.Screen name="Help" component={HelpScreen} />
-      <HomeStack.Screen name="Exchange" component={ExchangeScreen} />
+      <HomeStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <HomeStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <HomeStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
     </HomeStack.Navigator>
   );
 }
@@ -101,9 +102,9 @@ function MapStackNavigator() {
       <MapStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <MapStack.Screen name="BookTable" component={BookTableScreen} />
       <MapStack.Screen name="Settings" component={SettingsScreen} />
-      <MapStack.Screen name="History" component={HistoryScreen} />
-      <MapStack.Screen name="Help" component={HelpScreen} />
-      <MapStack.Screen name="Exchange" component={ExchangeScreen} />
+      <MapStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <MapStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <MapStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
     </MapStack.Navigator>
   );
 }
@@ -115,9 +116,9 @@ function TavolinaStackNavigator() {
       <TavolinaStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <TavolinaStack.Screen name="BookTable" component={BookTableScreen} />
       <TavolinaStack.Screen name="Settings" component={SettingsScreen} />
-      <TavolinaStack.Screen name="History" component={HistoryScreen} />
-      <TavolinaStack.Screen name="Help" component={HelpScreen} />
-      <TavolinaStack.Screen name="Exchange" component={ExchangeScreen} />
+      <TavolinaStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <TavolinaStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <TavolinaStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
     </TavolinaStack.Navigator>
   );
 }
@@ -131,9 +132,9 @@ function FavoritesStackNavigator() {
       <FavoritesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />
       <FavoritesStack.Screen name="Settings" component={SettingsScreen} />
-      <FavoritesStack.Screen name="History" component={HistoryScreen} />
-      <FavoritesStack.Screen name="Help" component={HelpScreen} />
-      <FavoritesStack.Screen name="Exchange" component={ExchangeScreen} />
+      <FavoritesStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <FavoritesStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <FavoritesStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
     </FavoritesStack.Navigator>
   );
 }
@@ -144,9 +145,9 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={ProfileEditScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
-      <ProfileStack.Screen name="History" component={HistoryScreen} />
-      <ProfileStack.Screen name="Help" component={HelpScreen} />
-      <ProfileStack.Screen name="Exchange" component={ExchangeScreen} />
+      <ProfileStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <ProfileStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <ProfileStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
     </ProfileStack.Navigator>
   );
 }

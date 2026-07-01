@@ -15,7 +15,7 @@ import {
     View,
 } from 'react-native';
 
-import { type TavolinaInvite } from '../data/mockData';
+import { tavolinaInvites, type TavolinaInvite } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { usePageSpacing } from '../components/Screen';
@@ -33,6 +33,17 @@ type EventInvite = Omit<TavolinaInvite, 'restaurantId'> & {
 type EventType = 'food' | 'culture' | 'nightlife' | 'other';
 
 type ComposerEventType = EventType;
+
+type CreatorProfile = {
+  name: string;
+  avatar: string;
+  rating: number;
+  eventCount: number;
+  confirmedGuests: number;
+  reliability: string;
+  badges: string[];
+  recentPraise: string[];
+};
 
 const moodKeys = ['all', 'food', 'culture', 'nightlife', 'other'] as const;
 type MoodKey = (typeof moodKeys)[number];
@@ -64,6 +75,42 @@ const eventImages = [
   'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=1200&q=80',
 ];
 
+const fallbackHostProfile = {
+  rating: 4.6,
+  eventCount: 8,
+  confirmedGuests: 42,
+  reliability: 'Reliable host',
+  badges: ['Verified vibe', 'Fast replies'],
+  recentPraise: ['Clear plan', 'Friendly group'],
+};
+
+const hostProfileOverrides: Record<string, Partial<CreatorProfile>> = {
+  'Arta K.': {
+    rating: 4.9,
+    eventCount: 18,
+    confirmedGuests: 96,
+    reliability: 'Top food host',
+    badges: ['Dinner pro', 'On-time', 'Warm tables'],
+    recentPraise: ['Booked exactly as promised', 'Made newcomers feel welcome'],
+  },
+  'Rina D.': {
+    rating: 4.8,
+    eventCount: 12,
+    confirmedGuests: 58,
+    reliability: 'Trusted organizer',
+    badges: ['Small groups', 'Great taste'],
+    recentPraise: ['Good communication', 'Easy-going host'],
+  },
+  'Dren A.': {
+    rating: 4.7,
+    eventCount: 10,
+    confirmedGuests: 74,
+    reliability: 'Culture guide',
+    badges: ['Local routes', 'Photo walks'],
+    recentPraise: ['Great route planning', 'Kept everyone together'],
+  },
+};
+
 function formatSpotsLabel(spotsLabel: string, joined: boolean) {
   const match = spotsLabel.match(/^(\d+)\/(\d+)(.*)$/);
 
@@ -79,16 +126,32 @@ function formatSpotsLabel(spotsLabel: string, joined: boolean) {
   return `${visibleCurrent}/${total}${suffix}`;
 }
 
+function getCreatorProfile(invite: EventInvite): CreatorProfile {
+  const override = hostProfileOverrides[invite.creator] ?? {};
+
+  return {
+    name: invite.creator,
+    avatar: invite.creatorAvatar,
+    ...fallbackHostProfile,
+    ...override,
+  };
+}
+
 export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const { language } = useI18n();
   const { setScrollOffset } = useScrollBehavior();
   const copy = nativeCopy[language].tavolina;
   const createCopy = copy.createEvent;
   const pageSpacing = usePageSpacing();
-  const [events, setEvents] = useState<EventInvite[]>([]);
+  const [events, setEvents] = useState<EventInvite[]>(() => tavolinaInvites);
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventInvite | null>(null);
+  const [selectedCreatorEvent, setSelectedCreatorEvent] = useState<EventInvite | null>(null);
   const [joinedEventIds, setJoinedEventIds] = useState<Set<string>>(() => new Set());
+  const [presenceConfirmedEventIds, setPresenceConfirmedEventIds] = useState<Set<string>>(
+    () => new Set()
+  );
+  const [eventRatings, setEventRatings] = useState<Record<string, number>>({});
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(0);
 
   // Multi-step form state
@@ -114,6 +177,8 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
 
     return events.filter((invite) => invite.eventType === selectedMood);
   }, [events, selectedMoodIndex]);
+
+  const selectedCreatorProfile = selectedEvent ? getCreatorProfile(selectedEvent) : null;
 
   const canProceedToStep2 = selectedComposerType !== null;
   const canProceedToStep3 =
@@ -222,6 +287,10 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   };
 
   const isSelectedEventJoined = selectedEvent ? joinedEventIds.has(selectedEvent.id) : false;
+  const isSelectedEventConfirmed = selectedEvent
+    ? presenceConfirmedEventIds.has(selectedEvent.id)
+    : false;
+  const selectedEventRating = selectedEvent ? eventRatings[selectedEvent.id] ?? 0 : 0;
 
   const toggleJoinSelectedEvent = () => {
     if (!selectedEvent) {
@@ -232,14 +301,66 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       const next = new Set(current);
 
       if (next.has(selectedEvent.id)) {
+        const eventId = selectedEvent.id;
         next.delete(selectedEvent.id);
+        setPresenceConfirmedEventIds((currentConfirmed) => {
+          const nextConfirmed = new Set(currentConfirmed);
+          nextConfirmed.delete(eventId);
+          return nextConfirmed;
+        });
+        setEventRatings((currentRatings) => {
+          const { [eventId]: _removed, ...remaining } = currentRatings;
+          return remaining;
+        });
       } else {
-        Alert.alert(createCopy.joinSuccessTitle, createCopy.joinSuccessMessage);
+        next.add(selectedEvent.id);
       }
 
       return next;
     });
   };
+
+  const confirmPresenceForSelectedEvent = () => {
+    if (!selectedEvent || !isSelectedEventJoined) {
+      return;
+    }
+
+    setPresenceConfirmedEventIds((current) => {
+      const next = new Set(current);
+      next.add(selectedEvent.id);
+      return next;
+    });
+  };
+
+  const rateSelectedEvent = (rating: number) => {
+    if (!selectedEvent || !isSelectedEventConfirmed) {
+      return;
+    }
+
+    setEventRatings((current) => ({ ...current, [selectedEvent.id]: rating }));
+  };
+
+  const renderRatingStars = (
+    value: number,
+    onRate: (rating: number) => void,
+    disabled = false
+  ) => (
+    <View style={[styles.ratingStars, disabled ? styles.ratingStarsDisabled : undefined]}>
+      {[1, 2, 3, 4, 5].map((rating) => (
+        <Pressable
+          key={rating}
+          disabled={disabled}
+          style={styles.ratingStarButton}
+          onPress={() => onRate(rating)}>
+          <Ionicons
+            name={rating <= value ? 'star' : 'star-outline'}
+            size={24}
+            color={disabled ? theme.colors.mutedText : theme.colors.gold}
+          />
+        </Pressable>
+      ))}
+    </View>
+  );
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
@@ -725,9 +846,10 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
         transparent
         animationType="slide"
         onRequestClose={() => setSelectedEvent(null)}>
-        <View style={styles.modalBackdrop}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedEvent(null)}>
           {selectedEvent ? (
-            <View style={styles.eventDetailCard}>
+            <Pressable style={styles.eventDetailCard} onPress={(event) => event.stopPropagation()}>
+              <Pressable style={styles.modalHandle} onPress={() => setSelectedEvent(null)} />
               <ImageBackground source={{ uri: selectedEvent.image }} style={styles.eventDetailImage}>
                 <View style={styles.eventDetailShade} />
                 <View style={styles.eventDetailTopRow}>
@@ -741,27 +863,45 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                 </View>
               </ImageBackground>
 
-              <View style={styles.eventDetailBody}>
+              <ScrollView
+                style={styles.eventDetailScroll}
+                contentContainerStyle={styles.eventDetailBody}
+                showsVerticalScrollIndicator={false}>
                 <Text style={styles.eventDetailTitle}>{selectedEvent.restaurantName}</Text>
                 <Text style={styles.eventDetailMeta}>
                   {selectedEvent.day} | {selectedEvent.time} | {selectedEvent.city}
                 </Text>
-                <View style={styles.eventTypePill}>
-                  <Text style={styles.eventTypePillText}>
-                    {copy.moods[eventTypeLabelIndex[selectedEvent.eventType]]}
-                  </Text>
+                <View style={styles.eventTrustRow}>
+                  <View style={styles.eventTypePill}>
+                    <Ionicons name={eventTypeIcons[selectedEvent.eventType]} size={13} color={theme.colors.surface} />
+                    <Text style={styles.eventTypePillText}>
+                      {copy.moods[eventTypeLabelIndex[selectedEvent.eventType]]}
+                    </Text>
+                  </View>
+                  <View style={styles.verifiedPill}>
+                    <Ionicons name="shield-checkmark-outline" size={13} color={theme.colors.success} />
+                    <Text style={styles.verifiedPillText}>
+                      {selectedCreatorProfile?.rating.toFixed(1)} host
+                    </Text>
+                  </View>
                 </View>
 
-                <View style={styles.hostRow}>
+                <Pressable
+                  style={styles.hostRow}
+                  onPress={() => setSelectedCreatorEvent(selectedEvent)}>
                   <ImageBackground source={{ uri: selectedEvent.creatorAvatar }} style={styles.hostAvatar} />
                   <View style={styles.hostCopy}>
                     <Text style={styles.hostLabel}>{createCopy.hostedBy}</Text>
                     <Text style={styles.hostName}>{selectedEvent.creator}</Text>
+                    <Text style={styles.hostSubline}>
+                      {selectedCreatorProfile?.reliability} | tap for ratings
+                    </Text>
                   </View>
+                  <Ionicons name="chevron-forward" size={18} color={theme.colors.mutedText} />
                   <Text style={styles.spotsLabel}>
                     {formatSpotsLabel(selectedEvent.spotsLabel, isSelectedEventJoined)}
                   </Text>
-                </View>
+                </Pressable>
 
                 {/* Pricing & capacity info in detail */}
                 {selectedEvent.isPaid || selectedEvent.maxAttendees ? (
@@ -798,6 +938,48 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                   ))}
                 </View>
 
+                <View style={styles.attendancePanel}>
+                  <View style={styles.attendanceIcon}>
+                    <Ionicons
+                      name={isSelectedEventConfirmed ? 'checkmark-done-outline' : 'ticket-outline'}
+                      size={20}
+                      color={isSelectedEventConfirmed ? theme.colors.success : theme.colors.secondary}
+                    />
+                  </View>
+                  <View style={styles.attendanceCopy}>
+                    <Text style={styles.attendanceTitle}>
+                      {isSelectedEventConfirmed
+                        ? 'Presence confirmed'
+                        : isSelectedEventJoined
+                          ? 'Waiting for host confirmation'
+                          : 'Join first to request a spot'}
+                    </Text>
+                    <Text style={styles.attendanceText}>
+                      Ratings unlock only after the event maker confirms you attended.
+                    </Text>
+                  </View>
+                </View>
+
+                {isSelectedEventJoined && !isSelectedEventConfirmed ? (
+                  <Pressable
+                    style={styles.confirmPresenceButton}
+                    onPress={confirmPresenceForSelectedEvent}>
+                    <Ionicons name="shield-checkmark-outline" size={18} color={theme.colors.surface} />
+                    <Text style={styles.confirmPresenceText}>Host confirms your presence</Text>
+                  </Pressable>
+                ) : null}
+
+                <View style={styles.ratingPanel}>
+                  <View style={styles.ratingHeader}>
+                    <Text style={styles.ratingTitle}>Rate after attending</Text>
+                    <Text style={styles.ratingLockText}>
+                      {isSelectedEventConfirmed ? 'Unlocked' : 'Locked'}
+                    </Text>
+                  </View>
+                  <Text style={styles.ratingLabel}>Event organization</Text>
+                  {renderRatingStars(selectedEventRating, rateSelectedEvent, !isSelectedEventConfirmed)}
+                </View>
+
                 <Pressable
                   style={[styles.joinButton, isSelectedEventJoined && styles.joinButtonActive]}
                   onPress={toggleJoinSelectedEvent}>
@@ -810,10 +992,75 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                     {isSelectedEventJoined ? createCopy.joined : createCopy.join}
                   </Text>
                 </Pressable>
-              </View>
-            </View>
+              </ScrollView>
+            </Pressable>
           ) : null}
-        </View>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={selectedCreatorEvent !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedCreatorEvent(null)}>
+        <Pressable style={styles.profileBackdrop} onPress={() => setSelectedCreatorEvent(null)}>
+          {selectedCreatorEvent ? (
+            <Pressable style={styles.creatorProfileCard} onPress={(event) => event.stopPropagation()}>
+              {(() => {
+                const profile = getCreatorProfile(selectedCreatorEvent);
+
+                return (
+                  <>
+                    <View style={styles.creatorProfileTop}>
+                      <Image source={{ uri: profile.avatar }} style={styles.creatorProfileAvatar} />
+                      <View style={styles.creatorProfileCopy}>
+                        <Text style={styles.creatorProfileEyebrow}>Event maker</Text>
+                        <Text style={styles.creatorProfileName}>{profile.name}</Text>
+                        <Text style={styles.creatorProfileMeta}>{profile.reliability}</Text>
+                      </View>
+                      <Pressable
+                        style={styles.modalCloseButton}
+                        onPress={() => setSelectedCreatorEvent(null)}>
+                        <Ionicons name="close" size={20} color={theme.colors.surface} />
+                      </Pressable>
+                    </View>
+
+                    <View style={styles.creatorStatsGrid}>
+                      <View style={styles.creatorStat}>
+                        <Text style={styles.creatorStatValue}>{profile.rating.toFixed(1)}</Text>
+                        <Text style={styles.creatorStatLabel}>Host rating</Text>
+                      </View>
+                      <View style={styles.creatorStat}>
+                        <Text style={styles.creatorStatValue}>{profile.eventCount}</Text>
+                        <Text style={styles.creatorStatLabel}>Events</Text>
+                      </View>
+                      <View style={styles.creatorStat}>
+                        <Text style={styles.creatorStatValue}>{profile.confirmedGuests}</Text>
+                        <Text style={styles.creatorStatLabel}>Confirmed</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.creatorBadgeRow}>
+                      {profile.badges.map((badge) => (
+                        <View key={badge} style={styles.creatorBadge}>
+                          <Ionicons name="sparkles-outline" size={12} color={theme.colors.gold} />
+                          <Text style={styles.creatorBadgeText}>{badge}</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    <View style={styles.creatorPraisePanel}>
+                      <Text style={styles.creatorPraiseTitle}>Recent guest notes</Text>
+                      {profile.recentPraise.map((praise) => (
+                        <Text key={praise} style={styles.creatorPraiseText}>- {praise}</Text>
+                      ))}
+                    </View>
+                  </>
+                );
+              })()}
+            </Pressable>
+          ) : null}
+        </Pressable>
       </Modal>
     </View>
   );
@@ -1063,7 +1310,13 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.64)',
+    backgroundColor: '#0B0D16',
+  },
+  profileBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   modalCard: {
     maxHeight: '92%',
@@ -1472,17 +1725,25 @@ const styles = StyleSheet.create({
   },
   // Event detail modal
   eventDetailCard: {
-    maxHeight: '88%',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    flex: 1,
+    width: '100%',
     overflow: 'hidden',
     backgroundColor: '#0B0D16',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  modalHandle: {
+    position: 'absolute',
+    top: 8,
+    alignSelf: 'center',
+    width: 54,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.32)',
+    zIndex: 5,
   },
   eventDetailImage: {
-    height: 220,
+    height: 292,
     padding: 18,
+    paddingTop: 54,
   },
   eventDetailShade: {
     ...StyleSheet.absoluteFillObject,
@@ -1510,6 +1771,10 @@ const styles = StyleSheet.create({
   },
   eventDetailBody: {
     padding: 20,
+    paddingBottom: 46,
+  },
+  eventDetailScroll: {
+    flex: 1,
   },
   eventDetailTitle: {
     color: theme.colors.heading,
@@ -1524,8 +1789,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   eventTypePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     alignSelf: 'flex-start',
-    marginTop: 12,
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 999,
@@ -1539,11 +1806,39 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textTransform: 'uppercase',
   },
+  eventTrustRow: {
+    marginTop: 12,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  verifiedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(66,217,140,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(66,217,140,0.24)',
+  },
+  verifiedPillText: {
+    color: theme.colors.success,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
   hostRow: {
     marginTop: 18,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    padding: 12,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
   hostAvatar: {
     width: 44,
@@ -1564,6 +1859,12 @@ const styles = StyleSheet.create({
     color: theme.colors.heading,
     fontSize: 15,
     fontWeight: '900',
+  },
+  hostSubline: {
+    marginTop: 3,
+    color: theme.colors.secondary,
+    fontSize: 12,
+    fontWeight: '700',
   },
   detailInfoRow: {
     flexDirection: 'row',
@@ -1591,6 +1892,102 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 23,
   },
+  attendancePanel: {
+    marginTop: 18,
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(93,167,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(93,167,255,0.2)',
+  },
+  attendanceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  attendanceCopy: {
+    flex: 1,
+  },
+  attendanceTitle: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  attendanceText: {
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  confirmPresenceButton: {
+    marginTop: 12,
+    minHeight: 48,
+    borderRadius: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(66,217,140,0.8)',
+  },
+  confirmPresenceText: {
+    color: theme.colors.surface,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  ratingPanel: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.045)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  ratingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 10,
+  },
+  ratingTitle: {
+    color: theme.colors.heading,
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  ratingLockText: {
+    color: theme.colors.secondary,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  ratingLabel: {
+    marginTop: 10,
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+  },
+  ratingStars: {
+    marginTop: 8,
+    flexDirection: 'row',
+    gap: 4,
+  },
+  ratingStarsDisabled: {
+    opacity: 0.45,
+  },
+  ratingStarButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
   joinButton: {
     marginTop: 22,
     minHeight: 56,
@@ -1608,5 +2005,111 @@ const styles = StyleSheet.create({
     color: theme.colors.surface,
     fontSize: 16,
     fontWeight: '900',
+  },
+  creatorProfileCard: {
+    padding: 18,
+    borderRadius: 28,
+    backgroundColor: '#0B0D16',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    ...theme.shadow.floating,
+  },
+  creatorProfileTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  creatorProfileAvatar: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+  },
+  creatorProfileCopy: {
+    flex: 1,
+  },
+  creatorProfileEyebrow: {
+    color: theme.colors.secondary,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  creatorProfileName: {
+    marginTop: 3,
+    color: theme.colors.heading,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  creatorProfileMeta: {
+    marginTop: 3,
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  creatorStatsGrid: {
+    marginTop: 18,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  creatorStat: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.055)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  creatorStatValue: {
+    color: theme.colors.heading,
+    fontSize: 21,
+    fontWeight: '900',
+  },
+  creatorStatLabel: {
+    marginTop: 3,
+    color: theme.colors.mutedText,
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  creatorBadgeRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  creatorBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,179,0,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.18)',
+  },
+  creatorBadgeText: {
+    color: theme.colors.gold,
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  creatorPraisePanel: {
+    marginTop: 16,
+    padding: 14,
+    borderRadius: 20,
+    backgroundColor: 'rgba(66,217,140,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(66,217,140,0.16)',
+  },
+  creatorPraiseTitle: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  creatorPraiseText: {
+    color: '#DDE1EF',
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '700',
   },
 });

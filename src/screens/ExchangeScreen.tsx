@@ -2,8 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
@@ -43,6 +44,7 @@ const exchangeCopy = {
 
 export function ExchangeScreen() {
   const { language } = useI18n();
+  const insets = useSafeAreaInsets();
   const copy = exchangeCopy[language];
   const [rates, setRates] = useState<Record<string, number>>({});
   const [date, setDate] = useState('');
@@ -90,7 +92,13 @@ export function ExchangeScreen() {
   }, [parsedAmount, selectedRate]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: Math.max(insets.top + 18, 34) },
+      ]}
+      showsVerticalScrollIndicator={false}>
       <LinearGradient colors={theme.gradients.fire} style={styles.hero}>
         <View style={styles.moneyIcon}>
           <Ionicons name="logo-euro" size={30} color={theme.colors.surface} />
@@ -168,42 +176,41 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: 20,
-    paddingTop: PAGE_TOP_PADDING,
     paddingBottom: PAGE_BOTTOM_PADDING,
   },
   hero: {
-    padding: 20,
-    borderRadius: 28,
+    padding: 16,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.14)',
     ...theme.shadow.card,
   },
   moneyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.18)',
-    marginBottom: 18,
+    marginBottom: 12,
   },
   title: {
-    color: theme.colors.heading,
-    fontSize: 36,
-    lineHeight: 38,
+    color: theme.colors.secondary,
+    fontSize: 28,
+    lineHeight: 31,
     fontWeight: '900',
   },
   subtitle: {
-    marginTop: 10,
+    marginTop: 8,
     color: 'rgba(255,255,255,0.82)',
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 20,
   },
   heroMetaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 18,
+    marginTop: 12,
   },
   heroChip: {
     flexDirection: 'row',
