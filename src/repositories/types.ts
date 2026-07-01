@@ -367,6 +367,7 @@ export type CreateStoryInput = {
   imageUri?: string;
   authorName?: string;
   authorId?: string;
+  language?: string;
 };
 
 export type StoriesData = {
@@ -430,7 +431,7 @@ export interface IEventsRepository {
 export interface IStoriesRepository {
   getStories(language: SupportedLanguage): StoryItem[];
   getStoryById(storyId: string, language: SupportedLanguage): StoryItem | undefined;
-  createStory(input: CreateStoryInput): StoryItem;
+  createStory(input: CreateStoryInput): Promise<StoryItem>;
   getImageTemplates(): string[];
 }
 

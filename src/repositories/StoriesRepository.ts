@@ -6,8 +6,8 @@ import type { CreateStoryInput, IStoriesRepository, StoryItem } from './types';
  * Sprint 6 — Database-backed Stories Repository
  *
  * All story data comes from the database via Supabase.
- * AsyncStorage has been removed. Base stories are seeded in DB.
  * User-created stories persist to the `stories` table.
+ * Cache is updated after every write so the UI stays in sync.
  */
 
 const imageTemplates = [
@@ -18,7 +18,29 @@ const imageTemplates = [
   'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
 ];
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+function computeReadTime(body: string): string {
+  const words = body.trim().split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.round(words / 200));
+  return `${minutes} min`;
+}
+
+function relativeTime(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  return date.toLocaleDateString();
+}
+
 function buildStory(row: Record<string, unknown>): StoryItem {
+  const createdAt = row.created_at ? new Date(row.created_at as string) : null;
   return {
     id: row.id as string,
     title: row.title as string,
@@ -28,14 +50,16 @@ function buildStory(row: Record<string, unknown>): StoryItem {
     image: row.image_url as string,
     location: row.location as string,
     category: row.category as string,
-    readTime: row.read_time as string,
-    postedAt: row.posted_at as string,
+    readTime: (row.read_time as string) ?? computeReadTime((row.body as string) ?? ''),
+    postedAt: createdAt ? relativeTime(createdAt) : (row.posted_at as string) ?? 'Just now',
     likes: (row.likes_count as number) ?? 0,
     views: (row.views_count as number) ?? 0,
     isUserStory: (row.is_user_story as boolean) ?? false,
     imageUri: (row.image_url as string) ?? undefined,
   };
 }
+
+// ─── repository ─────────────────────────────────────────────────────────────
 
 export class StoriesRepository implements IStoriesRepository {
   private baseStoriesCache = new Map<SupportedLanguage, StoryItem[]>();
@@ -53,6 +77,8 @@ export class StoriesRepository implements IStoriesRepository {
 
     if (!enError && enStories) {
       this.baseStoriesCache.set('en', enStories.map(buildStory));
+    } else {
+      console.error('Failed to load en stories', enError);
     }
 
     const { data: sqStories, error: sqError } = await supabase
@@ -66,16 +92,18 @@ export class StoriesRepository implements IStoriesRepository {
 
     if (!sqError && sqStories) {
       this.baseStoriesCache.set('sq', sqStories.map(buildStory));
+    } else {
+      console.error('Failed to load sq stories', sqError);
     }
 
     this.initialized = true;
   }
 
   private async ensureReady(): Promise<void> {
-    if (!this.initialized) {
-      await this.refresh();
-    }
+    if (!this.initialized) await this.refresh();
   }
+
+  // ─── reads ──────────────────────────────────────────────────────────────
 
   getStories(language: SupportedLanguage): StoryItem[] {
     return [...(this.baseStoriesCache.get(language) ?? [])];
@@ -95,65 +123,45 @@ export class StoriesRepository implements IStoriesRepository {
     return this.getStoryById(storyId, language);
   }
 
-  createStory(input: CreateStoryInput): StoryItem {
-    const tempId = `story-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-    const now = input.postedAt ?? 'Just now';
+  // ─── writes ─────────────────────────────────────────────────────────────
 
-    const nextStory: StoryItem = {
-      id: tempId,
-      title: input.title.trim(),
-      author: input.authorName ?? input.authorId ?? '@you',
-      subtitle: input.subtitle.trim(),
-      body: input.body.trim(),
-      image: input.image,
-      location: input.location.trim(),
-      category: input.category.trim(),
-      readTime: '2 min',
-      postedAt: now,
-      likes: 0,
-      views: 0,
-      isUserStory: true,
-      imageUri: input.imageUri,
-    };
+  async createStory(input: CreateStoryInput): Promise<StoryItem> {
+    const language: SupportedLanguage = (input.language === 'sq' ? 'sq' : 'en');
+    const readTime = computeReadTime(input.body);
 
-    // Persist to DB in background
-    void supabase
+    const { data, error } = await supabase
       .from('stories')
       .insert({
-        title: nextStory.title,
-        author: nextStory.author,
-        subtitle: nextStory.subtitle,
-        body: nextStory.body,
-        image_url: nextStory.image,
-        location: nextStory.location,
-        category: nextStory.category,
-        read_time: nextStory.readTime,
-        posted_at: nextStory.postedAt,
-        likes_count: nextStory.likes,
-        views_count: nextStory.views,
-        language: 'en',
+        title: input.title.trim(),
+        author: input.authorName ?? input.authorId ?? 'Anonymous',
+        subtitle: input.subtitle.trim(),
+        body: input.body.trim(),
+        image_url: input.image,
+        location: input.location.trim(),
+        category: input.category.trim(),
+        read_time: readTime,
+        language,
         is_user_story: true,
         visibility: 'public',
         moderation_status: 'approved',
+        user_id: input.authorId ?? null,
+        posted_at: null, // let created_at handle the real timestamp
       })
-      .then(({ data, error }) => {
-        if (!error && data?.[0]) {
-          // Update cache with real DB ID
-          const dbStory = buildStory(data[0]);
-          const enCache = this.baseStoriesCache.get('en') ?? [];
-          this.baseStoriesCache.set('en', [dbStory, ...enCache]);
-        }
-      })
-      .then(
-        () => undefined,
-        () => undefined
-      );
+      .select('*')
+      .single();
 
-    // Also add to cache immediately with temp ID
-    const enCache = this.baseStoriesCache.get('en') ?? [];
-    this.baseStoriesCache.set('en', [nextStory, ...enCache]);
+    if (error || !data) {
+      console.error('Failed to create story', error);
+      throw error ?? new Error('Failed to create story');
+    }
 
-    return nextStory;
+    const dbStory = buildStory(data);
+
+    // Add to cache synchronously so the UI can read it immediately
+    const cache = this.baseStoriesCache.get(language) ?? [];
+    this.baseStoriesCache.set(language, [dbStory, ...cache]);
+
+    return dbStory;
   }
 
   getImageTemplates(): string[] {
@@ -161,10 +169,7 @@ export class StoriesRepository implements IStoriesRepository {
   }
 
   async likeStory(storyId: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('story_likes')
-      .insert({ story_id: storyId });
-
+    const { error } = await supabase.from('story_likes').insert({ story_id: storyId });
     return !error;
   }
 
@@ -173,7 +178,6 @@ export class StoriesRepository implements IStoriesRepository {
       .from('story_likes')
       .delete()
       .eq('story_id', storyId);
-
     return !error;
   }
 
@@ -185,7 +189,6 @@ export class StoriesRepository implements IStoriesRepository {
         body,
         author_name: authorName || 'Community member',
       });
-
     return !error;
   }
 }

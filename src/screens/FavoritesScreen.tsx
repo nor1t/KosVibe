@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
-import { favoritesRepository } from '../repositories/favoritesRepository';
+import { useStories } from '../lib/stories-state';
 import type { StoryItem } from '../repositories/types';
 import { theme } from '../theme';
 
@@ -28,7 +30,16 @@ function StoryMeta({ story }: { story: StoryItem }) {
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const stories = favoritesRepository.getFavoriteStories(language);
+  const { getStories } = useStories();
+
+  const [stories, setStories] = useState<StoryItem[]>(() => getStories(language));
+
+  useFocusEffect(
+    useCallback(() => {
+      setStories(getStories(language));
+    }, [getStories, language])
+  );
+
   const featuredStory = stories[0] ?? null;
   const latestStories = stories.slice(1);
 

@@ -6,9 +6,10 @@ import { storiesRepository } from '../repositories/StoriesRepository';
 import type { CreateStoryInput, StoryItem } from '../repositories/types';
 
 type StoriesContextValue = {
-  createStory: (input: CreateStoryInput) => StoryItem;
+  createStory: (input: CreateStoryInput) => Promise<StoryItem>;
   getStoryById: (storyId: string, language: SupportedLanguage) => StoryItem | undefined;
   getStories: (language: SupportedLanguage) => StoryItem[];
+  refreshStories: () => Promise<void>;
   imageTemplates: string[];
 };
 
@@ -23,10 +24,15 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const createStory = useCallback((input: CreateStoryInput) => {
-    const nextStory = storiesRepository.createStory(input);
+  const createStory = useCallback(async (input: CreateStoryInput) => {
+    const nextStory = await storiesRepository.createStory(input);
     forceUpdate((current) => current + 1);
     return nextStory;
+  }, []);
+
+  const refreshStories = useCallback(async () => {
+    await storiesRepository.refresh();
+    forceUpdate((current) => current + 1);
   }, []);
 
   const getStories = useCallback((language: SupportedLanguage) => storiesRepository.getStories(language), []);
@@ -42,6 +48,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         createStory,
         getStoryById,
         getStories,
+        refreshStories,
         imageTemplates: storiesRepository.getImageTemplates(),
       }}>
       {children}

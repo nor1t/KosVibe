@@ -90,27 +90,37 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
     setSelectedImage(result.assets[0].uri);
   };
 
-  const handleCreate = () => {
-    if (!canCreate) {
-      return;
-    }
+  const [publishing, setPublishing] = useState(false);
+
+  const handleCreate = async () => {
+    if (!canCreate || publishing) return;
 
     const displayImage = localImageUri || selectedImage || imageTemplates[0];
+    setPublishing(true);
 
-    const story = createStory({
-      title,
-      subtitle,
-      body,
-      location,
-      category,
-      image: displayImage,
-      imageUri: localImageUri || undefined,
-      postedAt: copy.justNow,
-      authorName: displayName,
-      authorId: user?.id,
-    });
+    try {
+      const story = await createStory({
+        title,
+        subtitle,
+        body,
+        location,
+        category,
+        image: displayImage,
+        imageUri: localImageUri || undefined,
+        authorName: displayName,
+        authorId: user?.id,
+        language,
+      });
 
-    navigation.navigate('StoryDetail', { storyId: story.id });
+      navigation.navigate('StoryDetail', { storyId: story.id });
+    } catch (err) {
+      Alert.alert(
+        'Failed to publish',
+        'Could not save your story. Please try again.'
+      );
+    } finally {
+      setPublishing(false);
+    }
   };
 
   return (
@@ -272,8 +282,8 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
 
         {/* Publish button */}
         <Pressable
-          disabled={!canCreate}
-          style={[styles.createButton, !canCreate && styles.createButtonDisabled]}
+          disabled={!canCreate || publishing}
+          style={[styles.createButton, (!canCreate || publishing) && styles.createButtonDisabled]}
           onPress={handleCreate}>
           <Ionicons name="paper-plane" size={18} color={theme.colors.surface} />
           <Text style={styles.createButtonText}>{copy.publishButton}</Text>

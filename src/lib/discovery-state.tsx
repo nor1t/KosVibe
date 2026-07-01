@@ -106,6 +106,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
+  const [, forceUpdate] = useState(0);
   const pendingReplyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const locationOptions = placesRepository.getDiscoveryLocations();
 
@@ -113,7 +114,9 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
     locationOptions.find((location) => location.id === selectedLocationId) ?? locationOptions[0];
 
   useEffect(() => {
-    void placesRepository.refresh();
+    void placesRepository.refresh().then(() => {
+      forceUpdate((current) => current + 1);
+    });
   }, []);
 
   useEffect(() => {
