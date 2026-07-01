@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { EmptyState } from '@/src/components/EmptyState';
 import { theme } from '@/src/theme';
 
-import type { Coordinates, MapRegion } from '@/src/data/mockData';
+import type { Coordinates, MapRegion } from '@/src/repositories/types';
 
 export type ExploreMapMarker = {
   id: string;

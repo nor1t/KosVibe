@@ -5,7 +5,8 @@ import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
-import { useStories, type StoryItem } from '../lib/stories-state';
+import { favoritesRepository } from '../repositories/favoritesRepository';
+import type { StoryItem } from '../repositories/types';
 import { theme } from '../theme';
 
 type FavoritesScreenProps = {
@@ -27,8 +28,7 @@ function StoryMeta({ story }: { story: StoryItem }) {
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const { getStories } = useStories();
-  const stories = getStories(language);
+  const stories = favoritesRepository.getFavoriteStories(language);
   const featuredStory = stories[0];
   const latestStories = stories.slice(1);
 

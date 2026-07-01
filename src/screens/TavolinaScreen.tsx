@@ -1,7 +1,7 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
     Alert,
     Image,
@@ -15,11 +15,12 @@ import {
     View,
 } from 'react-native';
 
-import { tavolinaInvites, type TavolinaInvite } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { usePageSpacing } from '../components/Screen';
 import { useScrollBehavior } from '../lib/scroll-behavior';
+import { eventsRepository } from '../repositories/eventsRepository';
+import type { TavolinaInvite } from '../repositories/types';
 import { theme } from '../theme';
 
 type TavolinaScreenProps = {
@@ -46,7 +47,6 @@ type CreatorProfile = {
 };
 
 const moodKeys = ['all', 'food', 'culture', 'nightlife', 'other'] as const;
-type MoodKey = (typeof moodKeys)[number];
 
 const eventTypeLabelIndex: Record<EventType, number> = {
   food: 1,
@@ -143,7 +143,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const copy = nativeCopy[language].tavolina;
   const createCopy = copy.createEvent;
   const pageSpacing = usePageSpacing();
-  const [events, setEvents] = useState<EventInvite[]>(() => tavolinaInvites);
+  const [events, setEvents] = useState<EventInvite[]>(() => eventsRepository.getTavolinaInvites());
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventInvite | null>(null);
   const [selectedCreatorEvent, setSelectedCreatorEvent] = useState<EventInvite | null>(null);
@@ -153,6 +153,13 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   );
   const [eventRatings, setEventRatings] = useState<Record<string, number>>({});
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(0);
+
+  // Load events from DB on mount
+  useEffect(() => {
+    eventsRepository.refresh().then(() => {
+      setEvents(eventsRepository.getTavolinaInvites());
+    });
+  }, []);
 
   // Multi-step form state
   const [currentStep, setCurrentStep] = useState(0);

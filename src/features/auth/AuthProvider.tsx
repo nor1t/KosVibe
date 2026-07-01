@@ -4,6 +4,7 @@ import { AppState, Platform } from 'react-native';
 import { createContext, useContext, useEffect, useState } from 'react';
 
 import { supabase } from '@/src/lib/supabase';
+import { normalizeImageUri } from '@/src/lib/image-uri';
 
 type SignInParams = {
   email: string;
@@ -124,11 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.session;
     },
     async updateProfile({ fullName, bio, avatarUrl }) {
+      const safeAvatarUrl = normalizeImageUri(avatarUrl);
+
       const { data, error } = await supabase.auth.updateUser({
         data: {
           full_name: fullName.trim(),
           bio: bio?.trim() || null,
-          avatar_url: avatarUrl?.trim() || null,
+          avatar_url: safeAvatarUrl,
         },
       });
 

@@ -6,19 +6,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ExploreMap, type ExploreMapMarker } from '../components/map/ExploreMap';
-import {
-    filterRestaurantsByDiscovery,
-    getMapRegionForRestaurants,
-    restaurants,
-    type Coordinates,
-    type MapRegion,
-} from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
 import { openDirectionsToPlace } from '../lib/maps';
 import { useScrollBehavior } from '../lib/scroll-behavior';
 import { PAGE_BOTTOM_PADDING } from '../components/Screen';
+import { placesRepository } from '../repositories/placesRepository';
+import { searchRepository } from '../repositories/searchRepository';
+import type { Coordinates, MapRegion } from '../repositories/types';
 import { theme } from '../theme';
 
 type MapScreenProps = {
@@ -433,7 +429,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
   }, [searchQuery]);
 
   const visibleRestaurants = useMemo(
-    () => filterRestaurantsByDiscovery(restaurants, selectedLocationId, searchQuery),
+    () => searchRepository.searchRestaurants(selectedLocationId, searchQuery),
     [searchQuery, selectedLocationId]
   );
 
@@ -532,7 +528,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
 
   const defaultRegion = useMemo(() => {
     if (activeCategory === 'eat') {
-      return getMapRegionForRestaurants(visibleRestaurants);
+      return placesRepository.getMapRegionForRestaurants(visibleRestaurants);
     }
 
     return getRegionForCoordinates(

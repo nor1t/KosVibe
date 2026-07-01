@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
-import { bookingDates, bookingTimes, getRestaurantById } from '../data/mockData';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { profileRepository } from '../repositories/profileRepository';
+import { restaurantsRepository } from '../repositories/restaurantsRepository';
 import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { theme } from '../theme';
 
@@ -21,8 +22,11 @@ export function BookTableScreen({ route }: BookTableScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].booking;
   const { getRestaurantById: getCatalogRestaurantById } = useRestaurantCatalog();
-  const restaurant = getCatalogRestaurantById(route.params.restaurantId) ?? getRestaurantById(route.params.restaurantId);
-  const [selectedDateId, setSelectedDateId] = useState(bookingDates[0]?.id ?? '');
+  const bookingData = profileRepository.getProfileData();
+  const restaurant =
+    getCatalogRestaurantById(route.params.restaurantId) ??
+    restaurantsRepository.getById(route.params.restaurantId);
+  const [selectedDateId, setSelectedDateId] = useState(bookingData.bookingDates[0]?.id ?? '');
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
   return (
@@ -43,7 +47,7 @@ export function BookTableScreen({ route }: BookTableScreenProps) {
 
       <Text style={styles.sectionHeading}>{copy.dates}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateRow}>
-        {bookingDates.map((date) => {
+        {bookingData.bookingDates.map((date) => {
           const active = date.id === selectedDateId;
           return (
             <Pressable key={date.id} onPress={() => setSelectedDateId(date.id)} style={styles.dateCardWrap}>
@@ -67,7 +71,7 @@ export function BookTableScreen({ route }: BookTableScreenProps) {
 
       <Text style={styles.sectionHeading}>{copy.timeSlots}</Text>
       <View style={styles.timeGrid}>
-        {bookingTimes.map((time) => {
+        {bookingData.bookingTimes.map((time) => {
           const active = selectedTime === time;
           return (
             <Pressable key={time} onPress={() => setSelectedTime(time)} style={styles.timeCellWrap}>

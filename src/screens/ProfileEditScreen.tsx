@@ -17,6 +17,7 @@ import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { normalizeImageUri } from '../lib/image-uri';
 import { theme } from '../theme';
 
 type ProfileEditScreenProps = {
@@ -35,6 +36,7 @@ export function ProfileEditScreen({ navigation }: ProfileEditScreenProps) {
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const previewAvatarUrl = normalizeImageUri(avatarUrl);
 
   useEffect(() => {
     const nextFullName = getStringMetadata(user?.user_metadata?.full_name);
@@ -100,8 +102,8 @@ export function ProfileEditScreen({ navigation }: ProfileEditScreenProps) {
         <View style={styles.avatarWrap}>
           <View style={styles.avatarRing}>
             <View style={styles.avatarCore}>
-              {avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={styles.avatarImage} resizeMode="cover" />
+              {previewAvatarUrl ? (
+                <Image source={{ uri: previewAvatarUrl }} style={styles.avatarImage} resizeMode="cover" />
               ) : (
                 <Ionicons name="person" size={36} color={theme.colors.surface} />
               )}

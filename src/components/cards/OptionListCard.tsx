@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { QuickLink } from '../../data/mockData';
+import type { QuickLink } from '../../repositories/types';
 import { theme } from '../../theme';
 
 type OptionListCardProps = {

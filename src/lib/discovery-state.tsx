@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { discoveryLocations, restaurants, type DiscoveryLocation } from '../data/mockData';
+import { placesRepository } from '../repositories/placesRepository';
+import { restaurantsRepository } from '../repositories/restaurantsRepository';
+import type { DiscoveryLocation } from '../repositories/types';
 
 type ChatMessage = {
   id: string;
@@ -34,9 +36,9 @@ function createId(prefix: string) {
 
 function buildAssistantReply(message: string, selectedLocation: DiscoveryLocation) {
   const normalized = message.trim().toLowerCase();
-  const visibleRestaurants = restaurants.filter((restaurant) =>
-    selectedLocation.city ? restaurant.city === selectedLocation.city : true
-  );
+  const visibleRestaurants = restaurantsRepository
+    .getAll()
+    .filter((restaurant) => (selectedLocation.city ? restaurant.city === selectedLocation.city : true));
   const mentionedRestaurant = visibleRestaurants.find((restaurant) =>
     normalized.includes(restaurant.name.toLowerCase())
   );
@@ -46,7 +48,7 @@ function buildAssistantReply(message: string, selectedLocation: DiscoveryLocatio
   }
 
   if (normalized.includes('book') || normalized.includes('reservation') || normalized.includes('table')) {
-    const bestMatch = visibleRestaurants[0] ?? restaurants[0];
+    const bestMatch = visibleRestaurants[0] ?? restaurantsRepository.getAll()[0];
     return `If you want to book something quickly, start with ${bestMatch.name}. Open the restaurant card and tap "Book a Table" to choose your date and time.`;
   }
 
@@ -105,9 +107,14 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(initialMessages);
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
   const pendingReplyRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locationOptions = placesRepository.getDiscoveryLocations();
 
   const selectedLocation =
-    discoveryLocations.find((location) => location.id === selectedLocationId) ?? discoveryLocations[0];
+    locationOptions.find((location) => location.id === selectedLocationId) ?? locationOptions[0];
+
+  useEffect(() => {
+    void placesRepository.refresh();
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -158,7 +165,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo<DiscoveryContextValue>(
     () => ({
-      locationOptions: discoveryLocations,
+      locationOptions,
       selectedLocationId,
       selectedLocation,
       setSelectedLocationId,
@@ -181,6 +188,7 @@ export function DiscoveryProvider({ children }: { children: ReactNode }) {
       selectedLocation,
       selectedLocationId,
       selectedCategory,
+      locationOptions,
       sendMessage,
     ]
   );

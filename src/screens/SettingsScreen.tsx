@@ -7,14 +7,10 @@ import { OptionListCard } from '../components/cards/OptionListCard';
 import { SectionTitle } from '../components/common/SectionTitle';
 import { ToggleSwitch } from '../components/common/ToggleSwitch';
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING, Screen } from '../components/Screen';
-import {
-  type LanguageOption,
-  type NotificationOption,
-  type QuickLink,
-} from '../data/mockData';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import type { SupportedLanguage } from '../i18n/messages';
+import type { LanguageOption, NotificationOption, QuickLink } from '../repositories/types';
 import { theme } from '../theme';
 
 type SettingsScreenProps = {

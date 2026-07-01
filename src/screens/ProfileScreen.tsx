@@ -7,6 +7,8 @@ import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { normalizeImageUri } from '../lib/image-uri';
+import { profileRepository } from '../repositories/profileRepository';
 import { theme } from '../theme';
 
 function getDisplayName(
@@ -36,13 +38,15 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   const fullName =
     typeof user?.user_metadata?.full_name === 'string' ? user.user_metadata.full_name : null;
   const bio = typeof user?.user_metadata?.bio === 'string' ? user.user_metadata.bio : copy.bio;
-  const avatarUrl =
-    typeof user?.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null;
+  const avatarUrl = normalizeImageUri(
+    typeof user?.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null
+  );
   const displayName = getDisplayName(fullName, user?.email, copy.fallbackName);
+  const profileData = profileRepository.getProfileData();
   const stats = [
-    { id: 'saved', value: '28', label: copy.stats.saved },
-    { id: 'stories', value: '12', label: copy.stats.stories },
-    { id: 'events', value: '05', label: copy.stats.events },
+    { id: 'saved', value: profileData.stats[0]?.value ?? '0', label: copy.stats.saved },
+    { id: 'stories', value: profileData.stats[1]?.value ?? '0', label: copy.stats.stories },
+    { id: 'events', value: profileData.stats[2]?.value ?? '0', label: copy.stats.events },
   ];
   const parentNavigation = navigation.getParent() as any;
 

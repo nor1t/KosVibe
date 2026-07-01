@@ -1,6 +1,6 @@
 import { Linking, Platform } from 'react-native';
 
-import type { Coordinates } from '../data/mockData';
+import type { Coordinates } from '../repositories/types';
 
 type DirectionsTarget = {
   label: string;

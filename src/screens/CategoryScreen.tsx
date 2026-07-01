@@ -19,7 +19,6 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { nearbyVibesRestaurants } from '../data/nearbyVibesRestaurants';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
@@ -29,6 +28,7 @@ import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseC
 import { RestaurantListCard } from '../components/common/RestaurantListCard';
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import type { HomeStackParamList } from '../navigation/types';
+import { restaurantsRepository } from '../repositories/restaurantsRepository';
 import { theme } from '../theme';
 
 type CategoryScreenProps = {
@@ -613,7 +613,7 @@ export function CategoryScreen({ navigation, route }: CategoryScreenProps) {
 
         <Text style={styles.sectionHeading}>Nearby Vibes</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.cardRow}>
-          {nearbyVibesRestaurants.map((restaurant) => (
+          {restaurantsRepository.getNearbyVibes().map((restaurant) => (
             <RestaurantShowcaseCard
               key={restaurant.id}
               restaurant={restaurant}

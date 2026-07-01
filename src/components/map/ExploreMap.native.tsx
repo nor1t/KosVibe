@@ -4,7 +4,7 @@ import MapView, { Marker } from 'react-native-maps';
 
 import { theme } from '@/src/theme';
 
-import type { MapRegion } from '@/src/data/mockData';
+import type { MapRegion } from '@/src/repositories/types';
 import type { ExploreMapMarker } from '@/src/components/map/ExploreMap';
 
 type ExploreMapProps = {

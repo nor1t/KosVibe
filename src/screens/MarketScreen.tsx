@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -7,10 +6,6 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
-
-type MarketScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
 
 type MarketCategoryKey = 'food' | 'craft' | 'clothing';
 
