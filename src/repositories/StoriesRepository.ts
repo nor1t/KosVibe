@@ -134,7 +134,7 @@ export class StoriesRepository implements IStoriesRepository {
         language: 'en',
         is_user_story: true,
         visibility: 'public',
-        moderation_status: 'pending',
+        moderation_status: 'approved',
       })
       .then(({ data, error }) => {
         if (!error && data?.[0]) {
