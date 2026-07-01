@@ -38,7 +38,7 @@
 ## ✨ Features
 
 ### 🍽️ Restaurant Discovery
-Browse 21 restaurants across Kosovo's cities with rich detail screens showing menus, images, opening hours, today's specials, promotions, and user reviews. Book tables, save favorites, and filter by city or cuisine.
+Browse restaurants across Kosovo's cities with rich detail screens showing menus, images, opening hours, today's specials, promotions, and user reviews. Book tables, save favorites, and filter by city or cuisine.
 
 ### 🎉 Community Events (Tavolina)
 Join local food tours, cultural walks, nightlife meetups, and outdoor adventures. Create your own events, track attendance, confirm presence, and rate organizers. Each organizer has a reputation profile with badges and guest praise.
@@ -50,7 +50,7 @@ Curated stories in English and Albanian covering Kosovo's coffee culture, night 
 Explore village market guides featuring family sellers of traditional wine, rakia, dairy, copper craft, woodwork, woven textiles, and ceremonial clothing. All content is bilingual (en/sq).
 
 ### 🗺️ Monuments & Nature
-Discover 12 monument and nature spots (Prizren Fortress, Rugova Canyon, Mirusha Waterfalls, etc.) and 18 explore spots (coffee, nightlife, culture, nature, study, icons) across Prishtina, Prizren, and Peja.
+Discover monuments and nature spots (Prizren Fortress, Rugova Canyon, Mirusha Waterfalls, etc.) and 18 explore spots (coffee, nightlife, culture, nature, study, icons) across Prishtina, Prizren, and Peja.
 
 ### 🎯 Fun Activities
 15 curated activities — from Germia Park bike rides and Padel Court matches to Batllava Lake fishing and Brezovica ski trips — with a scrolling billboard on the home screen.
