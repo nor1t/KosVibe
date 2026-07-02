@@ -32,6 +32,7 @@ export const nativeCopy: Record<
       subtitle: string;
       trending: string;
       latest: string;
+      totalStories: string;
       ctaTitle: string;
       ctaText: string;
       ctaButton: string;
@@ -225,6 +226,7 @@ export const nativeCopy: Record<
         'Swipe through creator-led travel notes, restaurant drops, and local stories from the community.',
       trending: 'Trending Story',
       latest: 'Latest Drops',
+      totalStories: 'Total stories',
       ctaTitle: 'Share your own vibe',
       ctaText:
         'Post a story from your favorite restaurant, event, or hidden Kosovo corner and inspire the next route.',
@@ -465,6 +467,7 @@ export const nativeCopy: Record<
         'Shfleto shenime udhetimi, vende ushqimi dhe storje lokale nga komuniteti.',
       trending: 'Storje ne trend',
       latest: 'Me te fundit',
+      totalStories: 'Totali i storjeve',
       ctaTitle: 'Ndaje viben tende',
       ctaText:
         'Posto nje storje nga restoranti, eventi ose cepi yt i preferuar ne Kosove.',

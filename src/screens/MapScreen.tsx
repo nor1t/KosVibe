@@ -201,7 +201,7 @@ export function MapScreen({ navigation }: MapScreenProps) {
   );
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
-  const [isSheetVisible, setIsSheetVisible] = useState(true);
+  const [isSheetVisible, setIsSheetVisible] = useState(false);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [mapRegion, setMapRegion] = useState<MapRegion>(selectedLocation.region);
   const [mapType, setMapType] = useState<'standard' | 'hybrid'>('standard');

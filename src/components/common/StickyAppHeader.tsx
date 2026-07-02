@@ -55,7 +55,6 @@ export function StickyAppHeader({ navigation }: StickyAppHeaderProps) {
           <View style={styles.row}>
             <View style={styles.left}>
               <Text style={styles.brand}>KosVibe</Text>
-              <Text style={styles.pageName}>/{pageLabel}</Text>
             </View>
 
             <WeatherSettingsButton navigation={navigation} collapseInfoActions />

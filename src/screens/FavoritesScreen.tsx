@@ -21,7 +21,7 @@ function StoryMeta({ story }: { story: StoryItem }) {
     <View style={styles.metaRow}>
       <Text style={styles.storyAuthor}>{story.author}</Text>
       <View style={styles.metaDot} />
-      <Text style={styles.metaText}>{story.readTime}</Text>
+      <Text style={styles.metaText}>{story.postedAt}</Text>
       <View style={styles.metaDot} />
       <Text style={styles.metaText}>{story.location}</Text>
     </View>
@@ -123,17 +123,11 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
         ) : null}
 
         <View style={styles.statsStrip}>
-          <View style={styles.statBlock}>
+          <View style={styles.statBlockOrange}>
             <Text style={styles.statValue}>{stories.length}</Text>
-            <Text style={styles.statLabel}>{copy.latest}</Text>
+            <Text style={styles.statLabel}>{copy.totalStories}</Text>
           </View>
-          <View style={styles.statBlock}>
-            <Text style={styles.statValue}>
-              {Math.round(stories.reduce((total, story) => total + story.views, 0) / 100) / 10}k
-            </Text>
-            <Text style={styles.statLabel}>{copy.views}</Text>
-          </View>
-          <View style={styles.statBlock}>
+          <View style={styles.statBlockRed}>
             <Text style={styles.statValue}>
               {stories.reduce((total, story) => total + story.likes, 0)}
             </Text>
@@ -326,6 +320,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
+  },
+  statBlockOrange: {
+    flex: 1,
+    minHeight: 76,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,141,41,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,141,41,0.32)',
+  },
+  statBlockRed: {
+    flex: 1,
+    minHeight: 76,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,72,66,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,72,66,0.34)',
   },
   statValue: {
     color: theme.colors.heading,
