@@ -1,115 +1,78 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useState } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { theme } from '../theme';
 
-type HelpSectionId = 'government' | 'taxi' | 'guides';
-
-type HelpContact = {
-  id: string;
-  name: string;
-  detail: string;
-  phone: string;
-};
+const supportEmail = 'ermir.gerguri@umib.net';
 
 const helpCopy = {
   en: {
-    title: 'Important numbers',
-    subtitle: 'Fast contacts for emergencies, taxis, and local guides in Kosovo.',
-    call: 'Call',
-    sections: {
-      government: 'Government',
-      taxi: 'Taxi',
-      guides: 'Guides',
-    },
-    contacts: {
-      government: [
-        { id: 'emergency', name: 'Unified Emergency Number', detail: 'Police, ambulance, fire', phone: '112' },
-        { id: 'police', name: 'Kosovo Police', detail: 'Direct police line', phone: '192' },
-        { id: 'fire', name: 'Firefighters', detail: 'Fire and rescue', phone: '193' },
-        { id: 'ambulance', name: 'Ambulance', detail: 'Medical emergency', phone: '194' },
-        {
-          id: 'public-health',
-          name: 'National Institute of Public Health',
-          detail: 'Public health information',
-          phone: '038 200 80 800',
-        },
-      ],
-      taxi: [
-        { id: 'hej', name: 'Hej Taxi', detail: 'Prishtina taxi service', phone: '044 333 999' },
-        { id: 'victory', name: 'Victory Taxi', detail: 'Prishtina taxi service', phone: '+381 38 555 333' },
-        { id: 'london', name: 'London Taxi', detail: 'Prishtina taxi service', phone: '+377 44 300 300' },
-        { id: 'beki', name: 'Beki Taxi', detail: 'Prishtina taxi service', phone: '+377 44 111 555' },
-      ],
-      guides: [
-        { id: 'my-kosovo-guide', name: 'My Kosovo Guide', detail: 'WhatsApp / Viber guide contact', phone: '+383 44 157 663' },
-        { id: 'kosovo-tour-guide-1', name: 'Kosovo Tour Guide', detail: 'National/local guide contact', phone: '+383 44 561 081' },
-        { id: 'kosovo-tour-guide-2', name: 'Kosovo Tour Guide', detail: 'National/local guide contact', phone: '+383 49 205 254' },
-      ],
-    },
+    title: 'About KosVibe',
+    subtitle: 'A local discovery app for food, places, stories, and plans across Kosovo.',
+    contactTitle: 'Need help?',
+    contactText: `Contact ${supportEmail} and the KosVibe team will help you with account access, story publishing, restaurant details, or app feedback.`,
+    emailButton: 'Email support',
+    sections: [
+      {
+        id: 'mission',
+        icon: 'compass-outline',
+        title: 'Our mission',
+        body: 'KosVibe helps locals and visitors discover Kosovo through restaurants, cultural spots, events, markets, and community stories.',
+      },
+      {
+        id: 'community',
+        icon: 'people-outline',
+        title: 'Built around community',
+        body: 'Stories, favorites, and recommendations are designed to make every city feel easier to explore and more personal to remember.',
+      },
+      {
+        id: 'mock',
+        icon: 'construct-outline',
+        title: 'Mock support data',
+        body: 'Response time: within 24 hours. Support hours: Monday-Friday, 09:00-17:00. App version: 1.0.0.',
+      },
+    ],
   },
   sq: {
-    title: 'Numra te rendesishem',
-    subtitle: 'Kontakte te shpejta per emergjenca, taksi dhe guida lokale ne Kosove.',
-    call: 'Thirr',
-    sections: {
-      government: 'Qeveria',
-      taxi: 'Taksi',
-      guides: 'Guida',
-    },
-    contacts: {
-      government: [
-        { id: 'emergency', name: 'Numri unik emergjent', detail: 'Polici, ambulance, zjarrfikes', phone: '112' },
-        { id: 'police', name: 'Policia e Kosoves', detail: 'Linja direkte e policise', phone: '192' },
-        { id: 'fire', name: 'Zjarrfikesit', detail: 'Zjarr dhe shpetim', phone: '193' },
-        { id: 'ambulance', name: 'Ambulanca', detail: 'Emergjence mjekesore', phone: '194' },
-        {
-          id: 'public-health',
-          name: 'Instituti Kombetar i Shendetit Publik',
-          detail: 'Informata per shendet publik',
-          phone: '038 200 80 800',
-        },
-      ],
-      taxi: [
-        { id: 'hej', name: 'Hej Taxi', detail: 'Sherbim taksi ne Prishtine', phone: '044 333 999' },
-        { id: 'victory', name: 'Victory Taxi', detail: 'Sherbim taksi ne Prishtine', phone: '+381 38 555 333' },
-        { id: 'london', name: 'London Taxi', detail: 'Sherbim taksi ne Prishtine', phone: '+377 44 300 300' },
-        { id: 'beki', name: 'Beki Taxi', detail: 'Sherbim taksi ne Prishtine', phone: '+377 44 111 555' },
-      ],
-      guides: [
-        { id: 'my-kosovo-guide', name: 'My Kosovo Guide', detail: 'Kontakt guide ne WhatsApp / Viber', phone: '+383 44 157 663' },
-        { id: 'kosovo-tour-guide-1', name: 'Kosovo Tour Guide', detail: 'Kontakt guide kombetare/lokale', phone: '+383 44 561 081' },
-        { id: 'kosovo-tour-guide-2', name: 'Kosovo Tour Guide', detail: 'Kontakt guide kombetare/lokale', phone: '+383 49 205 254' },
-      ],
-    },
+    title: 'Rreth KosVibe',
+    subtitle: 'Aplikacion lokal per ushqim, vende, storje dhe plane ne Kosove.',
+    contactTitle: 'Ke nevoje per ndihme?',
+    contactText: `Kontakto ${supportEmail} dhe ekipi i KosVibe do te ndihmoje per llogarine, storjet, restoranet ose sugjerimet per aplikacionin.`,
+    emailButton: 'Dergo email',
+    sections: [
+      {
+        id: 'mission',
+        icon: 'compass-outline',
+        title: 'Misioni yne',
+        body: 'KosVibe ndihmon vendasit dhe vizitoret te zbulojne Kosoven permes restoraneve, vendeve kulturore, eventeve, tregjeve dhe storjeve.',
+      },
+      {
+        id: 'community',
+        icon: 'people-outline',
+        title: 'Per komunitetin',
+        body: 'Storjet, te preferuarat dhe rekomandimet e bejne cdo qytet me te lehte per ta eksploruar dhe me personal per ta mbajtur mend.',
+      },
+      {
+        id: 'mock',
+        icon: 'construct-outline',
+        title: 'Te dhena mock per ndihme',
+        body: 'Koha e pergjigjes: brenda 24 oreve. Orari: e hene-e premte, 09:00-17:00. Versioni: 1.0.0.',
+      },
+    ],
   },
-} satisfies Record<
-  string,
-  {
-    title: string;
-    subtitle: string;
-    call: string;
-    sections: Record<HelpSectionId, string>;
-    contacts: Record<HelpSectionId, HelpContact[]>;
-  }
->;
+};
 
-const sectionOrder: HelpSectionId[] = ['government', 'taxi', 'guides'];
-
-function phoneUrl(phone: string) {
-  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+function emailUrl() {
+  return `mailto:${supportEmail}?subject=KosVibe%20Support`;
 }
 
 export function HelpScreen() {
   const { language } = useI18n();
   const insets = useSafeAreaInsets();
   const copy = helpCopy[language];
-  const [activeSection, setActiveSection] = useState<HelpSectionId>('government');
-  const contacts = copy.contacts[activeSection];
 
   return (
     <ScrollView
@@ -121,50 +84,36 @@ export function HelpScreen() {
       showsVerticalScrollIndicator={false}>
       <View style={styles.hero}>
         <View style={styles.helpIcon}>
-          <Ionicons name="help-outline" size={28} color={theme.colors.surface} />
+          <Ionicons name="information-circle-outline" size={30} color={theme.colors.surface} />
         </View>
         <Text style={styles.title}>{copy.title}</Text>
         <Text style={styles.subtitle}>{copy.subtitle}</Text>
       </View>
 
-      <View style={styles.tabs}>
-        {sectionOrder.map((section) => {
-          const active = activeSection === section;
-
-          return (
-            <Pressable
-              key={section}
-              style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setActiveSection(section)}>
-              <Text style={[styles.tabText, active && styles.tabTextActive]}>
-                {copy.sections[section]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <View style={styles.contactList}>
-        {contacts.map((contact) => (
-          <View key={contact.id} style={styles.contactCard}>
-            <View style={styles.contactIcon}>
-              <Ionicons
-                name={activeSection === 'government' ? 'shield-checkmark-outline' : activeSection === 'taxi' ? 'car-outline' : 'map-outline'}
-                size={22}
-                color={theme.colors.secondary}
-              />
+      <View style={styles.sectionList}>
+        {copy.sections.map((section) => (
+          <View key={section.id} style={styles.infoCard}>
+            <View style={styles.infoIcon}>
+              <Ionicons name={section.icon as never} size={22} color={theme.colors.secondary} />
             </View>
-            <View style={styles.contactCopy}>
-              <Text style={styles.contactName}>{contact.name}</Text>
-              <Text style={styles.contactDetail}>{contact.detail}</Text>
-              <Text style={styles.contactPhone}>{contact.phone}</Text>
+            <View style={styles.infoCopy}>
+              <Text style={styles.infoTitle}>{section.title}</Text>
+              <Text style={styles.infoBody}>{section.body}</Text>
             </View>
-            <Pressable style={styles.callButton} onPress={() => void Linking.openURL(phoneUrl(contact.phone))}>
-              <Ionicons name="call-outline" size={18} color={theme.colors.surface} />
-              <Text style={styles.callText}>{copy.call}</Text>
-            </Pressable>
           </View>
         ))}
+      </View>
+
+      <View style={styles.contactCard}>
+        <View style={styles.contactHeader}>
+          <Ionicons name="mail-outline" size={22} color={theme.colors.secondary} />
+          <Text style={styles.contactTitle}>{copy.contactTitle}</Text>
+        </View>
+        <Text style={styles.contactText}>{copy.contactText}</Text>
+        <Pressable style={styles.emailButton} onPress={() => void Linking.openURL(emailUrl())}>
+          <Ionicons name="send-outline" size={18} color={theme.colors.surface} />
+          <Text style={styles.emailButtonText}>{copy.emailButton}</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
@@ -188,9 +137,9 @@ const styles = StyleSheet.create({
     ...theme.shadow.card,
   },
   helpIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,31,61,0.32)',
@@ -208,49 +157,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
   },
-  tabs: {
-    marginTop: 18,
-    flexDirection: 'row',
-    gap: 8,
-  },
-  tab: {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  tabActive: {
-    backgroundColor: 'rgba(255,31,61,0.22)',
-    borderColor: 'rgba(255,31,61,0.38)',
-  },
-  tabText: {
-    color: theme.colors.mutedText,
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  tabTextActive: {
-    color: theme.colors.heading,
-  },
-  contactList: {
+  sectionList: {
     marginTop: 18,
     gap: 12,
   },
-  contactCard: {
+  infoCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
-    padding: 14,
+    padding: 16,
     borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     ...theme.shadow.card,
   },
-  contactIcon: {
+  infoIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -258,39 +179,58 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255,179,0,0.12)',
   },
-  contactCopy: {
+  infoCopy: {
     flex: 1,
+    gap: 5,
   },
-  contactName: {
+  infoTitle: {
     color: theme.colors.heading,
     fontSize: 16,
     fontWeight: '900',
   },
-  contactDetail: {
-    marginTop: 3,
+  infoBody: {
     color: theme.colors.mutedText,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 19,
   },
-  contactPhone: {
-    marginTop: 5,
-    color: theme.colors.secondary,
-    fontSize: 14,
+  contactCard: {
+    marginTop: 18,
+    padding: 18,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255,179,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.2)',
+    ...theme.shadow.card,
+  },
+  contactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  contactTitle: {
+    color: theme.colors.heading,
+    fontSize: 18,
     fontWeight: '900',
   },
-  callButton: {
-    minWidth: 76,
-    minHeight: 42,
+  contactText: {
+    marginTop: 10,
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  emailButton: {
+    marginTop: 16,
+    minHeight: 50,
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     backgroundColor: theme.colors.primary,
   },
-  callText: {
+  emailButtonText: {
     color: theme.colors.surface,
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '900',
   },
 });

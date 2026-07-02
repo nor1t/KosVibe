@@ -125,7 +125,7 @@ export function WeatherSettingsButton({
       ? [
           {
             key: 'help',
-            label: 'Important Numbers',
+            label: 'About & Support',
             icon: 'help-outline' as const,
             action: () => navigation.navigate('Help'),
           },
@@ -192,7 +192,7 @@ export function WeatherSettingsButton({
 
           {!collapseInfoActions && showHelp ? (
             <Pressable
-              accessibilityLabel="Open important numbers"
+              accessibilityLabel="Open about and support"
               style={[styles.actionButton, compact && styles.compactActionButton]}
               onPress={() => navigation.navigate('Help')}>
               <Ionicons name="help-outline" size={21} color={theme.colors.surface} />

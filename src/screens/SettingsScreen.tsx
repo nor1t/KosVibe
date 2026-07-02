@@ -70,9 +70,6 @@ const settingsCopy: Record<
       },
     ],
     accountLinks: [
-      { id: 'profile', icon: 'person-outline', label: 'My Profile' },
-      { id: 'addresses', icon: 'location-sharp', label: 'Addresses' },
-      { id: 'payments', icon: 'card-outline', label: 'Payment Methods' },
       { id: 'help', icon: 'help-circle-outline', label: 'Help & Support' },
       { id: 'logout', icon: 'log-out-outline', label: 'Sign Out', tone: 'danger' },
     ],
@@ -112,9 +109,6 @@ const settingsCopy: Record<
       },
     ],
     accountLinks: [
-      { id: 'profile', icon: 'person-outline', label: 'Profili im' },
-      { id: 'addresses', icon: 'location-sharp', label: 'Adresat' },
-      { id: 'payments', icon: 'card-outline', label: 'Metodat e pageses' },
       { id: 'help', icon: 'help-circle-outline', label: 'Ndihme & Mbeshtejte' },
       { id: 'logout', icon: 'log-out-outline', label: 'Dil nga llogaria', tone: 'danger' },
     ],
@@ -225,21 +219,6 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
   };
 
   const handleAccountPress = async (item: QuickLink) => {
-    if (item.id === 'profile') {
-      navigation.getParent()?.navigate('ProfileTab' as never);
-      return;
-    }
-
-    if (item.id === 'addresses') {
-      navigation.getParent()?.navigate('MapTab' as never);
-      return;
-    }
-
-    if (item.id === 'payments') {
-      navigation.navigate('Exchange' as never);
-      return;
-    }
-
     if (item.id === 'help') {
       navigation.navigate('Help' as never);
       return;

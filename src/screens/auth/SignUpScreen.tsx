@@ -6,6 +6,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  ImageBackground,
   Platform,
   Pressable,
   StyleSheet,
@@ -32,6 +33,8 @@ const highlights = [
   { icon: 'navigate-outline', label: 'Nearby routes' },
   { icon: 'camera-outline', label: 'Stories' },
 ] as const;
+
+const authMapBackground = require('../../../assets/images/pristina_midnight_blue.png');
 
 export function SignUpScreen() {
   const navigation = useNavigation<Navigation>();
@@ -82,7 +85,9 @@ export function SignUpScreen() {
 
   return (
     <Screen scrollable style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.backdropTop} />
+      <ImageBackground source={authMapBackground} resizeMode="cover" style={styles.mapBackground}>
+        <View style={styles.mapOverlay} />
+      </ImageBackground>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.stack}>
@@ -261,8 +266,10 @@ export function SignUpScreen() {
               (isSubmitting || !isValid) && styles.primaryButtonDisabled,
               pressed && !isSubmitting && isValid ? styles.primaryButtonPressed : undefined,
             ]}>
-            <LinearGradient colors={['#FFD166', '#FF8C00']} style={styles.primaryButtonFill}>
-              <Ionicons name="person-add-outline" size={18} color="#1B1206" />
+            <LinearGradient
+              colors={['rgba(255,255,255,0.22)', 'rgba(255, 209, 102, 0.14)']}
+              style={styles.primaryButtonFill}>
+              <Ionicons name="person-add-outline" size={18} color={theme.colors.surface} />
               <Text style={styles.primaryButtonText}>
                 {isSubmitting ? messages.auth.createProfilePending : messages.auth.createProfileCta}
               </Text>
@@ -293,13 +300,17 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: theme.spacing.xxxxl,
   },
-  backdropTop: {
+  mapBackground: {
     position: 'absolute',
-    top: -20,
-    left: 0,
-    right: 0,
-    height: 320,
-    backgroundColor: 'rgba(255, 179, 0, 0.04)',
+    top: 0,
+    left: -24,
+    right: -24,
+    bottom: 0,
+    minHeight: 1080,
+  },
+  mapOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(3, 8, 18, 0.5)',
   },
   stack: {
     gap: theme.spacing.xl,
@@ -313,8 +324,8 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: theme.spacing.xl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 179, 0, 0.18)',
-    backgroundColor: 'rgba(255, 179, 0, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.14)',
+    backgroundColor: 'rgba(5, 13, 28, 0.44)',
     overflow: 'hidden',
   },
   heroBadge: {
@@ -377,9 +388,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.lg,
     padding: theme.spacing.xl,
     borderRadius: 28,
-    backgroundColor: 'rgba(14, 15, 24, 0.9)',
+    backgroundColor: 'rgba(7, 13, 26, 0.68)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 179, 0, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.13)',
   },
   errorBanner: {
     flexDirection: 'row',
@@ -453,6 +464,9 @@ const styles = StyleSheet.create({
   primaryButton: {
     borderRadius: theme.radius.round,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   primaryButtonDisabled: {
     opacity: 0.55,
@@ -470,7 +484,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.xl,
   },
   primaryButtonText: {
-    color: '#1B1206',
+    color: theme.colors.surface,
     fontSize: 16,
     fontWeight: '900',
   },
@@ -496,11 +510,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: theme.radius.round,
     borderWidth: 1,
-    borderColor: 'rgba(255, 179, 0, 0.18)',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   footerButtonText: {
-    color: theme.colors.secondary,
+    color: theme.colors.surface,
     fontSize: 14,
     fontWeight: '800',
   },
