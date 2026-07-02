@@ -198,10 +198,13 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async joinEvent(eventId: string): Promise<boolean> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
     const { error } = await supabase
       .from('event_attendance')
       .insert({
         event_id: eventId,
+        user_id: uid,
         status: 'joined',
       });
 
@@ -214,10 +217,13 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async leaveEvent(eventId: string): Promise<boolean> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
     const { error } = await supabase
       .from('event_attendance')
       .update({ status: 'cancelled' })
       .eq('event_id', eventId)
+      .eq('user_id', uid)
       .eq('status', 'joined');
 
     if (error) {
@@ -288,6 +294,28 @@ export class EventsRepository implements IEventsRepository {
     }
 
     return data.map((row) => row.event_id);
+  }
+
+  async deleteEvent(eventId: string): Promise<boolean> {
+    // Hard-delete: RLS requires a DELETE policy for the event creator
+    const { error } = await supabase
+      .from('tavolina_events')
+      .delete()
+      .eq('id', eventId);
+    if (!error) {
+      this.tavolinaInvitesCache = this.tavolinaInvitesCache.filter((e) => e.id !== eventId);
+    } else {
+      // Fallback: try soft-delete via update
+      const { error: updateError } = await supabase
+        .from('tavolina_events')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', eventId);
+      if (!updateError) {
+        this.tavolinaInvitesCache = this.tavolinaInvitesCache.filter((e) => e.id !== eventId);
+        return true;
+      }
+    }
+    return !error;
   }
 
   async getEventRatings(): Promise<Record<string, number>> {

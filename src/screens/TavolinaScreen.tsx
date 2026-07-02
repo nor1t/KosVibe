@@ -305,6 +305,24 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
     }
   };
 
+  const handleDeleteEvent = async () => {
+    if (!selectedEvent) return;
+    const eventId = selectedEvent.id;
+    const ok = await eventsRepository.deleteEvent(eventId);
+    if (ok) {
+      setSelectedEvent(null);
+      setEvents((current) => current.filter((e) => e.id !== eventId));
+    }
+  };
+
+  const confirmDeleteEvent = () => {
+    if (!selectedEvent) return;
+    Alert.alert('Delete event', 'Are you sure you want to delete this event?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: handleDeleteEvent },
+    ]);
+  };
+
   // Sprint 12: Persist rating to DB
   const rateSelectedEvent = async (rating: number) => {
     if (!selectedEvent || !isSelectedEventConfirmed) return;
@@ -573,9 +591,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       <Modal visible={selectedEvent !== null} transparent animationType="slide" onRequestClose={() => setSelectedEvent(null)}>
         <View style={styles.modalBackdrop}>
           {selectedEvent ? (
-            <>
-              <Pressable style={StyleSheet.absoluteFill} onPress={() => setSelectedEvent(null)} />
-              <View style={styles.eventDetailCard}>
+            <View style={styles.eventDetailCard}>
               <ScrollView style={styles.eventDetailScroll} contentContainerStyle={styles.eventDetailScrollContent} showsVerticalScrollIndicator={false}>
                 <Pressable style={styles.modalHandle} onPress={() => setSelectedEvent(null)} />
                 <ImageBackground source={{ uri: selectedEvent.image }} style={styles.eventDetailImage}>
@@ -615,14 +631,22 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                   <Text style={styles.ratingLabel}>Event organization</Text>
                   {renderRatingStars(selectedEventRating, rateSelectedEvent, !isSelectedEventConfirmed)}
                 </View>
-                <Pressable style={[styles.joinButton, isSelectedEventJoined && styles.joinButtonActive]} onPress={toggleJoinSelectedEvent}>
-                  <Ionicons name={isSelectedEventJoined ? 'checkmark-circle' : 'person-add-outline'} size={20} color={theme.colors.surface} />
-                  <Text style={styles.joinButtonText}>{isSelectedEventJoined ? createCopy.joined : createCopy.join}</Text>
-                </Pressable>
+                {selectedEvent.creator !== currentUserName ? (
+                  <Pressable style={[styles.joinButton, isSelectedEventJoined && styles.joinButtonActive]} onPress={toggleJoinSelectedEvent}>
+                    <Ionicons name={isSelectedEventJoined ? 'checkmark-circle' : 'person-add-outline'} size={20} color={theme.colors.surface} />
+                    <Text style={styles.joinButtonText}>{isSelectedEventJoined ? createCopy.joined : createCopy.join}</Text>
+                  </Pressable>
+                ) : (
+                  <Pressable
+                    style={styles.deleteEventButton}
+                    onPress={confirmDeleteEvent}>
+                    <Ionicons name="trash-outline" size={20} color="#FF4D4D" />
+                    <Text style={styles.deleteEventButtonText}>Delete event</Text>
+                  </Pressable>
+                )}
                 </View>
               </ScrollView>
             </View>
-            </>
           ) : null}
         </View>
       </Modal>
@@ -704,6 +728,14 @@ const styles = StyleSheet.create({
   priceBadgeText: { color: theme.colors.gold, fontSize: 12, fontWeight: '900' },
   createFab: { position: 'absolute', right: 20, width: 66, height: 66, borderRadius: 33, backgroundColor: theme.colors.primary, alignItems: 'center', justifyContent: 'center', ...theme.shadow.glow },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: '#0B0D16' },
+  backdropTouchArea: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
   profileBackdrop: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: 'rgba(0,0,0,0.7)' },
   modalCard: { maxHeight: '92%', padding: 20, borderTopLeftRadius: 30, borderTopRightRadius: 30, backgroundColor: '#0B0D16', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
@@ -848,6 +880,23 @@ const styles = StyleSheet.create({
   joinButton: { marginTop: 22, minHeight: 56, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: theme.colors.primary },
   joinButtonActive: { backgroundColor: theme.colors.success },
   joinButtonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '900' },
+  deleteEventButton: {
+    marginTop: 22,
+    minHeight: 56,
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255,77,77,0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,77,77,0.3)',
+  },
+  deleteEventButtonText: {
+    color: '#FF4D4D',
+    fontSize: 16,
+    fontWeight: '900',
+  },
   creatorProfileCard: { padding: 18, borderRadius: 28, backgroundColor: '#0B0D16', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', ...theme.shadow.floating },
   creatorProfileTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   creatorProfileAvatar: { width: 62, height: 62, borderRadius: 31 },

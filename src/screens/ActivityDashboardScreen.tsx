@@ -88,6 +88,7 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const [isAssistantPromptVisible, setIsAssistantPromptVisible] = useState(true);
   const pageSpacing = usePageSpacing();
   const [kosovoHighlights, setKosovoHighlights] = useState<KosovoHighlight[]>([]);
+  const [funActivities, setFunActivities] = useState<FunActivity[]>([]);
   const visibleRestaurants = useMemo(
     () => searchRepository.searchRestaurants(selectedLocationId, ''),
     [selectedLocationId]
@@ -96,9 +97,9 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const visibleFunActivities = useMemo(
     () =>
       selectedLocation.city
-        ? placesRepository.getFunActivities().filter((activity) => activity.city === selectedLocation.city)
-        : placesRepository.getFunActivities(),
-    [selectedLocation.city]
+        ? funActivities.filter((activity) => activity.city === selectedLocation.city)
+        : funActivities,
+    [selectedLocation.city, funActivities]
   );
   const billboardDistance = visibleFunActivities.length * (FUN_ACTIVITY_CARD_WIDTH + FUN_ACTIVITY_GAP);
   const billboardItems = useMemo(
@@ -165,6 +166,9 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   useEffect(() => {
     void eventsRepository.refresh().then(() => {
       setKosovoHighlights(eventsRepository.getKosovoHighlights());
+    });
+    void placesRepository.refresh().then(() => {
+      setFunActivities(placesRepository.getFunActivities());
     });
   }, []);
 

@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { RouteProp } from '@react-navigation/native';
+import type { RouteProp, NavigationProp } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
+import { useAuth } from '../features/auth/AuthProvider';
 import { useStories } from '../lib/stories-state';
 import { storiesRepository } from '../repositories/StoriesRepository';
 import { theme } from '../theme';
@@ -21,19 +23,23 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
   const { getStoryById } = useStories();
+  const navigation = useNavigation<any>();
+  const { user } = useAuth();
+  const currentUserName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : user?.email?.split('@')[0] ?? '';
   const story = getStoryById(route.params.storyId, language);
+  const isOwnStory = story?.isUserStory && story.author === currentUserName;
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story?.likes ?? 0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
 
-  // Check if the current user has already liked this story
   useEffect(() => {
     if (!story) return;
     const checkLike = async () => {
       const liked = await storiesRepository.hasUserLikedStory(story.id);
-      if (liked) {
-        setIsLiked(true);
-      }
+      if (liked) setIsLiked(true);
     };
     void checkLike();
   }, [story?.id]);
@@ -53,8 +59,6 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
         if (ok) {
           setIsLiked(true);
           setLikeCount((prev) => prev + 1);
-        } else {
-          console.warn('Failed to like story — check RLS and auth state');
         }
       }
     } catch (err) {
@@ -62,6 +66,21 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
     } finally {
       setIsLikeLoading(false);
     }
+  };
+
+  const handleDelete = () => {
+    if (!story) return;
+    Alert.alert('Delete story', 'Are you sure you want to delete this story?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          const ok = await storiesRepository.deleteStory(story.id);
+          if (ok) navigation.goBack();
+        },
+      },
+    ]);
   };
 
   if (!story) {
@@ -113,6 +132,13 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
           </View>
         </View>
 
+        {isOwnStory ? (
+          <Pressable style={styles.deleteButton} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={16} color="#FF4D4D" />
+            <Text style={styles.deleteButtonText}>Delete story</Text>
+          </Pressable>
+        ) : null}
+
         <Text style={styles.bodyText}>{story.body}</Text>
       </View>
     </ScrollView>
@@ -120,108 +146,33 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  content: {
-    paddingBottom: PAGE_BOTTOM_PADDING,
-  },
-  heroImage: {
-    height: 520,
-  },
-  heroOverlay: {
-    flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-  },
-  heroSpacer: {
-    height: 24,
-  },
-  location: {
-    color: theme.colors.secondary,
-    fontSize: 13,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
-  title: {
-    marginTop: 10,
-    color: theme.colors.heading,
-    fontSize: 40,
-    lineHeight: 42,
-    fontWeight: '900',
-  },
-  subtitle: {
-    marginTop: 12,
-    color: '#E3E7F2',
-    fontSize: 16,
-    lineHeight: 24,
-  },
-  metaRow: {
-    marginTop: 18,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    alignItems: 'center',
-  },
-  author: {
-    color: '#F9D08D',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  metaText: {
-    color: theme.colors.mutedText,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  storyBody: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    gap: 22,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 14,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  content: { paddingBottom: PAGE_BOTTOM_PADDING },
+  heroImage: { height: 520 },
+  heroOverlay: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 30 },
+  heroSpacer: { height: 24 },
+  location: { color: theme.colors.secondary, fontSize: 13, fontWeight: '900', textTransform: 'uppercase' },
+  title: { marginTop: 10, color: theme.colors.heading, fontSize: 40, lineHeight: 42, fontWeight: '900' },
+  subtitle: { marginTop: 12, color: '#E3E7F2', fontSize: 16, lineHeight: 24 },
+  metaRow: { marginTop: 18, flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
+  author: { color: '#F9D08D', fontSize: 14, fontWeight: '800' },
+  metaText: { color: theme.colors.mutedText, fontSize: 13, fontWeight: '700' },
+  storyBody: { paddingHorizontal: 20, paddingTop: 24, gap: 22 },
+  statsRow: { flexDirection: 'row', gap: 14 },
   statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10,
+    borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
   },
-  statItemLiked: {
-    backgroundColor: 'rgba(255,31,61,0.15)',
-    borderColor: 'rgba(255,31,61,0.3)',
+  statItemLiked: { backgroundColor: 'rgba(255,31,61,0.15)', borderColor: 'rgba(255,31,61,0.3)' },
+  statText: { color: theme.colors.heading, fontSize: 13, fontWeight: '800' },
+  statTextLiked: { color: '#FF6B81' },
+  bodyText: { color: theme.colors.mutedText, fontSize: 17, lineHeight: 28 },
+  deleteButton: {
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
+    backgroundColor: 'rgba(255,77,77,0.1)', borderWidth: 1, borderColor: 'rgba(255,77,77,0.25)',
   },
-  statText: {
-    color: theme.colors.heading,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  statTextLiked: {
-    color: '#FF6B81',
-  },
-  bodyText: {
-    color: theme.colors.mutedText,
-    fontSize: 17,
-    lineHeight: 28,
-  },
-  emptyScreen: {
-    flex: 1,
-    gap: theme.spacing.xl,
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: theme.colors.background,
-  },
-  emptyTitle: {
-    color: theme.colors.heading,
-    fontSize: 24,
-    fontWeight: '900',
-  },
+  deleteButtonText: { color: '#FF4D4D', fontSize: 13, fontWeight: '800' },
+  emptyScreen: { flex: 1, gap: theme.spacing.xl, padding: 20, paddingTop: 60, backgroundColor: theme.colors.background },
+  emptyTitle: { color: theme.colors.heading, fontSize: 24, fontWeight: '900' },
 });

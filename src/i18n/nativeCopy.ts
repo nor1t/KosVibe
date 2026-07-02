@@ -72,7 +72,7 @@ export const nativeCopy: Record<
       saveChanges: string;
       savingChanges: string;
       stats: {
-        saved: string;
+        joined: string;
         stories: string;
         events: string;
       };
@@ -268,7 +268,7 @@ export const nativeCopy: Record<
       saveChanges: 'Save changes',
       savingChanges: 'Saving...',
       stats: {
-        saved: 'Saved spots',
+        joined: 'Joined events',
         stories: 'Stories',
         events: 'Events hosted',
       },
@@ -283,7 +283,7 @@ export const nativeCopy: Record<
       eyebrow: 'KosVibe Events',
       title: 'Create the next vibe.',
       subtitle: 'Start a culture night, dinner, or city meetup and invite the community.',
-      moods: ['All', 'Food', 'Culture', 'Nightlife'],
+      moods: ['All', 'Food', 'Culture', 'Nightlife', 'Other'],
       creatorOptions: [
         {
           id: 'host-dinner',
@@ -508,7 +508,7 @@ export const nativeCopy: Record<
       saveChanges: 'Ruaj ndryshimet',
       savingChanges: 'Duke ruajtur...',
       stats: {
-        saved: 'Vende te ruajtura',
+        joined: 'Evente te bashkuara',
         stories: 'Storje',
         events: 'Evente te mbajtura',
       },
@@ -523,7 +523,7 @@ export const nativeCopy: Record<
       eyebrow: 'Evente KosVibe',
       title: 'Krijo viben e radhes.',
       subtitle: 'Fillo nje nate kulture, darke ose takim qyteti dhe fto komunitetin.',
-      moods: ['Te gjitha', 'Ushqim', 'Kulture', 'Nate'],
+      moods: ['Te gjitha', 'Ushqim', 'Kulture', 'Nate', 'Tjeter'],
       creatorOptions: [
         {
           id: 'host-dinner',

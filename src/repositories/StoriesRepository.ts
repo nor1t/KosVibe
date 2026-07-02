@@ -201,6 +201,17 @@ export class StoriesRepository implements IStoriesRepository {
     return !error && (data?.length ?? 0) > 0;
   }
 
+  async deleteStory(storyId: string): Promise<boolean> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
+    const { error } = await supabase
+      .from('stories')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', storyId)
+      .eq('user_id', uid);
+    return !error;
+  }
+
   async addComment(storyId: string, body: string, authorName?: string): Promise<boolean> {
     const { error } = await supabase
       .from('story_comments')

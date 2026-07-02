@@ -9,6 +9,7 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { normalizeImageUri } from '../lib/image-uri';
+import { eventsRepository } from '../repositories/eventsRepository';
 import { profileRepository } from '../repositories/profileRepository';
 import { storiesRepository } from '../repositories/StoriesRepository';
 import { theme } from '../theme';
@@ -44,26 +45,38 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     typeof user?.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null
   );
   const displayName = getDisplayName(fullName, user?.email, copy.fallbackName);
+  const currentUserName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : user?.email?.split('@')[0] ?? '';
   const [userStoryCount, setUserStoryCount] = useState(0);
-  const profileData = profileRepository.getProfileData();
+  const [joinedEventCount, setJoinedEventCount] = useState(0);
+  const [hostedEventCount, setHostedEventCount] = useState(0);
   const stats = [
-    { id: 'saved', value: profileData.stats[0]?.value ?? '0', label: copy.stats.saved },
+    { id: 'joined', value: String(joinedEventCount), label: copy.stats.joined },
     { id: 'stories', value: String(userStoryCount), label: copy.stats.stories },
-    { id: 'events', value: profileData.stats[2]?.value ?? '0', label: copy.stats.events },
+    { id: 'events', value: String(hostedEventCount), label: copy.stats.events },
   ];
   const parentNavigation = navigation.getParent() as any;
 
   useEffect(() => {
     void storiesRepository.refresh().then(() => {
       const allStories = storiesRepository.getStories('en');
-      const currentUserName =
-        typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
-          ? user.user_metadata.full_name.trim()
-          : user?.email?.split('@')[0] ?? '';
       const userStories = allStories.filter(
         (s) => s.isUserStory && s.author === currentUserName
       );
       setUserStoryCount(userStories.length);
+    });
+
+    void eventsRepository.refresh().then(async () => {
+      const joinedIds = await eventsRepository.getAttendedEventIds();
+      setJoinedEventCount(joinedIds.length);
+
+      const allEvents = eventsRepository.getTavolinaInvites();
+      const hosted = allEvents.filter(
+        (e) => e.creator === currentUserName
+      );
+      setHostedEventCount(hosted.length);
     });
   }, [user]);
 
