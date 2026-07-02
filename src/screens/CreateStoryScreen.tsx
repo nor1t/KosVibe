@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import type { NavigationProp, RouteProp } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Alert, Image } from 'react-native';
-import { useState } from 'react';
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useState } from 'react';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
@@ -10,6 +10,7 @@ import { nativeCopy } from '../i18n/nativeCopy';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useStories } from '../lib/stories-state';
 import { uploadStoryImage } from '../lib/storage';
+import type { StoriesStackParamList } from '../navigation/types';
 import { theme } from '../theme';
 
 const UPLOAD_PHOTO = 'Upload photo';
@@ -18,7 +19,8 @@ const GALLERY = 'Gallery';
 const CAMERA = 'Camera';
 
 type CreateStoryScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
+  navigation: NavigationProp<StoriesStackParamList, 'CreateStory'>;
+  route: RouteProp<StoriesStackParamList, 'CreateStory'>;
 };
 
 const categoryOptions = ['Food', 'Coffee', 'Culture', 'Night Walk', 'Nature', 'Other'];
@@ -29,26 +31,55 @@ function getDisplayName(userMeta: { full_name?: unknown } | null, email: string 
   return undefined;
 }
 
-export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
+export function CreateStoryScreen({ navigation, route }: CreateStoryScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const { createStory, imageTemplates } = useStories();
+  const { createStory, updateStory, getStoryById, onStoriesChange, imageTemplates } = useStories();
   const { user } = useAuth();
   const displayName = getDisplayName(user?.user_metadata ?? null, user?.email ?? null);
-  const [title, setTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
-  const [body, setBody] = useState('');
-  const [location, setLocation] = useState('');
-  const [category, setCategory] = useState('');
-  const [selectedImage, setSelectedImage] = useState(imageTemplates[0]);
+  const editStoryId = route.params?.editStoryId;
+  const isEditing = Boolean(editStoryId);
+  const initialStory = editStoryId ? getStoryById(editStoryId, language) : undefined;
+  const [hasPrefilled, setHasPrefilled] = useState(!isEditing || Boolean(initialStory));
+  const [title, setTitle] = useState(initialStory?.title ?? '');
+  const [subtitle, setSubtitle] = useState(initialStory?.subtitle ?? '');
+  const [body, setBody] = useState(initialStory?.body ?? '');
+  const [location, setLocation] = useState(initialStory?.location ?? '');
+  const [category, setCategory] = useState(initialStory?.category ?? '');
+  const [selectedImage, setSelectedImage] = useState(initialStory?.image ?? imageTemplates[0]);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
 
-  const canCreate =
+  const canSave =
     title.trim().length > 2 &&
     subtitle.trim().length > 5 &&
     body.trim().length > 20 &&
     location.trim().length > 1 &&
-    category.trim().length > 1;
+    category.trim().length > 1 &&
+    (!isEditing || hasPrefilled);
+
+  useEffect(() => {
+    if (!editStoryId || hasPrefilled) return undefined;
+
+    const prefill = () => {
+      const story = getStoryById(editStoryId, language);
+      if (!story) return false;
+      setTitle(story.title);
+      setSubtitle(story.subtitle);
+      setBody(story.body);
+      setLocation(story.location);
+      setCategory(story.category);
+      setSelectedImage(story.image || imageTemplates[0]);
+      setLocalImageUri(null);
+      setHasPrefilled(true);
+      return true;
+    };
+
+    if (prefill()) return undefined;
+
+    return onStoriesChange(() => {
+      prefill();
+    });
+  }, [editStoryId, getStoryById, hasPrefilled, imageTemplates, language, onStoriesChange]);
 
   const pickImageFromGallery = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -93,8 +124,8 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
 
   const [publishing, setPublishing] = useState(false);
 
-  const handleCreate = async () => {
-    if (!canCreate || publishing) return;
+  const handleSave = async () => {
+    if (!canSave || publishing) return;
 
     setPublishing(true);
 
@@ -107,7 +138,7 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
 
       const displayImage = uploadedImageUrl || selectedImage || imageTemplates[0];
 
-      const story = await createStory({
+      const storyInput = {
         title,
         subtitle,
         body,
@@ -118,12 +149,16 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
         authorName: displayName,
         authorId: user?.id,
         language,
-      });
+      };
+
+      const story = editStoryId
+        ? await updateStory({ ...storyInput, storyId: editStoryId })
+        : await createStory(storyInput);
 
       navigation.navigate('StoryDetail', { storyId: story.id });
     } catch (err) {
       Alert.alert(
-        'Failed to publish',
+        isEditing ? 'Failed to save' : 'Failed to publish',
         'Could not save your story. Please try again.'
       );
     } finally {
@@ -137,7 +172,7 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
       <View style={styles.headerRow}>
         <View style={styles.headerCopy}>
           <Text style={styles.eyebrow}>{copy.creatorEyebrow}</Text>
-          <Text style={styles.title}>{copy.createTitle}</Text>
+          <Text style={styles.title}>{isEditing ? 'Edit your story' : copy.createTitle}</Text>
         </View>
       </View>
 
@@ -290,11 +325,11 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
 
         {/* Publish button */}
         <Pressable
-          disabled={!canCreate || publishing}
-          style={[styles.createButton, (!canCreate || publishing) && styles.createButtonDisabled]}
-          onPress={handleCreate}>
-          <Ionicons name="paper-plane" size={18} color={theme.colors.surface} />
-          <Text style={styles.createButtonText}>{copy.publishButton}</Text>
+          disabled={!canSave || publishing}
+          style={[styles.createButton, (!canSave || publishing) && styles.createButtonDisabled]}
+          onPress={handleSave}>
+          <Ionicons name={isEditing ? 'checkmark' : 'paper-plane'} size={18} color={theme.colors.surface} />
+          <Text style={styles.createButtonText}>{isEditing ? 'Save changes' : copy.publishButton}</Text>
         </Pressable>
       </View>
     </ScrollView>

@@ -47,7 +47,7 @@ export type StoriesStackParamList = {
   StoriesMain: undefined;
   StoryDetail: { storyId: string };
   StorySearch: undefined;
-  CreateStory: undefined;
+  CreateStory: { editStoryId?: string } | undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
   Settings: undefined;

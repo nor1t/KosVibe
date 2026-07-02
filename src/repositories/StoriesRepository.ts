@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { SupportedLanguage } from '../i18n/messages';
-import type { CreateStoryInput, IStoriesRepository, StoryItem } from './types';
+import type { CreateStoryInput, IStoriesRepository, StoryItem, UpdateStoryInput } from './types';
 
 /**
  * Sprint 6 — Database-backed Stories Repository
@@ -68,6 +68,15 @@ function buildStory(row: Record<string, unknown>): StoryItem {
 }
 
 // ─── repository ─────────────────────────────────────────────────────────────
+
+function buildStoryWithCounts(row: Record<string, unknown>): StoryItem {
+  const story = buildStory(row);
+  const likesFromJoin = row.story_likes as unknown as { count: number }[] | null;
+  if (likesFromJoin && likesFromJoin.length > 0) {
+    return { ...story, likes: likesFromJoin[0].count };
+  }
+  return story;
+}
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -142,22 +151,19 @@ export class StoriesRepository implements IStoriesRepository {
 
         const newCache = data
           .filter((row) => !row.deleted_at)
-          .map((row) => {
-            const story = buildStory(row as Record<string, unknown>);
-            // Use real like count from the join if available, fall back to stored count
-            const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
-            if (likesFromJoin && likesFromJoin.length > 0) {
-              story.likes = likesFromJoin[0].count;
-            }
-            return story;
-          });
+          .map((row) => buildStoryWithCounts(row as Record<string, unknown>));
 
         const oldCache = this.baseStoriesCache.get(lang) ?? [];
         const newIds = new Set(newCache.map((s) => s.id));
         const oldIds = new Set(oldCache.map((s) => s.id));
         const changed = newIds.size !== oldIds.size
           || [...newIds].some((id) => !oldIds.has(id))
-          || newCache.some((s, i) => oldCache[i]?.id !== s.id || oldCache[i]?.likes !== s.likes);
+          || newCache.some(
+            (s, i) =>
+              oldCache[i]?.id !== s.id
+              || oldCache[i]?.likes !== s.likes
+              || oldCache[i]?.views !== s.views
+          );
 
         if (changed) {
           this.baseStoriesCache.set(lang, newCache);
@@ -184,14 +190,7 @@ export class StoriesRepository implements IStoriesRepository {
     if (!enError && enStories) {
       this.baseStoriesCache.set(
         'en',
-        enStories.map((row) => {
-          const story = buildStory(row as Record<string, unknown>);
-          const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
-          if (likesFromJoin && likesFromJoin.length > 0) {
-            story.likes = likesFromJoin[0].count;
-          }
-          return story;
-        })
+        enStories.map((row) => buildStoryWithCounts(row as Record<string, unknown>))
       );
     } else {
       console.error('Failed to load en stories', enError);
@@ -209,14 +208,7 @@ export class StoriesRepository implements IStoriesRepository {
     if (!sqError && sqStories) {
       this.baseStoriesCache.set(
         'sq',
-        sqStories.map((row) => {
-          const story = buildStory(row as Record<string, unknown>);
-          const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
-          if (likesFromJoin && likesFromJoin.length > 0) {
-            story.likes = likesFromJoin[0].count;
-          }
-          return story;
-        })
+        sqStories.map((row) => buildStoryWithCounts(row as Record<string, unknown>))
       );
     } else {
       console.error('Failed to load sq stories', sqError);
@@ -291,6 +283,62 @@ export class StoriesRepository implements IStoriesRepository {
     return dbStory;
   }
 
+  async updateStory(input: UpdateStoryInput): Promise<StoryItem> {
+    const uid = input.authorId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) {
+      throw new Error('You must be signed in to edit this story.');
+    }
+
+    const language: SupportedLanguage = (input.language === 'sq' ? 'sq' : 'en');
+    const readTime = computeReadTime(input.body);
+
+    const { data, error } = await supabase
+      .from('stories')
+      .update({
+        title: input.title.trim(),
+        subtitle: input.subtitle.trim(),
+        body: input.body.trim(),
+        image_url: input.image,
+        location: input.location.trim(),
+        category: input.category.trim(),
+        read_time: readTime,
+        language,
+      })
+      .eq('id', input.storyId)
+      .eq('user_id', uid)
+      .select('*')
+      .single();
+
+    if (error || !data) {
+      console.error('Failed to update story', error);
+      throw error ?? new Error('Failed to update story');
+    }
+
+    const dbStory = buildStory(data);
+
+    for (const [lang, stories] of this.baseStoriesCache) {
+      const idx = stories.findIndex((story) => story.id === input.storyId);
+      if (idx !== -1) {
+        const updated = [...stories];
+        updated.splice(idx, 1);
+        this.baseStoriesCache.set(lang, updated);
+      }
+    }
+
+    const cache = this.baseStoriesCache.get(language) ?? [];
+    const idx = cache.findIndex((story) => story.id === input.storyId);
+    const updatedCache = [...cache];
+    if (idx === -1) {
+      updatedCache.unshift(dbStory);
+    } else {
+      updatedCache[idx] = dbStory;
+    }
+    this.baseStoriesCache.set(language, updatedCache);
+    this.notifyListeners();
+
+    return dbStory;
+  }
+
   getImageTemplates(): string[] {
     return imageTemplates;
   }
@@ -350,16 +398,36 @@ export class StoriesRepository implements IStoriesRepository {
 
   /** Increment the views count for a story (calls SECURITY DEFINER RPC). */
   async incrementStoryViews(storyId: string): Promise<void> {
-    void supabase.rpc('increment_story_views', { story_id_param: storyId });
+    const { error } = await supabase.rpc('increment_story_views', { story_id_param: storyId });
+    if (error) {
+      console.error('Failed to increment story views', error);
+      return;
+    }
 
-    // Optimistic cache update
+    const { data, error: refreshError } = await supabase
+      .from('stories')
+      .select('*, story_likes(count)')
+      .eq('id', storyId)
+      .single();
+
+    if (refreshError || !data) {
+      console.error('Failed to refresh story views after increment', refreshError);
+      return;
+    }
+
+    const updatedStory = buildStoryWithCounts(data as Record<string, unknown>);
+    let didUpdate = false;
     for (const [lang, stories] of this.baseStoriesCache) {
       const idx = stories.findIndex((s) => s.id === storyId);
       if (idx !== -1) {
         const updated = [...stories];
-        updated[idx] = { ...updated[idx], views: (updated[idx].views ?? 0) + 1 };
+        updated[idx] = updatedStory;
         this.baseStoriesCache.set(lang, updated);
+        didUpdate = true;
       }
+    }
+    if (didUpdate) {
+      this.notifyListeners();
     }
   }
 

@@ -376,6 +376,10 @@ export type CreateStoryInput = {
   language?: string;
 };
 
+export type UpdateStoryInput = CreateStoryInput & {
+  storyId: string;
+};
+
 export type StoriesData = {
   stories: StoryItem[];
   imageTemplates: string[];
@@ -438,6 +442,7 @@ export interface IStoriesRepository {
   getStories(language: SupportedLanguage): StoryItem[];
   getStoryById(storyId: string, language: SupportedLanguage): StoryItem | undefined;
   createStory(input: CreateStoryInput): Promise<StoryItem>;
+  updateStory(input: UpdateStoryInput): Promise<StoryItem>;
   getImageTemplates(): string[];
 }
 

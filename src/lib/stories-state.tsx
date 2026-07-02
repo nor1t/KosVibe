@@ -4,10 +4,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { SupportedLanguage } from '../i18n/messages';
 import { storiesRepository } from '../repositories/StoriesRepository';
 import type { StoriesChangeListener } from '../repositories/StoriesRepository';
-import type { CreateStoryInput, StoryItem } from '../repositories/types';
+import type { CreateStoryInput, StoryItem, UpdateStoryInput } from '../repositories/types';
 
 type StoriesContextValue = {
   createStory: (input: CreateStoryInput) => Promise<StoryItem>;
+  updateStory: (input: UpdateStoryInput) => Promise<StoryItem>;
   getStoryById: (storyId: string, language: SupportedLanguage) => StoryItem | undefined;
   getStories: (language: SupportedLanguage) => StoryItem[];
   refreshStories: () => Promise<void>;
@@ -31,6 +32,12 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
 
   const createStory = useCallback(async (input: CreateStoryInput) => {
     const nextStory = await storiesRepository.createStory(input);
+    forceUpdate((current) => current + 1);
+    return nextStory;
+  }, []);
+
+  const updateStory = useCallback(async (input: UpdateStoryInput) => {
+    const nextStory = await storiesRepository.updateStory(input);
     forceUpdate((current) => current + 1);
     return nextStory;
   }, []);
@@ -59,6 +66,7 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     <StoriesContext.Provider
       value={{
         createStory,
+        updateStory,
         getStoryById,
         getStories,
         refreshStories,
