@@ -128,7 +128,7 @@ function FavoritesStackNavigator() {
   return (
     <FavoritesStack.Navigator screenOptions={stackScreenOptions}>
       <FavoritesStack.Screen name="FavoritesMain" component={FavoritesScreen} />
-      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} options={{ headerShown: false }} />
+      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} />
       <FavoritesStack.Screen name="CreateStory" component={CreateStoryScreen} />
       <FavoritesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />

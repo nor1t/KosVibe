@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
@@ -9,6 +10,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { normalizeImageUri } from '../lib/image-uri';
 import { profileRepository } from '../repositories/profileRepository';
+import { storiesRepository } from '../repositories/StoriesRepository';
 import { theme } from '../theme';
 
 function getDisplayName(
@@ -42,13 +44,28 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     typeof user?.user_metadata?.avatar_url === 'string' ? user.user_metadata.avatar_url : null
   );
   const displayName = getDisplayName(fullName, user?.email, copy.fallbackName);
+  const [userStoryCount, setUserStoryCount] = useState(0);
   const profileData = profileRepository.getProfileData();
   const stats = [
     { id: 'saved', value: profileData.stats[0]?.value ?? '0', label: copy.stats.saved },
-    { id: 'stories', value: profileData.stats[1]?.value ?? '0', label: copy.stats.stories },
+    { id: 'stories', value: String(userStoryCount), label: copy.stats.stories },
     { id: 'events', value: profileData.stats[2]?.value ?? '0', label: copy.stats.events },
   ];
   const parentNavigation = navigation.getParent() as any;
+
+  useEffect(() => {
+    void storiesRepository.refresh().then(() => {
+      const allStories = storiesRepository.getStories('en');
+      const currentUserName =
+        typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+          ? user.user_metadata.full_name.trim()
+          : user?.email?.split('@')[0] ?? '';
+      const userStories = allStories.filter(
+        (s) => s.isUserStory && s.author === currentUserName
+      );
+      setUserStoryCount(userStories.length);
+    });
+  }, [user]);
 
   const openProfileEditor = () => {
     navigation.navigate('EditProfile' as never);
@@ -61,15 +78,7 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
     }
 
     if (index === 1) {
-      parentNavigation?.navigate('HomeTab', { screen: 'Market' });
-      return;
-    }
-
-    if (index === 2) {
-      parentNavigation?.navigate('HomeTab', {
-        screen: 'Category',
-        params: { category: 'Culture' },
-      });
+      navigation.navigate('Settings' as never);
       return;
     }
 

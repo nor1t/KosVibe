@@ -168,17 +168,37 @@ export class StoriesRepository implements IStoriesRepository {
     return imageTemplates;
   }
 
-  async likeStory(storyId: string): Promise<boolean> {
-    const { error } = await supabase.from('story_likes').insert({ story_id: storyId });
+  async likeStory(storyId: string, userId?: string): Promise<boolean> {
+    const uid = userId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
+    const { error } = await supabase.from('story_likes').insert({
+      story_id: storyId,
+      user_id: uid,
+    });
     return !error;
   }
 
-  async unlikeStory(storyId: string): Promise<boolean> {
+  async unlikeStory(storyId: string, userId?: string): Promise<boolean> {
+    const uid = userId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
     const { error } = await supabase
       .from('story_likes')
       .delete()
-      .eq('story_id', storyId);
+      .eq('story_id', storyId)
+      .eq('user_id', uid);
     return !error;
+  }
+
+  async hasUserLikedStory(storyId: string, userId?: string): Promise<boolean> {
+    const uid = userId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
+    const { data, error } = await supabase
+      .from('story_likes')
+      .select('id')
+      .eq('story_id', storyId)
+      .eq('user_id', uid)
+      .limit(1);
+    return !error && (data?.length ?? 0) > 0;
   }
 
   async addComment(storyId: string, body: string, authorName?: string): Promise<boolean> {

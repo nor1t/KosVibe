@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useStories } from '../lib/stories-state';
+import { uploadStoryImage } from '../lib/storage';
 import { theme } from '../theme';
 
 const UPLOAD_PHOTO = 'Upload photo';
@@ -95,10 +96,17 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
   const handleCreate = async () => {
     if (!canCreate || publishing) return;
 
-    const displayImage = localImageUri || selectedImage || imageTemplates[0];
     setPublishing(true);
 
     try {
+      // Upload to storage if user picked a local image
+      let uploadedImageUrl: string | null = null;
+      if (localImageUri) {
+        uploadedImageUrl = await uploadStoryImage(localImageUri);
+      }
+
+      const displayImage = uploadedImageUrl || selectedImage || imageTemplates[0];
+
       const story = await createStory({
         title,
         subtitle,
@@ -106,7 +114,7 @@ export function CreateStoryScreen({ navigation }: CreateStoryScreenProps) {
         location,
         category,
         image: displayImage,
-        imageUri: localImageUri || undefined,
+        imageUri: uploadedImageUrl || localImageUri || undefined,
         authorName: displayName,
         authorId: user?.id,
         language,

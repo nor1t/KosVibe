@@ -1,12 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { RouteProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { PAGE_BOTTOM_PADDING } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories } from '../lib/stories-state';
+import { storiesRepository } from '../repositories/StoriesRepository';
 import { theme } from '../theme';
 
 type StoryDetailRoute = RouteProp<{ StoryDetail: { storyId: string } }, 'StoryDetail'>;
@@ -20,6 +22,47 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
   const copy = nativeCopy[language].stories;
   const { getStoryById } = useStories();
   const story = getStoryById(route.params.storyId, language);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(story?.likes ?? 0);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Check if the current user has already liked this story
+  useEffect(() => {
+    if (!story) return;
+    const checkLike = async () => {
+      const liked = await storiesRepository.hasUserLikedStory(story.id);
+      if (liked) {
+        setIsLiked(true);
+      }
+    };
+    void checkLike();
+  }, [story?.id]);
+
+  const toggleLike = async () => {
+    if (!story || isLikeLoading) return;
+    setIsLikeLoading(true);
+    try {
+      if (isLiked) {
+        const ok = await storiesRepository.unlikeStory(story.id);
+        if (ok) {
+          setIsLiked(false);
+          setLikeCount((prev) => Math.max(0, prev - 1));
+        }
+      } else {
+        const ok = await storiesRepository.likeStory(story.id);
+        if (ok) {
+          setIsLiked(true);
+          setLikeCount((prev) => prev + 1);
+        } else {
+          console.warn('Failed to like story — check RLS and auth state');
+        }
+      }
+    } catch (err) {
+      console.error('Like toggle error:', err);
+    } finally {
+      setIsLikeLoading(false);
+    }
+  };
 
   if (!story) {
     return (
@@ -51,10 +94,19 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
 
       <View style={styles.storyBody}>
         <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Ionicons name="heart-outline" size={18} color={theme.colors.secondary} />
-            <Text style={styles.statText}>{story.likes} {copy.likes}</Text>
-          </View>
+          <Pressable
+            style={[styles.statItem, isLiked && styles.statItemLiked]}
+            onPress={toggleLike}
+            disabled={isLikeLoading}>
+            <Ionicons
+              name={isLiked ? 'heart' : 'heart-outline'}
+              size={18}
+              color={isLiked ? '#FF1F3D' : theme.colors.secondary}
+            />
+            <Text style={[styles.statText, isLiked && styles.statTextLiked]}>
+              {likeCount} {copy.likes}
+            </Text>
+          </Pressable>
           <View style={styles.statItem}>
             <Ionicons name="eye-outline" size={18} color={theme.colors.secondary} />
             <Text style={styles.statText}>{story.views} {copy.views}</Text>
@@ -74,7 +126,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: PAGE_BOTTOM_PADDING,
-    paddingTop: PAGE_TOP_PADDING,
   },
   heroImage: {
     height: 520,
@@ -83,11 +134,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: PAGE_TOP_PADDING - 60,
     paddingBottom: 30,
   },
   heroSpacer: {
-    height: 84,
+    height: 24,
   },
   location: {
     color: theme.colors.secondary,
@@ -145,10 +195,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
+  statItemLiked: {
+    backgroundColor: 'rgba(255,31,61,0.15)',
+    borderColor: 'rgba(255,31,61,0.3)',
+  },
   statText: {
     color: theme.colors.heading,
     fontSize: 13,
     fontWeight: '800',
+  },
+  statTextLiked: {
+    color: '#FF6B81',
   },
   bodyText: {
     color: theme.colors.mutedText,
@@ -159,7 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: theme.spacing.xl,
     padding: 20,
-    paddingTop: PAGE_TOP_PADDING,
+    paddingTop: 60,
     backgroundColor: theme.colors.background,
   },
   emptyTitle: {

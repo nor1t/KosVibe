@@ -3,25 +3,26 @@ import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Image,
-    ImageBackground,
-    Modal,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Image,
+  ImageBackground,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
 
+import { usePageSpacing } from '../components/Screen';
 import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
-import { usePageSpacing } from '../components/Screen';
 import { useScrollBehavior } from '../lib/scroll-behavior';
 import { eventsRepository } from '../repositories/eventsRepository';
 import type { TavolinaInvite } from '../repositories/types';
+import { uploadEventImage } from '../lib/storage';
 import { theme } from '../theme';
 
 type TavolinaScreenProps = {
@@ -234,9 +235,16 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const publishEvent = async () => {
     if (!canPublish) return;
 
-    const displayImage = localImageUri || selectedImage || eventImages[0];
     const maxCap = maxAttendees ? parseInt(maxAttendees, 10) : 8;
     const spotsText = language === 'sq' ? `0/${maxCap} vende` : `0/${maxCap} spots`;
+
+    // Upload image to storage if user picked a local image
+    let uploadedImageUrl: string | null = null;
+    if (localImageUri) {
+      uploadedImageUrl = await uploadEventImage(localImageUri);
+    }
+
+    const displayImage = uploadedImageUrl || localImageUri || selectedImage || eventImages[0];
 
     const created = await eventsRepository.createEvent({
       restaurantName: eventName.trim(),
@@ -245,11 +253,11 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       time: time.trim(),
       eventType: selectedComposerType,
       creatorName: currentUserName || 'KosVibe',
-      creatorAvatar: displayImage,
+      creatorAvatar: uploadedImageUrl || selectedImage || eventImages[0],
       description: description.trim(),
       tags: [copy.moods[eventTypeLabelIndex[selectedComposerType]], city.trim()],
       spotsLabel: spotsText,
-      imageUrl: displayImage,
+      imageUrl: uploadedImageUrl || displayImage,
       isPaid,
       price: isPaid ? price.trim() : undefined,
       maxAttendees: maxCap,
@@ -438,12 +446,12 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       {isPaid && (
         <View style={styles.field}>
           <Text style={styles.label}>{createCopy.price}</Text>
-          <TextInput value={price} onChangeText={setPrice} placeholder={createCopy.pricePlaceholder} placeholderTextColor={theme.colors.subtle} keyboardType="decimal-pad" style={styles.input} />
+          <TextInput value={price} onChangeText={setPrice} placeholder={createCopy.pricePlaceholder} placeholderTextColor={theme.colors.subtle} keyboardType="default" returnKeyType="done" style={styles.input} />
         </View>
       )}
       <View style={styles.field}>
         <Text style={styles.label}>{createCopy.maxAttendees}</Text>
-        <TextInput value={maxAttendees} onChangeText={setMaxAttendees} placeholder={createCopy.maxAttendeesPlaceholder} placeholderTextColor={theme.colors.subtle} keyboardType="number-pad" style={styles.input} />
+        <TextInput value={maxAttendees} onChangeText={setMaxAttendees} placeholder={createCopy.maxAttendeesPlaceholder} placeholderTextColor={theme.colors.subtle} keyboardType="default" returnKeyType="done" style={styles.input} />
       </View>
       <View style={styles.summaryCard}>
         <Text style={styles.summaryTitle}>{eventName || createCopy.eventNamePlaceholder}</Text>
@@ -520,49 +528,64 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       </Pressable>
 
       {/* Multi-step create event modal */}
-      <Modal visible={isComposerOpen} transparent animationType="slide" onRequestClose={closeComposer}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{currentStep === 0 ? createCopy.stepType : currentStep === 1 ? createCopy.stepDetails : createCopy.stepPricing}</Text>
-              <Pressable style={styles.modalCloseButton} onPress={closeComposer}><Ionicons name="close" size={20} color={theme.colors.surface} /></Pressable>
+      <Modal visible={isComposerOpen} transparent={false} animationType="slide" onRequestClose={closeComposer}>
+        <View style={styles.composerFullScreen}>
+          <View style={[styles.composerHeaderBar, { paddingTop: pageSpacing.topPadding }]}>
+            <View>
+              <Text style={styles.composerTitle}>{currentStep === 0 ? createCopy.stepType : currentStep === 1 ? createCopy.stepDetails : createCopy.stepPricing}</Text>
+              <Text style={styles.composerStepLabel}>Step {currentStep + 1} of 3</Text>
             </View>
-            {renderStepIndicator()}
-            <View style={styles.stepContainer}>{currentStep === 0 && renderStep1()}{currentStep === 1 && renderStep2()}{currentStep === 2 && renderStep3()}</View>
-            <View style={styles.modalActions}>
-              {currentStep > 0 ? (
-                <Pressable style={styles.backButton} onPress={() => setCurrentStep((s) => s - 1)}><Ionicons name="chevron-back" size={18} color={theme.colors.heading} /><Text style={styles.backButtonText}>{createCopy.back}</Text></Pressable>
-              ) : (
-                <Pressable style={styles.backButton} onPress={closeComposer}><Text style={styles.backButtonText}>{createCopy.cancel}</Text></Pressable>
-              )}
-              {currentStep < 2 ? (
-                <Pressable disabled={currentStep === 0 ? !canProceedToStep2 : !canProceedToStep3} style={[styles.nextButton, (currentStep === 0 ? !canProceedToStep2 : !canProceedToStep3) && styles.nextButtonDisabled]} onPress={() => setCurrentStep((s) => s + 1)}>
-                  <Text style={styles.nextButtonText}>{createCopy.next}</Text><Ionicons name="chevron-forward" size={18} color={theme.colors.surface} />
-                </Pressable>
-              ) : (
-                <Pressable disabled={!canPublish} style={[styles.publishButton, !canPublish && styles.publishButtonDisabled]} onPress={publishEvent}>
-                  <Ionicons name="paper-plane" size={18} color={theme.colors.surface} /><Text style={styles.publishButtonText}>{createCopy.publish}</Text>
-                </Pressable>
-              )}
-            </View>
+            <Pressable style={styles.modalCloseButton} onPress={closeComposer}><Ionicons name="close" size={20} color={theme.colors.surface} /></Pressable>
+          </View>
+          {renderStepIndicator()}
+          <ScrollView
+            style={styles.composerBodyScroll}
+            contentContainerStyle={styles.composerBodyContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {currentStep === 0 && renderStep1()}
+            {currentStep === 1 && renderStep2()}
+            {currentStep === 2 && renderStep3()}
+          </ScrollView>
+          <View style={[styles.modalActions, { paddingBottom: pageSpacing.bottomPadding }]}>
+            {currentStep > 0 ? (
+              <Pressable style={styles.backButton} onPress={() => { setCurrentStep((s) => s - 1); }}>
+                <Ionicons name="chevron-back" size={18} color={theme.colors.heading} />
+                <Text style={styles.backButtonText}>{createCopy.back}</Text>
+              </Pressable>
+            ) : (
+              <Pressable style={styles.backButton} onPress={closeComposer}><Text style={styles.backButtonText}>{createCopy.cancel}</Text></Pressable>
+            )}
+            {currentStep < 2 ? (
+              <Pressable disabled={currentStep === 0 ? !canProceedToStep2 : !canProceedToStep3} style={[styles.nextButton, (currentStep === 0 ? !canProceedToStep2 : !canProceedToStep3) && styles.nextButtonDisabled]} onPress={() => setCurrentStep((s) => s + 1)}>
+                <Text style={styles.nextButtonText}>{createCopy.next}</Text><Ionicons name="chevron-forward" size={18} color={theme.colors.surface} />
+              </Pressable>
+            ) : (
+              <Pressable disabled={!canPublish} style={[styles.publishButton, !canPublish && styles.publishButtonDisabled]} onPress={publishEvent}>
+                <Ionicons name="paper-plane" size={18} color={theme.colors.surface} /><Text style={styles.publishButtonText}>{createCopy.publish}</Text>
+              </Pressable>
+            )}
           </View>
         </View>
       </Modal>
 
       {/* Event detail modal */}
       <Modal visible={selectedEvent !== null} transparent animationType="slide" onRequestClose={() => setSelectedEvent(null)}>
-        <Pressable style={styles.modalBackdrop} onPress={() => setSelectedEvent(null)}>
+        <View style={styles.modalBackdrop}>
           {selectedEvent ? (
-            <Pressable style={styles.eventDetailCard} onPress={(event) => event.stopPropagation()}>
-              <Pressable style={styles.modalHandle} onPress={() => setSelectedEvent(null)} />
-              <ImageBackground source={{ uri: selectedEvent.image }} style={styles.eventDetailImage}>
-                <View style={styles.eventDetailShade} />
-                <View style={styles.eventDetailTopRow}>
-                  <View style={styles.eventDetailBadge}><Ionicons name="calendar-outline" size={18} color={theme.colors.surface} /><Text style={styles.eventDetailBadgeText}>{createCopy.eventDetails}</Text></View>
-                  <Pressable style={styles.modalCloseButton} onPress={() => setSelectedEvent(null)}><Ionicons name="close" size={20} color={theme.colors.surface} /></Pressable>
-                </View>
-              </ImageBackground>
-              <ScrollView style={styles.eventDetailScroll} contentContainerStyle={styles.eventDetailBody} showsVerticalScrollIndicator={false}>
+            <>
+              <Pressable style={StyleSheet.absoluteFill} onPress={() => setSelectedEvent(null)} />
+              <View style={styles.eventDetailCard}>
+              <ScrollView style={styles.eventDetailScroll} contentContainerStyle={styles.eventDetailScrollContent} showsVerticalScrollIndicator={false}>
+                <Pressable style={styles.modalHandle} onPress={() => setSelectedEvent(null)} />
+                <ImageBackground source={{ uri: selectedEvent.image }} style={styles.eventDetailImage}>
+                  <View style={styles.eventDetailShade} />
+                  <View style={styles.eventDetailTopRow}>
+                    <View style={styles.eventDetailBadge}><Ionicons name="calendar-outline" size={18} color={theme.colors.surface} /><Text style={styles.eventDetailBadgeText}>{createCopy.eventDetails}</Text></View>
+                    <Pressable style={styles.modalCloseButton} onPress={() => setSelectedEvent(null)}><Ionicons name="close" size={20} color={theme.colors.surface} /></Pressable>
+                  </View>
+                </ImageBackground>
+                <View style={styles.eventDetailBody}>
                 <Text style={styles.eventDetailTitle}>{selectedEvent.restaurantName}</Text>
                 <Text style={styles.eventDetailMeta}>{selectedEvent.day} | {selectedEvent.time} | {selectedEvent.city}</Text>
                 <View style={styles.eventTrustRow}>
@@ -596,10 +619,12 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                   <Ionicons name={isSelectedEventJoined ? 'checkmark-circle' : 'person-add-outline'} size={20} color={theme.colors.surface} />
                   <Text style={styles.joinButtonText}>{isSelectedEventJoined ? createCopy.joined : createCopy.join}</Text>
                 </Pressable>
+                </View>
               </ScrollView>
-            </Pressable>
+            </View>
+            </>
           ) : null}
-        </Pressable>
+        </View>
       </Modal>
 
       {/* Creator profile modal */}
@@ -740,7 +765,39 @@ const styles = StyleSheet.create({
   summaryBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   summaryBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.06)' },
   summaryBadgeText: { color: theme.colors.secondary, fontSize: 12, fontWeight: '800' },
-  modalActions: { flexDirection: 'row', gap: 12, marginTop: 18 },
+  composerFullScreen: {
+    flex: 1,
+    backgroundColor: '#0A0C14',
+  },
+  composerHeaderBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
+    backgroundColor: '#0A0C14',
+  },
+  composerTitle: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  composerStepLabel: {
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  composerBodyScroll: {
+    flex: 1,
+  },
+  composerBodyContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  modalActions: { flexDirection: 'row', gap: 12, paddingHorizontal: 20, paddingTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(255, 255, 255, 0.06)', backgroundColor: '#0A0C14' },
   backButton: { flex: 1, minHeight: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.06)' },
   backButtonText: { color: theme.colors.heading, fontWeight: '900' },
   nextButton: { flex: 1, minHeight: 52, borderRadius: 999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: theme.colors.primary },
@@ -758,6 +815,7 @@ const styles = StyleSheet.create({
   eventDetailBadgeText: { color: theme.colors.surface, fontSize: 12, fontWeight: '900' },
   eventDetailBody: { padding: 20, paddingBottom: 46 },
   eventDetailScroll: { flex: 1 },
+  eventDetailScrollContent: { flexGrow: 1 },
   eventDetailTitle: { color: theme.colors.heading, fontSize: 28, lineHeight: 30, fontWeight: '900' },
   eventDetailMeta: { marginTop: 8, color: theme.colors.secondary, fontSize: 14, fontWeight: '800' },
   eventTypePill: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: 'rgba(255,179,0,0.16)', borderWidth: 1, borderColor: 'rgba(255,179,0,0.24)' },

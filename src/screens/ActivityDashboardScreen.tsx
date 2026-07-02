@@ -11,10 +11,11 @@ import { useDiscovery } from '../lib/discovery-state';
 import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseCard';
 import { usePageSpacing } from '../components/Screen';
+import { eventsRepository } from '../repositories/eventsRepository';
 import { placesRepository } from '../repositories/placesRepository';
 import { restaurantsRepository } from '../repositories/restaurantsRepository';
 import { searchRepository } from '../repositories/searchRepository';
-import type { FunActivity } from '../repositories/types';
+import type { FunActivity, KosovoHighlight } from '../repositories/types';
 import { theme } from '../theme';
 
 type ActivityDashboardScreenProps = {
@@ -86,11 +87,11 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
   const [selectedActivity, setSelectedActivity] = useState<FunActivity | null>(null);
   const [isAssistantPromptVisible, setIsAssistantPromptVisible] = useState(true);
   const pageSpacing = usePageSpacing();
+  const [kosovoHighlights, setKosovoHighlights] = useState<KosovoHighlight[]>([]);
   const visibleRestaurants = useMemo(
     () => searchRepository.searchRestaurants(selectedLocationId, ''),
     [selectedLocationId]
   );
-  const trending = visibleRestaurants.slice(0, 2);
   const topPick = visibleRestaurants[2] ?? visibleRestaurants[0];
   const visibleFunActivities = useMemo(
     () =>
@@ -160,6 +161,12 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
 
     return () => animation.stop();
   }, [billboardAnim, billboardDistance]);
+
+  useEffect(() => {
+    void eventsRepository.refresh().then(() => {
+      setKosovoHighlights(eventsRepository.getKosovoHighlights());
+    });
+  }, []);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -238,20 +245,22 @@ export function ActivityDashboardScreen({ navigation }: ActivityDashboardScreenP
 
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{copy.trending}</Text>
-              <View style={styles.trendingGrid}>
-                {trending.map((item) => (
-                  <Pressable
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.trendingRow}>
+                {kosovoHighlights.slice(0, 3).map((item) => (
+                  <View
                     key={item.id}
-                    style={styles.miniCard}
-                    onPress={() => navigation.navigate('RestaurantDetails', { restaurantId: item.id })}>
-                    <Text style={styles.miniCardTitle}>{item.name}</Text>
-                    <View style={styles.metaRow}>
-                      <Ionicons name="star" size={13} color={theme.colors.secondary} />
-                      <Text style={styles.metaText}>{item.rating.toFixed(1)} • {item.city}</Text>
+                    style={[styles.trendingCard, { borderColor: item.accentColor + '66' }]}>
+                    <View style={[styles.trendingAccentBar, { backgroundColor: item.accentColor }]} />
+                    <View style={styles.trendingCardContent}>
+                      <Text style={styles.trendingCardTitle}>{item.title}</Text>
+                      <Text style={styles.trendingCardDesc}>{item.description}</Text>
                     </View>
-                  </Pressable>
+                  </View>
                 ))}
-              </View>
+              </ScrollView>
             </View>
 
             {topPick ? (
@@ -495,6 +504,41 @@ const styles = StyleSheet.create({
     marginTop: 14,
     flexDirection: 'row',
     gap: 12,
+  },
+  trendingRow: {
+    marginTop: 14,
+    gap: 12,
+    paddingRight: 12,
+  },
+  trendingCard: {
+    width: 260,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    overflow: 'hidden',
+  },
+  trendingAccentBar: {
+    width: 4,
+    alignSelf: 'stretch',
+  },
+  trendingCardContent: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingRight: 8,
+  },
+  trendingCardTitle: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  trendingCardDesc: {
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    lineHeight: 17,
   },
   restaurantRow: {
     marginTop: 14,

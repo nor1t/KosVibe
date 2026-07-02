@@ -18,6 +18,7 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { normalizeImageUri } from '../lib/image-uri';
+import { uploadAvatar } from '../lib/storage';
 import { theme } from '../theme';
 
 type ProfileEditScreenProps = {
@@ -35,8 +36,9 @@ export function ProfileEditScreen({ navigation }: ProfileEditScreenProps) {
   const [fullName, setFullName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const previewAvatarUrl = normalizeImageUri(avatarUrl);
+  const previewAvatarUrl = normalizeImageUri(localAvatarUri || avatarUrl);
 
   useEffect(() => {
     const nextFullName = getStringMetadata(user?.user_metadata?.full_name);
@@ -60,6 +62,7 @@ export function ProfileEditScreen({ navigation }: ProfileEditScreenProps) {
       return;
     }
 
+    setLocalAvatarUri(result.assets[0].uri);
     setAvatarUrl(result.assets[0].uri);
   };
 
@@ -76,10 +79,19 @@ export function ProfileEditScreen({ navigation }: ProfileEditScreenProps) {
 
     try {
       setIsSaving(true);
+
+      // Upload avatar to storage if user picked a local image
+      let uploadedAvatarUrl: string | null = null;
+      if (localAvatarUri) {
+        uploadedAvatarUrl = await uploadAvatar(localAvatarUri);
+      }
+
+      const finalAvatarUrl = uploadedAvatarUrl || avatarUrl.trim() || null;
+
       await updateProfile({
         fullName: nextFullName,
         bio: bio.trim() || null,
-        avatarUrl: avatarUrl.trim() || null,
+        avatarUrl: finalAvatarUrl || null,
       });
       navigation.goBack();
     } catch (error) {

@@ -2,10 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, useState } from 'react';
 import {
-  Animated,
   KeyboardAvoidingView,
   Modal,
-  PanResponder,
   Platform,
   Pressable,
   ScrollView,
@@ -36,45 +34,7 @@ export function ChatAssistantModal() {
     sendMessage,
   } = useDiscovery();
   const [draft, setDraft] = useState('');
-  const sheetTranslateY = useRef(new Animated.Value(0)).current;
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) =>
-        gestureState.dy > 10 && Math.abs(gestureState.dy) > Math.abs(gestureState.dx),
-      onPanResponderMove: (_, gestureState) => {
-        sheetTranslateY.setValue(Math.max(0, gestureState.dy));
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dy > 90 || gestureState.vy > 0.85) {
-          Animated.timing(sheetTranslateY, {
-            toValue: 420,
-            duration: 180,
-            useNativeDriver: true,
-          }).start(({ finished }) => {
-            if (finished) {
-              closeChat();
-              sheetTranslateY.setValue(0);
-            }
-          });
-
-          return;
-        }
-
-        Animated.spring(sheetTranslateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          bounciness: 4,
-        }).start();
-      },
-      onPanResponderTerminate: () => {
-        Animated.spring(sheetTranslateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          bounciness: 4,
-        }).start();
-      },
-    })
-  ).current;
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleSend = () => {
     if (!draft.trim()) {
@@ -83,136 +43,132 @@ export function ChatAssistantModal() {
 
     sendMessage(draft);
     setDraft('');
+
+    // Scroll to bottom after sending
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   return (
-    <Modal visible={isChatOpen} transparent animationType="slide" onRequestClose={closeChat}>
-      <View style={styles.overlay}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={closeChat} />
+    <Modal
+      visible={isChatOpen}
+      transparent={false}
+      animationType="slide"
+      onRequestClose={closeChat}
+      statusBarTranslucent>
+      <View style={styles.screen}>
+        <LinearGradient
+          colors={['#0D1019', '#0A0C14']}
+          start={{ x: 0.2, y: 0 }}
+          end={{ x: 0.9, y: 1 }}
+          style={styles.gradient}>
+          {/* Header */}
+          <View style={[styles.headerBar, { paddingTop: insets.top + 8 }]}>
+            <View style={styles.headerCopy}>
+              <View style={styles.badge}>
+                <Ionicons name="sparkles-outline" size={14} color={theme.colors.secondary} />
+                <Text style={styles.badgeText}>AI Guide</Text>
+              </View>
+              <Text style={styles.title}>KosVibe Assistant</Text>
+              <Text style={styles.subtitle}>Helping you discover {selectedLocation.label}</Text>
+            </View>
+            <Pressable onPress={closeChat} style={styles.closeButton}>
+              <Ionicons name="close" size={22} color={theme.colors.heading} />
+            </Pressable>
+          </View>
 
-        <Animated.View style={[styles.sheetWrap, { transform: [{ translateY: sheetTranslateY }] }]}>
+          {/* Messages area */}
           <KeyboardAvoidingView
+            style={styles.flex1}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            style={styles.sheetKeyboardWrap}>
-            <LinearGradient
-              colors={['#171B28', '#0D1019']}
-              start={{ x: 0.2, y: 0 }}
-              end={{ x: 0.9, y: 1 }}
-              style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) }]}>
-              <View {...panResponder.panHandlers}>
-                <View style={styles.handle} />
-                <View style={styles.header}>
-                  <View style={styles.headerCopy}>
-                    <View style={styles.badge}>
-                      <Ionicons name="sparkles-outline" size={14} color={theme.colors.secondary} />
-                      <Text style={styles.badgeText}>AI Guide</Text>
-                    </View>
-                    <Text style={styles.title}>KosVibe Assistant</Text>
-                    <Text style={styles.subtitle}>Helping you discover {selectedLocation.label}</Text>
-                  </View>
-                  <Pressable onPress={closeChat} style={styles.closeButton}>
-                    <Ionicons name="close" size={22} color={theme.colors.heading} />
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesScroll}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.messagesContent}
+              keyboardShouldPersistTaps="handled"
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}>
+              <View style={styles.quickPromptsRow}>
+                {quickPrompts.map((prompt) => (
+                  <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
+                    <Text style={styles.quickPromptText}>{prompt}</Text>
                   </Pressable>
-                </View>
-              </View>
-
-              <ScrollView
-                style={styles.messagesScroll}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.messagesContent}>
-                <View style={styles.quickPromptsRow}>
-                  {quickPrompts.map((prompt) => (
-                    <Pressable key={prompt} onPress={() => sendMessage(prompt)} style={styles.quickPrompt}>
-                      <Text style={styles.quickPromptText}>{prompt}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-
-                {chatMessages.map((message) => (
-                  <View
-                    key={message.id}
-                    style={[
-                      styles.messageBubble,
-                      message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
-                    ]}>
-                    <Text
-                      style={[
-                        styles.messageText,
-                        message.role === 'assistant' ? styles.assistantText : styles.userText,
-                      ]}>
-                      {message.text}
-                    </Text>
-                  </View>
                 ))}
-
-                {isAssistantTyping ? (
-                  <View style={[styles.messageBubble, styles.assistantBubble]}>
-                    <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
-                  </View>
-                ) : null}
-              </ScrollView>
-
-              <View style={styles.inputRow}>
-                <TextInput
-                  value={draft}
-                  onChangeText={setDraft}
-                  placeholder="Ask about Kosovo food, monuments, markets, or culture..."
-                  placeholderTextColor={theme.colors.subtle}
-                  style={styles.input}
-                  multiline
-                />
-                <Pressable onPress={handleSend} style={styles.sendButton}>
-                  <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
-                </Pressable>
               </View>
-            </LinearGradient>
+
+              {chatMessages.map((message) => (
+                <View
+                  key={message.id}
+                  style={[
+                    styles.messageBubble,
+                    message.role === 'assistant' ? styles.assistantBubble : styles.userBubble,
+                  ]}>
+                  <Text
+                    style={[
+                      styles.messageText,
+                      message.role === 'assistant' ? styles.assistantText : styles.userText,
+                    ]}>
+                    {message.text}
+                  </Text>
+                </View>
+              ))}
+
+              {isAssistantTyping ? (
+                <View style={[styles.messageBubble, styles.assistantBubble]}>
+                  <Text style={[styles.messageText, styles.assistantText]}>Typing...</Text>
+                </View>
+              ) : null}
+
+              {/* Extra bottom padding so last message isn't hidden behind input */}
+              <View style={{ height: 12 }} />
+            </ScrollView>
+
+            {/* Input bar pinned to bottom */}
+            <View style={[styles.inputRow, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+              <TextInput
+                value={draft}
+                onChangeText={setDraft}
+                placeholder="Ask about Kosovo food, monuments, markets, or culture..."
+                placeholderTextColor={theme.colors.subtle}
+                style={styles.input}
+                multiline
+                returnKeyType="send"
+                onSubmitEditing={handleSend}
+                blurOnSubmit={false}
+              />
+              <Pressable onPress={handleSend} style={styles.sendButton}>
+                <Ionicons name="arrow-up" size={20} color={theme.colors.surface} />
+              </Pressable>
+            </View>
           </KeyboardAvoidingView>
-        </Animated.View>
+        </LinearGradient>
       </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  screen: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(7, 8, 16, 0.54)',
+    backgroundColor: '#0A0C14',
   },
-  sheetWrap: {
-    height: '84%',
-    maxHeight: '90%',
-    minHeight: '72%',
-  },
-  sheetKeyboardWrap: {
+  gradient: {
     flex: 1,
   },
-  sheet: {
+  flex1: {
     flex: 1,
-    borderTopLeftRadius: theme.radius.xxl,
-    borderTopRightRadius: theme.radius.xxl,
-    paddingTop: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.xxl,
-    borderWidth: 1,
-    borderBottomWidth: 0,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    overflow: 'hidden',
-    ...theme.shadow.floating,
   },
-  handle: {
-    alignSelf: 'center',
-    width: 64,
-    height: 6,
-    borderRadius: theme.radius.round,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
-    marginBottom: theme.spacing.lg,
-  },
-  header: {
+  headerBar: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    alignItems: 'center',
     gap: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xxl,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   headerCopy: {
     flex: 1,
@@ -256,18 +212,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginTop: 4,
   },
   messagesScroll: {
     flex: 1,
+    paddingHorizontal: theme.spacing.xxl,
   },
   messagesContent: {
     gap: theme.spacing.md,
-    paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
   },
   quickPromptsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
+    marginBottom: 4,
   },
   quickPrompt: {
     backgroundColor: 'rgba(255, 31, 61, 0.14)',
@@ -312,19 +272,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: theme.spacing.md,
-    paddingTop: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xxl,
+    paddingTop: theme.spacing.sm,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#0A0C14',
   },
   input: {
     flex: 1,
     minHeight: 48,
-    maxHeight: 96,
+    maxHeight: 100,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: theme.radius.lg,
     paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
     fontSize: theme.typography.sizes.body,
     color: theme.colors.text,
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
@@ -336,6 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.primary,
+    marginBottom: 4,
     ...theme.shadow.glow,
   },
 });

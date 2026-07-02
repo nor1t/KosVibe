@@ -273,7 +273,7 @@ export const nativeCopy: Record<
         events: 'Events hosted',
       },
       section: 'Your vibe',
-      actions: ['Favorite restaurants', 'Hidden gems list', 'Monument trail', 'Settings'],
+      actions: ['Favorite restaurants', 'Monument trail', 'Settings'],
       badgeEyebrow: 'KosVibe Badge',
       badgeTitle: 'Gold city curator',
       badgeText:
@@ -513,7 +513,7 @@ export const nativeCopy: Record<
         events: 'Evente te mbajtura',
       },
       section: 'Vibi yt',
-      actions: ['Restorantet favorite', 'Lista e vendeve te fshehura', 'Shtegu i monumenteve', 'Cilesimet'],
+      actions: ['Restorantet favorite', 'Shtegu i monumenteve', 'Cilesimet'],
       badgeEyebrow: 'Distinktivi KosVibe',
       badgeTitle: 'Kurator i arte i qytetit',
       badgeText:
