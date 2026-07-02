@@ -13,30 +13,16 @@ import type { SupportedLanguage } from '../i18n/messages';
  */
 
 export class FavoritesRepository implements IFavoritesRepository {
+  /** DEPRECATED: Returns ALL restaurants, not user favorites. Use getFavoriteRestaurantsByUser() instead. */
   getFavoriteRestaurants(): Restaurant[] {
-    // Synchronous: returns cached favorites from the repository's detail cache.
-    // For real user-specific data, call getFavoriteRestaurantsAsync.
     return restaurantsRepository.getAll();
   }
 
+  /** DEPRECATED: Use getFavoriteRestaurantsByUser(userId) for user-specific favorites. */
   async getFavoriteRestaurantsAsync(): Promise<Restaurant[]> {
-    const { data, error } = await supabase
-      .from('saved_restaurants')
-      .select('restaurant_id')
-      .range(0, 50)
-      .order('created_at', { ascending: false });
-
-    if (error || !data) {
-      console.error('Failed to load saved restaurants', error);
-      return [];
-    }
-
-    const restaurantIds = data.map((row) => row.restaurant_id);
-    const restaurants = await Promise.all(
-      restaurantIds.map((id) => restaurantsRepository.getByIdAsync(id))
-    );
-
-    return restaurants.filter((r): r is Restaurant => Boolean(r));
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return [];
+    return this.getFavoriteRestaurantsByUser(uid);
   }
 
   async getFavoriteRestaurantsByUser(userId: string): Promise<Restaurant[]> {

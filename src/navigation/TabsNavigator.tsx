@@ -15,7 +15,7 @@ import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
 import { ExchangeScreen } from '../screens/ExchangeScreen';
-import { FavoritesScreen } from '../screens/FavoritesScreen';
+import { StoriesScreen } from '../screens/FavoritesScreen';
 import { FavoriteRestaurantsScreen } from '../screens/FavoriteRestaurantsScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
@@ -26,10 +26,11 @@ import { ProfileEditScreen } from '../screens/ProfileEditScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StoryDetailScreen } from '../screens/StoryDetailScreen';
+import { StorySearchScreen } from '../screens/StorySearchScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
 import { theme } from '../theme';
 import type {
-    FavoritesStackParamList,
+    StoriesStackParamList,
     HomeStackParamList,
     MapStackParamList,
     ProfileStackParamList,
@@ -41,7 +42,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
 const MapStack = createNativeStackNavigator<MapStackParamList>();
 const TavolinaStack = createNativeStackNavigator<TavolinaStackParamList>();
-const FavoritesStack = createNativeStackNavigator<FavoritesStackParamList>();
+const StoriesStack = createNativeStackNavigator<StoriesStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 const noHeaderOptions = { headerShown: false };
 
@@ -73,7 +74,7 @@ function TabIcon({
   const iconByRoute: Record<Exclude<keyof RootTabParamList, 'TavolinaTab'>, IconName> = {
     HomeTab: 'home-outline',
     MapTab: 'search-outline',
-    FavoritesTab: 'book-outline',
+    StoriesTab: 'book-outline',
     ProfileTab: 'person-outline',
   };
 
@@ -124,19 +125,20 @@ function TavolinaStackNavigator() {
   );
 }
 
-function FavoritesStackNavigator() {
+function StoriesStackNavigator() {
   return (
-    <FavoritesStack.Navigator screenOptions={stackScreenOptions}>
-      <FavoritesStack.Screen name="FavoritesMain" component={FavoritesScreen} />
-      <FavoritesStack.Screen name="StoryDetail" component={StoryDetailScreen} />
-      <FavoritesStack.Screen name="CreateStory" component={CreateStoryScreen} />
-      <FavoritesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
-      <FavoritesStack.Screen name="BookTable" component={BookTableScreen} />
-      <FavoritesStack.Screen name="Settings" component={SettingsScreen} />
-      <FavoritesStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
-      <FavoritesStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
-      <FavoritesStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
-    </FavoritesStack.Navigator>
+    <StoriesStack.Navigator screenOptions={stackScreenOptions}>
+      <StoriesStack.Screen name="StoriesMain" component={StoriesScreen} />
+      <StoriesStack.Screen name="StoryDetail" component={StoryDetailScreen} />
+      <StoriesStack.Screen name="StorySearch" component={StorySearchScreen} />
+      <StoriesStack.Screen name="CreateStory" component={CreateStoryScreen} />
+      <StoriesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
+      <StoriesStack.Screen name="BookTable" component={BookTableScreen} />
+      <StoriesStack.Screen name="Settings" component={SettingsScreen} />
+      <StoriesStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
+      <StoriesStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
+      <StoriesStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
+    </StoriesStack.Navigator>
   );
 }
 
@@ -194,7 +196,7 @@ export function TabsNavigator() {
       <Tab.Screen name="HomeTab" component={HomeStackNavigator} options={{ title: copy.home }} />
       <Tab.Screen name="MapTab" component={MapStackNavigator} options={{ title: copy.explore }} />
       <Tab.Screen name="TavolinaTab" component={TavolinaStackNavigator} options={{ title: copy.events }} />
-      <Tab.Screen name="FavoritesTab" component={FavoritesStackNavigator} options={{ title: copy.stories }} />
+      <Tab.Screen name="StoriesTab" component={StoriesStackNavigator} options={{ title: copy.stories }} />
       <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} options={{ title: copy.profile }} />
     </Tab.Navigator>
   );

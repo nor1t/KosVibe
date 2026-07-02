@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
@@ -59,26 +60,49 @@ export function ProfileScreen({ navigation }: ProfileScreenProps) {
   ];
   const parentNavigation = navigation.getParent() as any;
 
+  const loadProfileStats = useCallback(async () => {
+    // Load user story count
+    const allStories = storiesRepository.getStories('en');
+    const userStories = allStories.filter(
+      (s) => s.isUserStory && s.userId === user?.id
+    );
+    setUserStoryCount(userStories.length);
+
+    // Load joined & hosted event counts
+    const joinedIds = await eventsRepository.getAttendedEventIds();
+    setJoinedEventCount(joinedIds.length);
+
+    const allEvents = eventsRepository.getTavolinaInvites();
+    const hosted = allEvents.filter(
+      (e) => e.creatorId === user?.id
+    );
+    setHostedEventCount(hosted.length);
+  }, [currentUserName]);
+
+  // Sprint 15 — Realtime: subscribe to cache changes so stats update instantly
+  // after join/leave on TavolinaScreen without requiring a manual refresh.
   useEffect(() => {
-    void storiesRepository.refresh().then(() => {
-      const allStories = storiesRepository.getStories('en');
-      const userStories = allStories.filter(
-        (s) => s.isUserStory && s.author === currentUserName
-      );
-      setUserStoryCount(userStories.length);
+    // Ensure caches are fresh on mount
+    void storiesRepository.refresh();
+    void eventsRepository.refresh();
+
+    eventsRepository.startPolling();
+    const unsub = eventsRepository.onChange(() => {
+      void loadProfileStats();
     });
 
-    void eventsRepository.refresh().then(async () => {
-      const joinedIds = await eventsRepository.getAttendedEventIds();
-      setJoinedEventCount(joinedIds.length);
+    return () => {
+      unsub();
+      eventsRepository.stopPolling();
+    };
+  }, [loadProfileStats]);
 
-      const allEvents = eventsRepository.getTavolinaInvites();
-      const hosted = allEvents.filter(
-        (e) => e.creator === currentUserName
-      );
-      setHostedEventCount(hosted.length);
-    });
-  }, [user]);
+  // Refetch stats whenever the Profile tab gains focus
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfileStats();
+    }, [loadProfileStats])
+  );
 
   const openProfileEditor = () => {
     navigation.navigate('EditProfile' as never);

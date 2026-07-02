@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { RouteProp, NavigationProp } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
@@ -30,10 +30,11 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
       ? user.user_metadata.full_name.trim()
       : user?.email?.split('@')[0] ?? '';
   const [story, setStory] = useState(() => getStoryById(route.params.storyId, language));
-  const isOwnStory = story?.isUserStory && story.author === currentUserName;
+  const isOwnStory = story?.isUserStory && story.userId === user?.id;
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story?.likes ?? 0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(0);
 
   // Sprint 15 — Realtime: re-read story from cache whenever it changes
   useEffect(() => {
@@ -45,6 +46,18 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
       }
     });
   }, [onStoriesChange, getStoryById, route.params.storyId, language]);
+
+  // Increment views when story is opened
+  useEffect(() => {
+    if (!story) return;
+    void storiesRepository.incrementStoryViews(story.id);
+  }, [story?.id]);
+
+  // Load real comment count
+  useEffect(() => {
+    if (!story) return;
+    void storiesRepository.getStoryCommentCount(story.id).then(setCommentsCount);
+  }, [story?.id]);
 
   useEffect(() => {
     if (!story) return;
@@ -81,17 +94,28 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
 
   const handleDelete = () => {
     if (!story) return;
-    Alert.alert('Delete story', 'Are you sure you want to delete this story?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          const ok = await storiesRepository.deleteStory(story.id);
-          if (ok) navigation.goBack();
+    Alert.alert(
+      language === 'sq' ? 'Fshij storjen' : 'Delete story',
+      language === 'sq'
+        ? 'A je i sigurt qe deshiron ta fshish kete storje?'
+        : 'Are you sure you want to delete this story?',
+      [
+        { text: language === 'sq' ? 'Anulo' : 'Cancel', style: 'cancel' },
+        {
+          text: language === 'sq' ? 'Fshij' : 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            const ok = await storiesRepository.deleteStory(story.id);
+            if (ok) navigation.goBack();
+          },
         },
-      },
-    ]);
+      ]
+    );
+  };
+
+  const handleEdit = () => {
+    if (!story) return;
+    navigation.navigate('CreateStory', { editStoryId: story.id });
   };
 
   if (!story) {
@@ -104,6 +128,7 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* ── Hero Image ──────────────────────────────────────────────────── */}
       <ImageBackground source={{ uri: story.image }} style={styles.heroImage}>
         <LinearGradient
           colors={['rgba(7,8,16,0.08)', 'rgba(7,8,16,0.58)', 'rgba(7,8,16,0.96)']}
@@ -122,7 +147,9 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
         </LinearGradient>
       </ImageBackground>
 
+      {/* ── Body ────────────────────────────────────────────────────────── */}
       <View style={styles.storyBody}>
+        {/* Engagement row */}
         <View style={styles.statsRow}>
           <Pressable
             style={[styles.statItem, isLiked && styles.statItemLiked]}
@@ -143,13 +170,88 @@ export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
           </View>
         </View>
 
+        {/* ── Owner Actions ─────────────────────────────────────────────── */}
         {isOwnStory ? (
-          <Pressable style={styles.deleteButton} onPress={handleDelete}>
-            <Ionicons name="trash-outline" size={16} color="#FF4D4D" />
-            <Text style={styles.deleteButtonText}>Delete story</Text>
-          </Pressable>
+          <View style={styles.ownerSection}>
+            <Text style={styles.ownerSectionTitle}>
+              {language === 'sq' ? 'Menaxho storjen' : 'Manage Story'}
+            </Text>
+            <View style={styles.ownerActions}>
+              <Pressable style={styles.editButton} onPress={handleEdit}>
+                <Ionicons name="create-outline" size={16} color={theme.colors.secondary} />
+                <Text style={styles.editButtonText}>
+                  {language === 'sq' ? 'Ndrysho' : 'Edit'}
+                </Text>
+              </Pressable>
+              <Pressable style={styles.deleteButton} onPress={handleDelete}>
+                <Ionicons name="trash-outline" size={16} color="#FF4D4D" />
+                <Text style={styles.deleteButtonText}>
+                  {language === 'sq' ? 'Fshij' : 'Delete'}
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Performance Panel */}
+            <View style={styles.performancePanel}>
+              <Text style={styles.performanceTitle}>
+                {language === 'sq' ? 'Performanca' : 'Performance'}
+              </Text>
+              <View style={styles.performanceGrid}>
+                <View style={styles.performanceStat}>
+                  <Text style={styles.performanceValue}>{story.likes}</Text>
+                  <Text style={styles.performanceLabel}>
+                    {language === 'sq' ? 'Pelqime' : 'Likes'}
+                  </Text>
+                </View>
+                <View style={styles.performanceStat}>
+                  <Text style={styles.performanceValue}>{story.views}</Text>
+                  <Text style={styles.performanceLabel}>
+                    {language === 'sq' ? 'Shikime' : 'Views'}
+                  </Text>
+                </View>
+                <View style={styles.performanceStat}>
+                  <Text style={styles.performanceValue}>{commentsCount}</Text>
+                  <Text style={styles.performanceLabel}>
+                    {language === 'sq' ? 'Komente' : 'Comments'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.performanceMeta}>
+                <View style={styles.performanceMetaItem}>
+                  <Ionicons name="time-outline" size={14} color={theme.colors.mutedText} />
+                  <Text style={styles.performanceMetaText}>
+                    {language === 'sq' ? 'Publikuar ' : 'Published '}{story.postedAt}
+                  </Text>
+                </View>
+                <View style={styles.performanceMetaItem}>
+                  <Ionicons name="bookmark-outline" size={14} color={theme.colors.mutedText} />
+                  <Text style={styles.performanceMetaText}>
+                    {story.readTime}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Future Analytics placeholder */}
+            <View style={styles.analyticsPlaceholder}>
+              <Ionicons name="bar-chart-outline" size={20} color={theme.colors.mutedText} />
+              <View style={styles.analyticsPlaceholderCopy}>
+                <Text style={styles.analyticsPlaceholderTitle}>
+                  {language === 'sq'
+                    ? 'Analitika se shpejti'
+                    : 'Analytics coming soon'}
+                </Text>
+                <Text style={styles.analyticsPlaceholderText}>
+                  {language === 'sq'
+                    ? 'Shikime me kalimin e kohes, demografia e lexuesve dhe me shume.'
+                    : 'Views over time, reader demographics, and more.'}
+                </Text>
+              </View>
+            </View>
+          </View>
         ) : null}
 
+        {/* Story body text */}
         <Text style={styles.bodyText}>{story.body}</Text>
       </View>
     </ScrollView>
@@ -169,6 +271,7 @@ const styles = StyleSheet.create({
   author: { color: '#F9D08D', fontSize: 14, fontWeight: '800' },
   metaText: { color: theme.colors.mutedText, fontSize: 13, fontWeight: '700' },
   storyBody: { paddingHorizontal: 20, paddingTop: 24, gap: 22 },
+  // ── Engagement ──────────────────────────────────────────────────────────
   statsRow: { flexDirection: 'row', gap: 14 },
   statItem: {
     flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 14, paddingVertical: 10,
@@ -177,13 +280,120 @@ const styles = StyleSheet.create({
   statItemLiked: { backgroundColor: 'rgba(255,31,61,0.15)', borderColor: 'rgba(255,31,61,0.3)' },
   statText: { color: theme.colors.heading, fontSize: 13, fontWeight: '800' },
   statTextLiked: { color: '#FF6B81' },
-  bodyText: { color: theme.colors.mutedText, fontSize: 17, lineHeight: 28 },
+  // ── Owner Section ───────────────────────────────────────────────────────
+  ownerSection: {
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,31,61,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,31,61,0.15)',
+    gap: 16,
+  },
+  ownerSectionTitle: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  ownerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  editButton: {
+    flex: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 12, borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  },
+  editButtonText: { color: theme.colors.secondary, fontSize: 14, fontWeight: '800' },
   deleteButton: {
     flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6,
     paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
     backgroundColor: 'rgba(255,77,77,0.1)', borderWidth: 1, borderColor: 'rgba(255,77,77,0.25)',
   },
   deleteButtonText: { color: '#FF4D4D', fontSize: 13, fontWeight: '800' },
+  // ── Performance Panel ───────────────────────────────────────────────────
+  performancePanel: {
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    gap: 14,
+  },
+  performanceTitle: {
+    color: theme.colors.heading,
+    fontSize: 14,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  performanceGrid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  performanceStat: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center',
+  },
+  performanceValue: {
+    color: theme.colors.heading,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  performanceLabel: {
+    marginTop: 4,
+    color: theme.colors.mutedText,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  performanceMeta: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  performanceMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  performanceMetaText: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  // ── Analytics Placeholder ───────────────────────────────────────────────
+  analyticsPlaceholder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,179,0,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.16)',
+  },
+  analyticsPlaceholderCopy: {
+    flex: 1,
+    gap: 3,
+  },
+  analyticsPlaceholderTitle: {
+    color: '#F0C06B',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  analyticsPlaceholderText: {
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  // ── Body Text ───────────────────────────────────────────────────────────
+  bodyText: { color: '#DDE1EF', fontSize: 17, lineHeight: 28 },
+  // ── Empty State ─────────────────────────────────────────────────────────
   emptyScreen: { flex: 1, gap: theme.spacing.xl, padding: 20, paddingTop: 60, backgroundColor: theme.colors.background },
   emptyTitle: { color: theme.colors.heading, fontSize: 24, fontWeight: '900' },
 });

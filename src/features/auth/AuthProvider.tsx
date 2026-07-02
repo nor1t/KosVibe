@@ -5,6 +5,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 import { supabase } from '@/src/lib/supabase';
 import { normalizeImageUri } from '@/src/lib/image-uri';
+import { storiesRepository } from '@/src/repositories/StoriesRepository';
+import { eventsRepository } from '@/src/repositories/eventsRepository';
 
 type SignInParams = {
   email: string;
@@ -147,6 +149,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         throw error;
       }
+
+      // Clear all repository caches on logout to prevent data leakage
+      storiesRepository.reset();
+      eventsRepository.reset();
     },
   };
 

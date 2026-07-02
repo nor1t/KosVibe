@@ -7,7 +7,7 @@ export type RootTabParamList = {
   HomeTab: undefined;
   MapTab: undefined;
   TavolinaTab: undefined;
-  FavoritesTab: undefined;
+  StoriesTab: undefined;
   ProfileTab: undefined;
 };
 
@@ -43,9 +43,10 @@ export type TavolinaStackParamList = {
   Exchange: undefined;
 };
 
-export type FavoritesStackParamList = {
-  FavoritesMain: undefined;
+export type StoriesStackParamList = {
+  StoriesMain: undefined;
   StoryDetail: { storyId: string };
+  StorySearch: undefined;
   CreateStory: undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };

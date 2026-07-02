@@ -62,6 +62,8 @@ function buildStory(row: Record<string, unknown>): StoryItem {
     views: (row.views_count as number) ?? 0,
     isUserStory: (row.is_user_story as boolean) ?? false,
     imageUri: (row.image_url as string) ?? undefined,
+    createdAtISO: createdAt?.toISOString() ?? (row.created_at as string) ?? undefined,
+    userId: (row.user_id as string) ?? undefined,
   };
 }
 
@@ -75,6 +77,7 @@ export class StoriesRepository implements IStoriesRepository {
   private listeners = new Set<StoriesChangeListener>();
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
   private pollingCount = 0;
+  private pollingInProgress = false;
 
   /** Register a callback invoked whenever the local stories cache changes. */
   onChange(listener: StoriesChangeListener): () => void {
@@ -94,6 +97,7 @@ export class StoriesRepository implements IStoriesRepository {
   startPolling(): void {
     this.pollingCount++;
     if (this.pollingTimer) return;
+    this.pollForChanges(); // immediate first poll
     this.pollingTimer = setInterval(() => {
       void this.pollForChanges();
     }, POLL_INTERVAL_MS);
@@ -109,7 +113,21 @@ export class StoriesRepository implements IStoriesRepository {
     }
   }
 
+  /** Reset all caches and stop polling. Call on logout / account switch. */
+  reset(): void {
+    this.baseStoriesCache.clear();
+    this.initialized = false;
+    this.pollingCount = 0;
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+    this.listeners.clear();
+  }
+
   private async pollForChanges(): Promise<void> {
+    if (this.pollingInProgress) return;
+    this.pollingInProgress = true;
     try {
       for (const lang of ['en', 'sq'] as const) {
         const { data, error } = await supabase
@@ -148,13 +166,15 @@ export class StoriesRepository implements IStoriesRepository {
       }
     } catch {
       // Silently ignore polling errors
+    } finally {
+      this.pollingInProgress = false;
     }
   }
 
   async refresh(): Promise<void> {
     const { data: enStories, error: enError } = await supabase
       .from('stories')
-      .select('*')
+      .select('*, story_likes(count)')
       .eq('language', 'en')
       .eq('visibility', 'public')
       .eq('moderation_status', 'approved')
@@ -162,14 +182,24 @@ export class StoriesRepository implements IStoriesRepository {
       .order('created_at', { ascending: false });
 
     if (!enError && enStories) {
-      this.baseStoriesCache.set('en', enStories.map(buildStory));
+      this.baseStoriesCache.set(
+        'en',
+        enStories.map((row) => {
+          const story = buildStory(row as Record<string, unknown>);
+          const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
+          if (likesFromJoin && likesFromJoin.length > 0) {
+            story.likes = likesFromJoin[0].count;
+          }
+          return story;
+        })
+      );
     } else {
       console.error('Failed to load en stories', enError);
     }
 
     const { data: sqStories, error: sqError } = await supabase
       .from('stories')
-      .select('*')
+      .select('*, story_likes(count)')
       .eq('language', 'sq')
       .eq('visibility', 'public')
       .eq('moderation_status', 'approved')
@@ -177,7 +207,17 @@ export class StoriesRepository implements IStoriesRepository {
       .order('created_at', { ascending: false });
 
     if (!sqError && sqStories) {
-      this.baseStoriesCache.set('sq', sqStories.map(buildStory));
+      this.baseStoriesCache.set(
+        'sq',
+        sqStories.map((row) => {
+          const story = buildStory(row as Record<string, unknown>);
+          const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
+          if (likesFromJoin && likesFromJoin.length > 0) {
+            story.likes = likesFromJoin[0].count;
+          }
+          return story;
+        })
+      );
     } else {
       console.error('Failed to load sq stories', sqError);
     }
@@ -265,6 +305,9 @@ export class StoriesRepository implements IStoriesRepository {
     });
     if (error) return false;
 
+    // Sync the likes_count column on the stories table via RPC
+    void supabase.rpc('increment_story_likes_count', { story_id_param: storyId });
+
     // Update in-memory cache so the UI reflects the change immediately
     for (const [lang, stories] of this.baseStoriesCache) {
       const idx = stories.findIndex((s) => s.id === storyId);
@@ -289,6 +332,9 @@ export class StoriesRepository implements IStoriesRepository {
       .eq('user_id', uid);
     if (error) return false;
 
+    // Sync the likes_count column on the stories table via RPC
+    void supabase.rpc('decrement_story_likes_count', { story_id_param: storyId });
+
     // Update in-memory cache so the UI reflects the change immediately
     for (const [lang, stories] of this.baseStoriesCache) {
       const idx = stories.findIndex((s) => s.id === storyId);
@@ -300,6 +346,37 @@ export class StoriesRepository implements IStoriesRepository {
     }
 
     return true;
+  }
+
+  /** Increment the views count for a story (calls SECURITY DEFINER RPC). */
+  async incrementStoryViews(storyId: string): Promise<void> {
+    void supabase.rpc('increment_story_views', { story_id_param: storyId });
+
+    // Optimistic cache update
+    for (const [lang, stories] of this.baseStoriesCache) {
+      const idx = stories.findIndex((s) => s.id === storyId);
+      if (idx !== -1) {
+        const updated = [...stories];
+        updated[idx] = { ...updated[idx], views: (updated[idx].views ?? 0) + 1 };
+        this.baseStoriesCache.set(lang, updated);
+      }
+    }
+  }
+
+  /** Get the comment count for a story. */
+  async getStoryCommentCount(storyId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('story_comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('story_id', storyId)
+      .is('deleted_at', null);
+
+    if (error) {
+      console.error('Failed to get story comment count', error);
+      return 0;
+    }
+
+    return count ?? 0;
   }
 
   async hasUserLikedStory(storyId: string, userId?: string): Promise<boolean> {

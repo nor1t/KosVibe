@@ -662,7 +662,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                   <Text style={styles.ratingLabel}>Event organization</Text>
                   {renderRatingStars(selectedEventRating, rateSelectedEvent, !isSelectedEventConfirmed)}
                 </View>
-                {selectedEvent.creator !== currentUserName ? (
+                {selectedEvent.creatorId !== user?.id ? (
                   <Pressable style={[styles.joinButton, isSelectedEventJoined && styles.joinButtonActive]} onPress={toggleJoinSelectedEvent}>
                     <Ionicons name={isSelectedEventJoined ? 'checkmark-circle' : 'person-add-outline'} size={20} color={theme.colors.surface} />
                     <Text style={styles.joinButtonText}>{isSelectedEventJoined ? createCopy.joined : createCopy.join}</Text>

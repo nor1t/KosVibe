@@ -39,6 +39,7 @@ function buildInvite(row: Record<string, unknown>): TavolinaInvite {
     isPaid: (row.is_paid as boolean) ?? undefined,
     price: (row.price as string) ?? undefined,
     maxAttendees: (row.max_attendees as number) ?? undefined,
+    creatorId: (row.created_by as string) ?? undefined,
   };
 }
 
@@ -66,6 +67,7 @@ export class EventsRepository implements IEventsRepository {
   private listeners = new Set<EventsChangeListener>();
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
   private pollingCount = 0;
+  private pollingInProgress = false;
 
   /** Register a callback invoked whenever the local cache changes. */
   onChange(listener: EventsChangeListener): () => void {
@@ -85,6 +87,7 @@ export class EventsRepository implements IEventsRepository {
   startPolling(): void {
     this.pollingCount++;
     if (this.pollingTimer) return;
+    this.pollForChanges(); // immediate first poll
     this.pollingTimer = setInterval(() => {
       void this.pollForChanges();
     }, POLL_INTERVAL_MS);
@@ -100,7 +103,23 @@ export class EventsRepository implements IEventsRepository {
     }
   }
 
+  /** Reset all caches and stop polling. Call on logout / account switch. */
+  reset(): void {
+    this.eventHighlightsCache = [];
+    this.tavolinaInvitesCache = [];
+    this.kosovoHighlightsCache = [];
+    this.initialized = false;
+    this.pollingCount = 0;
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+    this.listeners.clear();
+  }
+
   private async pollForChanges(): Promise<void> {
+    if (this.pollingInProgress) return;
+    this.pollingInProgress = true;
     try {
       const { data, error } = await supabase
         .from('tavolina_events')
@@ -126,6 +145,8 @@ export class EventsRepository implements IEventsRepository {
       }
     } catch {
       // Silently ignore polling errors — next interval will retry
+    } finally {
+      this.pollingInProgress = false;
     }
   }
 
@@ -407,9 +428,13 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async getAttendedEventIds(): Promise<string[]> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return [];
+
     const { data, error } = await supabase
       .from('event_attendance')
       .select('event_id')
+      .eq('user_id', uid)
       .eq('status', 'joined')
       .is('deleted_at', null);
 
@@ -421,9 +446,13 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async getConfirmedEventIds(): Promise<string[]> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return [];
+
     const { data, error } = await supabase
       .from('event_attendance')
       .select('event_id')
+      .eq('user_id', uid)
       .eq('status', 'confirmed')
       .is('deleted_at', null);
 

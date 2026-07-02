@@ -141,6 +141,8 @@ export type TavolinaInvite = {
   price?: string;
   maxAttendees?: number;
   imageUri?: string;
+  /** Database `created_by` UUID — the authenticated user who created the event. For ownership checks. */
+  creatorId?: string | null;
 };
 
 // ─── Map types ──────────────────────────────────────────────────────────────
@@ -354,6 +356,10 @@ export type StoryItem = {
   views: number;
   isUserStory?: boolean;
   imageUri?: string;
+  /** ISO 8601 timestamp from the database `created_at` column. Used for time-based filtering. */
+  createdAtISO?: string;
+  /** Database `user_id` — the authenticated user who created the story. For ownership checks. */
+  userId?: string | null;
 };
 
 export type CreateStoryInput = {
