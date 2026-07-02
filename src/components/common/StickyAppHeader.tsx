@@ -25,6 +25,7 @@ const pageLabelMap: Record<string, string> = {
   History: 'History',
   Help: 'Help',
   Exchange: 'Exchange',
+  ImportantNumbers: 'Important numbers',
 };
 
 export function StickyAppHeader({ navigation }: StickyAppHeaderProps) {

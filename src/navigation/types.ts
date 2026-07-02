@@ -21,6 +21,7 @@ export type HomeStackParamList = {
   History: undefined;
   Help: undefined;
   Exchange: undefined;
+  ImportantNumbers: undefined;
 };
 
 export type MapStackParamList = {
@@ -31,6 +32,7 @@ export type MapStackParamList = {
   History: undefined;
   Help: undefined;
   Exchange: undefined;
+  ImportantNumbers: undefined;
 };
 
 export type TavolinaStackParamList = {
@@ -41,6 +43,7 @@ export type TavolinaStackParamList = {
   History: undefined;
   Help: undefined;
   Exchange: undefined;
+  ImportantNumbers: undefined;
 };
 
 export type StoriesStackParamList = {
@@ -54,6 +57,7 @@ export type StoriesStackParamList = {
   History: undefined;
   Help: undefined;
   Exchange: undefined;
+  ImportantNumbers: undefined;
 };
 
 export type ProfileStackParamList = {
@@ -65,4 +69,5 @@ export type ProfileStackParamList = {
   History: undefined;
   Help: undefined;
   Exchange: undefined;
+  ImportantNumbers: undefined;
 };

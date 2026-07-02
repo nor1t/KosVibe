@@ -141,6 +141,12 @@ export function WeatherSettingsButton({
           },
         ]
       : []),
+    {
+      key: 'importantNumbers',
+      label: 'Important numbers',
+      icon: 'list-outline' as const,
+      action: () => navigation.navigate('ImportantNumbers'),
+    },
     ...(showSettings
       ? [
           {

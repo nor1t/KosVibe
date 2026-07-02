@@ -15,14 +15,15 @@ import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
 import { ExchangeScreen } from '../screens/ExchangeScreen';
-import { StoriesScreen } from '../screens/FavoritesScreen';
 import { FavoriteRestaurantsScreen } from '../screens/FavoriteRestaurantsScreen';
+import { StoriesScreen } from '../screens/FavoritesScreen';
 import { HelpScreen } from '../screens/HelpScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
+import { ImportantNumbersScreen } from '../screens/ImportantNumbersScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { MarketScreen } from '../screens/MarketScreen';
-import { ProfileScreen } from '../screens/ProfileScreen';
 import { ProfileEditScreen } from '../screens/ProfileEditScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StoryDetailScreen } from '../screens/StoryDetailScreen';
@@ -30,11 +31,11 @@ import { StorySearchScreen } from '../screens/StorySearchScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
 import { theme } from '../theme';
 import type {
-    StoriesStackParamList,
     HomeStackParamList,
     MapStackParamList,
     ProfileStackParamList,
     RootTabParamList,
+    StoriesStackParamList,
     TavolinaStackParamList,
 } from './types';
 
@@ -90,6 +91,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />
       <HomeStack.Screen name="Settings" component={SettingsScreen} />
+      <HomeStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <HomeStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <HomeStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
       <HomeStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
@@ -104,6 +106,7 @@ function MapStackNavigator() {
       <MapStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <MapStack.Screen name="BookTable" component={BookTableScreen} />
       <MapStack.Screen name="Settings" component={SettingsScreen} />
+      <MapStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <MapStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <MapStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
       <MapStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
@@ -118,6 +121,7 @@ function TavolinaStackNavigator() {
       <TavolinaStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <TavolinaStack.Screen name="BookTable" component={BookTableScreen} />
       <TavolinaStack.Screen name="Settings" component={SettingsScreen} />
+      <TavolinaStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <TavolinaStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <TavolinaStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
       <TavolinaStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
@@ -135,6 +139,7 @@ function StoriesStackNavigator() {
       <StoriesStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <StoriesStack.Screen name="BookTable" component={BookTableScreen} />
       <StoriesStack.Screen name="Settings" component={SettingsScreen} />
+      <StoriesStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <StoriesStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <StoriesStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
       <StoriesStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
@@ -150,6 +155,7 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="FavoriteRestaurants" component={FavoriteRestaurantsScreen} />
       <ProfileStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+      <ProfileStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <ProfileStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />
       <ProfileStack.Screen name="Help" component={HelpScreen} options={noHeaderOptions} />
       <ProfileStack.Screen name="Exchange" component={ExchangeScreen} options={noHeaderOptions} />
