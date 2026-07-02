@@ -26,80 +26,180 @@ drop policy if exists "avatars_insert_policy" on storage.objects;
 drop policy if exists "story_images_insert_policy" on storage.objects;
 drop policy if exists "event_images_insert_policy" on storage.objects;
 drop policy if exists "public_read_policy" on storage.objects;
+drop policy if exists "public_read_all" on storage.objects;
+drop policy if exists "auth_insert_avatars" on storage.objects;
+drop policy if exists "auth_insert_story_images" on storage.objects;
+drop policy if exists "auth_insert_event_images" on storage.objects;
+drop policy if exists "auth_update_avatars" on storage.objects;
+drop policy if exists "auth_update_story_images" on storage.objects;
+drop policy if exists "auth_update_event_images" on storage.objects;
+drop policy if exists "auth_delete_avatars" on storage.objects;
+drop policy if exists "auth_delete_story_images" on storage.objects;
+drop policy if exists "auth_delete_event_images" on storage.objects;
 
 -- ---------------------------------------------------------------------------
 -- Read access — all users can view files in all public buckets
 -- ---------------------------------------------------------------------------
-create policy "public_read_all"
-on storage.objects
-for select
-to anon, authenticated
-using (true);
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'public_read_all'
+  ) then
+    create policy "public_read_all"
+    on storage.objects
+    for select
+    to anon, authenticated
+    using (true);
+  end if;
+end
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Upload — authenticated users can upload to any of our 3 buckets
 -- ---------------------------------------------------------------------------
-create policy "auth_insert_avatars"
-on storage.objects
-for insert
-to authenticated
-with check (bucket_id = 'avatars');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_insert_avatars'
+  ) then
+    create policy "auth_insert_avatars"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (bucket_id = 'avatars');
+  end if;
+end
+$$;
 
-create policy "auth_insert_story_images"
-on storage.objects
-for insert
-to authenticated
-with check (bucket_id = 'story-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_insert_story_images'
+  ) then
+    create policy "auth_insert_story_images"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (bucket_id = 'story-images');
+  end if;
+end
+$$;
 
-create policy "auth_insert_event_images"
-on storage.objects
-for insert
-to authenticated
-with check (bucket_id = 'event-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_insert_event_images'
+  ) then
+    create policy "auth_insert_event_images"
+    on storage.objects
+    for insert
+    to authenticated
+    with check (bucket_id = 'event-images');
+  end if;
+end
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Update — authenticated users can update their own uploads
 -- ---------------------------------------------------------------------------
-create policy "auth_update_avatars"
-on storage.objects
-for update
-to authenticated
-using (bucket_id = 'avatars')
-with check (bucket_id = 'avatars');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_update_avatars'
+  ) then
+    create policy "auth_update_avatars"
+    on storage.objects
+    for update
+    to authenticated
+    using (bucket_id = 'avatars')
+    with check (bucket_id = 'avatars');
+  end if;
+end
+$$;
 
-create policy "auth_update_story_images"
-on storage.objects
-for update
-to authenticated
-using (bucket_id = 'story-images')
-with check (bucket_id = 'story-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_update_story_images'
+  ) then
+    create policy "auth_update_story_images"
+    on storage.objects
+    for update
+    to authenticated
+    using (bucket_id = 'story-images')
+    with check (bucket_id = 'story-images');
+  end if;
+end
+$$;
 
-create policy "auth_update_event_images"
-on storage.objects
-for update
-to authenticated
-using (bucket_id = 'event-images')
-with check (bucket_id = 'event-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_update_event_images'
+  ) then
+    create policy "auth_update_event_images"
+    on storage.objects
+    for update
+    to authenticated
+    using (bucket_id = 'event-images')
+    with check (bucket_id = 'event-images');
+  end if;
+end
+$$;
 
 -- ---------------------------------------------------------------------------
 -- Delete — authenticated users can delete their own uploads
 -- ---------------------------------------------------------------------------
-create policy "auth_delete_avatars"
-on storage.objects
-for delete
-to authenticated
-using (bucket_id = 'avatars');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_delete_avatars'
+  ) then
+    create policy "auth_delete_avatars"
+    on storage.objects
+    for delete
+    to authenticated
+    using (bucket_id = 'avatars');
+  end if;
+end
+$$;
 
-create policy "auth_delete_story_images"
-on storage.objects
-for delete
-to authenticated
-using (bucket_id = 'story-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_delete_story_images'
+  ) then
+    create policy "auth_delete_story_images"
+    on storage.objects
+    for delete
+    to authenticated
+    using (bucket_id = 'story-images');
+  end if;
+end
+$$;
 
-create policy "auth_delete_event_images"
-on storage.objects
-for delete
-to authenticated
-using (bucket_id = 'event-images');
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'storage' and tablename = 'objects' and policyname = 'auth_delete_event_images'
+  ) then
+    create policy "auth_delete_event_images"
+    on storage.objects
+    for delete
+    to authenticated
+    using (bucket_id = 'event-images');
+  end if;
+end
+$$;
 
 commit;

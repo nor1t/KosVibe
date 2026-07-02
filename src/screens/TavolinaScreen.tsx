@@ -88,14 +88,17 @@ const fallbackHostProfile = {
 
 const hostProfileOverrides: Record<string, Partial<CreatorProfile>> = {};
 
-function formatSpotsLabel(spotsLabel: string, joined: boolean) {
-  const match = spotsLabel.match(/^(\d+)\/(\d+)(.*)$/);
-  if (!match) return spotsLabel;
-  const current = Number(match[1]);
-  const total = Number(match[2]);
-  const suffix = match[3] ?? '';
-  const visibleCurrent = joined ? Math.min(current + 1, total) : current;
-  return `${visibleCurrent}/${total}${suffix}`;
+function getMaxSpots(spotsLabel: string): number {
+  const match = spotsLabel.match(/\/(\d+)/);
+  return match ? parseInt(match[1], 10) : 8;
+}
+
+function formatSpotsCount(spotsLabel: string, realJoinedCount: number, userHasJoined: boolean): string {
+  const max = getMaxSpots(spotsLabel);
+  const visibleCount = userHasJoined
+    ? Math.min(realJoinedCount + 1, max)
+    : realJoinedCount;
+  return `${visibleCount}/${max}`;
 }
 
 function getCreatorProfile(invite: EventInvite): CreatorProfile {
@@ -130,6 +133,8 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
   const [joinedEventIds, setJoinedEventIds] = useState<Set<string>>(new Set());
   const [presenceConfirmedEventIds, setPresenceConfirmedEventIds] = useState<Set<string>>(new Set());
   const [eventRatings, setEventRatings] = useState<Record<string, number>>({});
+  const [eventJoinedCounts, setEventJoinedCounts] = useState<Record<string, number>>({});
+  const [eventAttendees, setEventAttendees] = useState<string[]>([]);
   const [selectedMoodIndex, setSelectedMoodIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -156,20 +161,33 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
 
       // Load current user's joined/confirmed events and ratings
       try {
-        const [joined, confirmed, ratings] = await Promise.all([
+        const [joined, confirmed, ratings, counts] = await Promise.all([
           eventsRepository.getAttendedEventIds(),
           eventsRepository.getConfirmedEventIds(),
           eventsRepository.getEventRatings(),
+          eventsRepository.getAllEventJoinedCounts(),
         ]);
         setJoinedEventIds(new Set(joined));
         setPresenceConfirmedEventIds(new Set(confirmed));
         setEventRatings(ratings);
+        setEventJoinedCounts(counts);
       } catch {
         // Non-critical — UI still works without personal state
       }
       setLoading(false);
     }
     void loadAll();
+
+    // Sprint 15 — Background polling: auto-refresh every 3s
+    eventsRepository.startPolling();
+    const unsub = eventsRepository.onChange(() => {
+      setEvents(eventsRepository.getTavolinaInvites());
+    });
+
+    return () => {
+      unsub();
+      eventsRepository.stopPolling();
+    };
   }, []);
 
   const visibleEvents = useMemo(() => {
@@ -253,7 +271,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       time: time.trim(),
       eventType: selectedComposerType,
       creatorName: currentUserName || 'KosVibe',
-      creatorAvatar: uploadedImageUrl || selectedImage || eventImages[0],
+      creatorAvatar: currentUserAvatar || uploadedImageUrl || selectedImage || eventImages[0],
       description: description.trim(),
       tags: [copy.moods[eventTypeLabelIndex[selectedComposerType]], city.trim()],
       spotsLabel: spotsText,
@@ -304,6 +322,19 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
       setPresenceConfirmedEventIds((current) => new Set([...current, selectedEvent.id]));
     }
   };
+
+  const loadEventAttendees = async (eventId: string) => {
+    const names = await eventsRepository.getEventAttendees(eventId);
+    setEventAttendees(names);
+  };
+
+  useEffect(() => {
+    if (selectedEvent) {
+      void loadEventAttendees(selectedEvent.id);
+    } else {
+      setEventAttendees([]);
+    }
+  }, [selectedEvent?.id]);
 
   const handleDeleteEvent = async () => {
     if (!selectedEvent) return;
@@ -525,7 +556,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                       <Text style={styles.inviteTitle}>{invite.restaurantName}</Text>
                       <Text style={styles.inviteMeta}>{invite.day} | {invite.time} | {invite.city}</Text>
                     </View>
-                    <Text style={styles.spotsLabel}>{formatSpotsLabel(invite.spotsLabel, joinedEventIds.has(invite.id))}</Text>
+                    <Text style={styles.spotsLabel}>{formatSpotsCount(invite.spotsLabel, eventJoinedCounts[invite.id] ?? 0, joinedEventIds.has(invite.id))}</Text>
                   </View>
                   <Text style={styles.inviteDescription}>{invite.description}</Text>
                   <View style={styles.inviteMetaRow}>
@@ -612,7 +643,7 @@ export function TavolinaScreen({ navigation }: TavolinaScreenProps) {
                   <ImageBackground source={{ uri: selectedEvent.creatorAvatar }} style={styles.hostAvatar} />
                   <View style={styles.hostCopy}><Text style={styles.hostLabel}>{createCopy.hostedBy}</Text><Text style={styles.hostName}>{selectedEvent.creator}</Text><Text style={styles.hostSubline}>{selectedCreatorProfile?.reliability} | tap for ratings</Text></View>
                   <Ionicons name="chevron-forward" size={18} color={theme.colors.mutedText} />
-                  <Text style={styles.spotsLabel}>{formatSpotsLabel(selectedEvent.spotsLabel, isSelectedEventJoined)}</Text>
+                  <Text style={styles.spotsLabel}>{formatSpotsCount(selectedEvent.spotsLabel, eventJoinedCounts[selectedEvent.id] ?? 0, isSelectedEventJoined)}</Text>
                 </Pressable>
                 <Text style={styles.eventDetailDescription}>{selectedEvent.description}</Text>
                 <View style={styles.tagRow}>{selectedEvent.tags.map((tag) => (<View key={`detail-${selectedEvent.id}-${tag}`} style={styles.tag}><Text style={styles.tagLabel}>{tag}</Text></View>))}</View>

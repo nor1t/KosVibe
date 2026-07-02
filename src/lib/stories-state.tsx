@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 
 import type { SupportedLanguage } from '../i18n/messages';
 import { storiesRepository } from '../repositories/StoriesRepository';
+import type { StoriesChangeListener } from '../repositories/StoriesRepository';
 import type { CreateStoryInput, StoryItem } from '../repositories/types';
 
 type StoriesContextValue = {
@@ -11,6 +12,10 @@ type StoriesContextValue = {
   getStories: (language: SupportedLanguage) => StoryItem[];
   refreshStories: () => Promise<void>;
   imageTemplates: string[];
+  /** Subscribe to story cache changes. Returns unsubscribe function. */
+  onStoriesChange: (listener: StoriesChangeListener) => () => void;
+  startPolling: () => void;
+  stopPolling: () => void;
 };
 
 const StoriesContext = createContext<StoriesContextValue | undefined>(undefined);
@@ -42,6 +47,14 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const onStoriesChange = useCallback(
+    (listener: StoriesChangeListener) => storiesRepository.onChange(listener),
+    [],
+  );
+
+  const startPolling = useCallback(() => storiesRepository.startPolling(), []);
+  const stopPolling = useCallback(() => storiesRepository.stopPolling(), []);
+
   return (
     <StoriesContext.Provider
       value={{
@@ -50,6 +63,9 @@ export function StoriesProvider({ children }: { children: ReactNode }) {
         getStories,
         refreshStories,
         imageTemplates: storiesRepository.getImageTemplates(),
+        onStoriesChange,
+        startPolling,
+        stopPolling,
       }}>
       {children}
     </StoriesContext.Provider>

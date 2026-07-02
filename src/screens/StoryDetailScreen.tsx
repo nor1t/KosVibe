@@ -22,18 +22,29 @@ type StoryDetailScreenProps = {
 export function StoryDetailScreen({ route }: StoryDetailScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const { getStoryById } = useStories();
+  const { getStoryById, onStoriesChange } = useStories();
   const navigation = useNavigation<any>();
   const { user } = useAuth();
   const currentUserName =
     typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
       ? user.user_metadata.full_name.trim()
       : user?.email?.split('@')[0] ?? '';
-  const story = getStoryById(route.params.storyId, language);
+  const [story, setStory] = useState(() => getStoryById(route.params.storyId, language));
   const isOwnStory = story?.isUserStory && story.author === currentUserName;
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(story?.likes ?? 0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Sprint 15 — Realtime: re-read story from cache whenever it changes
+  useEffect(() => {
+    return onStoriesChange(() => {
+      const updated = getStoryById(route.params.storyId, language);
+      setStory(updated);
+      if (updated) {
+        setLikeCount(updated.likes);
+      }
+    });
+  }, [onStoriesChange, getStoryById, route.params.storyId, language]);
 
   useEffect(() => {
     if (!story) return;

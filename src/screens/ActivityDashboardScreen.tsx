@@ -5,12 +5,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseCard';
+import { usePageSpacing } from '../components/Screen';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useDiscovery } from '../lib/discovery-state';
-import { useRestaurantCatalog } from '../lib/restaurant-catalog';
-import { RestaurantShowcaseCard } from '../components/common/RestaurantShowcaseCard';
-import { usePageSpacing } from '../components/Screen';
 import { eventsRepository } from '../repositories/eventsRepository';
 import { placesRepository } from '../repositories/placesRepository';
 import { restaurantsRepository } from '../repositories/restaurantsRepository';

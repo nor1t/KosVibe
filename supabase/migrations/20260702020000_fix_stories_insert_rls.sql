@@ -1,11 +1,9 @@
 -- ============================================================================
--- Sprint 13.2 — Fix stories INSERT RLS + events UPDATE RLS
+-- Sprint 13.2 — Fix RLS policies
 --
--- 1. Stories: The old policy checked auth.uid() = created_by, but created_by
---    is set by a trigger. RLS with-check runs BEFORE triggers, so created_by
---    was always NULL at check time.
--- 2. Events: No UPDATE policy existed, so soft-delete (set deleted_at) was
---    blocked by RLS.
+-- 1. Stories INSERT: created_by set by trigger, so allow all auth users
+-- 2. Events UPDATE: needed for soft-delete
+-- 3. Event attendance SELECT: allow anyone to see who joined (for counts & host view)
 -- ============================================================================
 
 begin;
@@ -38,5 +36,13 @@ for update
 to authenticated
 using (auth.uid() = created_by)
 with check (auth.uid() = created_by);
+
+-- Fix event_attendance SELECT: allow anyone to see attendance (for spot counts)
+drop policy if exists "Event attendance is viewable by self or admin" on public.event_attendance;
+create policy "Event attendance is viewable by all authenticated users"
+on public.event_attendance
+for select
+to authenticated
+using (true);
 
 commit;

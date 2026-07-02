@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { useAuth } from '../features/auth/AuthProvider';
 import { useI18n } from '../i18n/I18nProvider';
 import { nativeCopy } from '../i18n/nativeCopy';
 import { useStories } from '../lib/stories-state';
@@ -30,9 +31,26 @@ function StoryMeta({ story }: { story: StoryItem }) {
 export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
   const { language } = useI18n();
   const copy = nativeCopy[language].stories;
-  const { getStories } = useStories();
+  const { getStories, onStoriesChange, startPolling, stopPolling } = useStories();
+  const { user } = useAuth();
+  const currentUserName =
+    typeof user?.user_metadata?.full_name === 'string' && user.user_metadata.full_name.trim()
+      ? user.user_metadata.full_name.trim()
+      : user?.email?.split('@')[0] ?? '';
 
   const [stories, setStories] = useState<StoryItem[]>(() => getStories(language));
+
+  // Sprint 15 — Background polling: auto-refresh stories every 3s
+  useEffect(() => {
+    startPolling();
+    const unsub = onStoriesChange(() => {
+      setStories(getStories(language));
+    });
+    return () => {
+      unsub();
+      stopPolling();
+    };
+  }, [onStoriesChange, getStories, language, startPolling, stopPolling]);
 
   useFocusEffect(
     useCallback(() => {
@@ -137,7 +155,7 @@ export function FavoritesScreen({ navigation }: FavoritesScreenProps) {
               <View style={styles.storyCopy}>
                 <View style={styles.storyTitleRow}>
                   <Text style={styles.storyTitle}>{story.title}</Text>
-                  {story.isUserStory ? (
+                  {story.isUserStory && story.author === currentUserName ? (
                     <View style={styles.userBadge}>
                       <Text style={styles.userBadgeText}>{copy.yourStory}</Text>
                     </View>

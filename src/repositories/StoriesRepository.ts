@@ -8,7 +8,13 @@ import type { CreateStoryInput, IStoriesRepository, StoryItem } from './types';
  * All story data comes from the database via Supabase.
  * User-created stories persist to the `stories` table.
  * Cache is updated after every write so the UI stays in sync.
+ *
+ * Sprint 15 — Realtime sync: all connected clients receive instant updates
+ * when stories are created, updated, or soft-deleted. Screens subscribe via
+ * onChange() to re-render without manual refresh.
  */
+
+export type StoriesChangeListener = () => void;
 
 const imageTemplates = [
   'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1200&q=80',
@@ -61,9 +67,89 @@ function buildStory(row: Record<string, unknown>): StoryItem {
 
 // ─── repository ─────────────────────────────────────────────────────────────
 
+const POLL_INTERVAL_MS = 3000;
+
 export class StoriesRepository implements IStoriesRepository {
   private baseStoriesCache = new Map<SupportedLanguage, StoryItem[]>();
   private initialized = false;
+  private listeners = new Set<StoriesChangeListener>();
+  private pollingTimer: ReturnType<typeof setInterval> | null = null;
+  private pollingCount = 0;
+
+  /** Register a callback invoked whenever the local stories cache changes. */
+  onChange(listener: StoriesChangeListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notifyListeners(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
+
+  /** Start background polling for story changes. Multiple callers are deduplicated. */
+  startPolling(): void {
+    this.pollingCount++;
+    if (this.pollingTimer) return;
+    this.pollingTimer = setInterval(() => {
+      void this.pollForChanges();
+    }, POLL_INTERVAL_MS);
+  }
+
+  /** Stop background polling. Polling only stops when all callers have called stop. */
+  stopPolling(): void {
+    this.pollingCount = Math.max(0, this.pollingCount - 1);
+    if (this.pollingCount > 0) return;
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+  }
+
+  private async pollForChanges(): Promise<void> {
+    try {
+      for (const lang of ['en', 'sq'] as const) {
+        const { data, error } = await supabase
+          .from('stories')
+          .select('*, story_likes(count)')
+          .eq('language', lang)
+          .eq('visibility', 'public')
+          .eq('moderation_status', 'approved')
+          .order('created_at', { ascending: false });
+
+        if (error || !data) continue;
+
+        const newCache = data
+          .filter((row) => !row.deleted_at)
+          .map((row) => {
+            const story = buildStory(row as Record<string, unknown>);
+            // Use real like count from the join if available, fall back to stored count
+            const likesFromJoin = (row as Record<string, unknown>).story_likes as unknown as { count: number }[] | null;
+            if (likesFromJoin && likesFromJoin.length > 0) {
+              story.likes = likesFromJoin[0].count;
+            }
+            return story;
+          });
+
+        const oldCache = this.baseStoriesCache.get(lang) ?? [];
+        const newIds = new Set(newCache.map((s) => s.id));
+        const oldIds = new Set(oldCache.map((s) => s.id));
+        const changed = newIds.size !== oldIds.size
+          || [...newIds].some((id) => !oldIds.has(id))
+          || newCache.some((s, i) => oldCache[i]?.id !== s.id || oldCache[i]?.likes !== s.likes);
+
+        if (changed) {
+          this.baseStoriesCache.set(lang, newCache);
+          this.notifyListeners();
+        }
+      }
+    } catch {
+      // Silently ignore polling errors
+    }
+  }
 
   async refresh(): Promise<void> {
     const { data: enStories, error: enError } = await supabase
@@ -97,6 +183,7 @@ export class StoriesRepository implements IStoriesRepository {
     }
 
     this.initialized = true;
+    this.notifyListeners();
   }
 
   private async ensureReady(): Promise<void> {
@@ -171,22 +258,48 @@ export class StoriesRepository implements IStoriesRepository {
   async likeStory(storyId: string, userId?: string): Promise<boolean> {
     const uid = userId ?? (await supabase.auth.getUser()).data.user?.id;
     if (!uid) return false;
+
     const { error } = await supabase.from('story_likes').insert({
       story_id: storyId,
       user_id: uid,
     });
-    return !error;
+    if (error) return false;
+
+    // Update in-memory cache so the UI reflects the change immediately
+    for (const [lang, stories] of this.baseStoriesCache) {
+      const idx = stories.findIndex((s) => s.id === storyId);
+      if (idx !== -1) {
+        const updated = [...stories];
+        updated[idx] = { ...updated[idx], likes: (updated[idx].likes ?? 0) + 1 };
+        this.baseStoriesCache.set(lang, updated);
+      }
+    }
+
+    return true;
   }
 
   async unlikeStory(storyId: string, userId?: string): Promise<boolean> {
     const uid = userId ?? (await supabase.auth.getUser()).data.user?.id;
     if (!uid) return false;
+
     const { error } = await supabase
       .from('story_likes')
       .delete()
       .eq('story_id', storyId)
       .eq('user_id', uid);
-    return !error;
+    if (error) return false;
+
+    // Update in-memory cache so the UI reflects the change immediately
+    for (const [lang, stories] of this.baseStoriesCache) {
+      const idx = stories.findIndex((s) => s.id === storyId);
+      if (idx !== -1) {
+        const updated = [...stories];
+        updated[idx] = { ...updated[idx], likes: Math.max(0, (updated[idx].likes ?? 0) - 1) };
+        this.baseStoriesCache.set(lang, updated);
+      }
+    }
+
+    return true;
   }
 
   async hasUserLikedStory(storyId: string, userId?: string): Promise<boolean> {

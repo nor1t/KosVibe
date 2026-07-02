@@ -48,13 +48,86 @@ function buildInvite(row: Record<string, unknown>): TavolinaInvite {
  * All event data comes from the database.
  * Write methods (join, leave, confirm, rate, create) persist to Supabase.
  * Reads populate a cache so the TavolinaScreen stays responsive.
+ *
+ * Sprint 15 — Background polling: screens call startPolling/stopPolling
+ * to auto-refresh caches at regular intervals so all users see updates
+ * from other clients without manual refresh.
  */
+
+const POLL_INTERVAL_MS = 3000;
+
+export type EventsChangeListener = () => void;
 
 export class EventsRepository implements IEventsRepository {
   private eventHighlightsCache: EventFeature[] = [];
   private tavolinaInvitesCache: TavolinaInvite[] = [];
   private kosovoHighlightsCache: KosovoHighlight[] = [];
   private initialized = false;
+  private listeners = new Set<EventsChangeListener>();
+  private pollingTimer: ReturnType<typeof setInterval> | null = null;
+  private pollingCount = 0;
+
+  /** Register a callback invoked whenever the local cache changes. */
+  onChange(listener: EventsChangeListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private notifyListeners(): void {
+    for (const listener of this.listeners) {
+      listener();
+    }
+  }
+
+  /** Start background polling for event changes. Multiple callers are deduplicated. */
+  startPolling(): void {
+    this.pollingCount++;
+    if (this.pollingTimer) return;
+    this.pollingTimer = setInterval(() => {
+      void this.pollForChanges();
+    }, POLL_INTERVAL_MS);
+  }
+
+  /** Stop background polling. Polling only stops when all callers have called stop. */
+  stopPolling(): void {
+    this.pollingCount = Math.max(0, this.pollingCount - 1);
+    if (this.pollingCount > 0) return;
+    if (this.pollingTimer) {
+      clearInterval(this.pollingTimer);
+      this.pollingTimer = null;
+    }
+  }
+
+  private async pollForChanges(): Promise<void> {
+    try {
+      const { data, error } = await supabase
+        .from('tavolina_events')
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error || !data) return;
+
+      const newCache = data.map((row) => buildInvite(row as Record<string, unknown>));
+
+      const newIds = new Set(newCache.map((e) => e.id));
+      const oldIds = new Set(this.tavolinaInvitesCache.map((e) => e.id));
+
+      const changed =
+        newIds.size !== oldIds.size ||
+        [...newIds].some((id) => !oldIds.has(id)) ||
+        newCache.some((e, i) => this.tavolinaInvitesCache[i]?.id !== e.id);
+
+      if (changed) {
+        this.tavolinaInvitesCache = newCache;
+        this.notifyListeners();
+      }
+    } catch {
+      // Silently ignore polling errors — next interval will retry
+    }
+  }
 
   async refresh(): Promise<void> {
     const [highlightsRes, invitesRes, kosovoRes] = await Promise.all([
@@ -95,6 +168,7 @@ export class EventsRepository implements IEventsRepository {
     }
 
     this.initialized = true;
+    this.notifyListeners();
   }
 
   private async ensureReady(): Promise<void> {
@@ -221,10 +295,9 @@ export class EventsRepository implements IEventsRepository {
     if (!uid) return false;
     const { error } = await supabase
       .from('event_attendance')
-      .update({ status: 'cancelled' })
+      .delete()
       .eq('event_id', eventId)
-      .eq('user_id', uid)
-      .eq('status', 'joined');
+      .eq('user_id', uid);
 
     if (error) {
       console.error('Failed to leave event', error);
@@ -234,11 +307,72 @@ export class EventsRepository implements IEventsRepository {
     return true;
   }
 
+  async getEventJoinedCount(eventId: string): Promise<number> {
+    const { data, error } = await supabase
+      .from('event_attendance')
+      .select('id', { count: 'exact' })
+      .eq('event_id', eventId)
+      .eq('status', 'joined')
+      .is('deleted_at', null);
+
+    if (error || !data) return 0;
+    return data.length;
+  }
+
+  async getEventAttendees(eventId: string): Promise<string[]> {
+    const { data: attendance, error: attError } = await supabase
+      .rpc('get_event_attendee_user_ids', { event_id_param: eventId });
+
+    if (attError || !attendance) return [];
+
+    const userIds = attendance.map((row: { user_id: string }) => row.user_id as string);
+    if (userIds.length === 0) return [];
+
+    // Look up author names from stories table
+    const { data: users } = await supabase
+      .from('stories')
+      .select('user_id, author')
+      .not('user_id', 'is', null);
+
+    const authorMap: Record<string, string> = {};
+    if (users) {
+      for (const u of users) {
+        if (u.user_id && !authorMap[u.user_id]) {
+          authorMap[u.user_id] = u.author as string;
+        }
+      }
+    }
+
+    const names: string[] = [];
+    for (const uid of userIds) {
+      names.push(authorMap[uid] || 'Joined user');
+    }
+
+    return names;
+  }
+
+  async getAllEventJoinedCounts(): Promise<Record<string, number>> {
+    const { data, error } = await supabase
+      .rpc('get_all_event_joined_counts');
+
+    if (error || !data) return {};
+
+    const counts: Record<string, number> = {};
+    for (const row of data) {
+      counts[row.event_id] = Number(row.count) || 0;
+    }
+    return counts;
+  }
+
   async confirmAttendance(eventId: string): Promise<boolean> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
+
     const { error } = await supabase
       .from('event_attendance')
       .update({ status: 'confirmed' })
       .eq('event_id', eventId)
+      .eq('user_id', uid)
       .eq('status', 'joined');
 
     if (error) {
@@ -250,11 +384,15 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async rateEvent(eventId: string, rating: number): Promise<boolean> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return false;
+
     const { error } = await supabase
       .from('event_reviews')
       .upsert(
         {
           event_id: eventId,
+          user_id: uid,
           rating,
         },
         { onConflict: 'event_id,user_id' }
@@ -319,9 +457,13 @@ export class EventsRepository implements IEventsRepository {
   }
 
   async getEventRatings(): Promise<Record<string, number>> {
+    const uid = (await supabase.auth.getUser()).data.user?.id;
+    if (!uid) return {};
+
     const { data, error } = await supabase
       .from('event_reviews')
       .select('event_id, rating')
+      .eq('user_id', uid)
       .is('deleted_at', null);
 
     if (error || !data) {
