@@ -439,6 +439,10 @@ export class RestaurantsRepository implements IRestaurantsRepository {
     return [];
   }
 
+  clearPlaceCache(placeId: string): void {
+    this.detailCache.delete(placeId);
+  }
+
   private getCatalogItemsSnapshot(): RestaurantCatalogItem[] {
     return this.catalog.map((restaurant) => ({ ...restaurant }));
   }

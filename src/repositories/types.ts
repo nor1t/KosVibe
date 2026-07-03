@@ -141,7 +141,6 @@ export type TavolinaInvite = {
   price?: string;
   maxAttendees?: number;
   imageUri?: string;
-  /** Database `created_by` UUID — the authenticated user who created the event. For ownership checks. */
   creatorId?: string | null;
 };
 
@@ -356,9 +355,7 @@ export type StoryItem = {
   views: number;
   isUserStory?: boolean;
   imageUri?: string;
-  /** ISO 8601 timestamp from the database `created_at` column. Used for time-based filtering. */
   createdAtISO?: string;
-  /** Database `user_id` — the authenticated user who created the story. For ownership checks. */
   userId?: string | null;
 };
 
@@ -429,6 +426,7 @@ export interface IRestaurantsRepository {
   getFeaturedMenuItems(): FeaturedMenuItem[];
   getCatalogItems(): Promise<RestaurantCatalogItem[]>;
   getCatalogItemById(restaurantId: string): Promise<Restaurant | undefined>;
+  clearPlaceCache(placeId: string): void;
 }
 
 export interface IEventsRepository {
@@ -464,4 +462,273 @@ export interface ISearchRepository {
   searchRestaurants(locationId: string, query: string): Restaurant[];
   searchFeaturedItems(locationId: string, query: string): FeaturedMenuItem[];
   searchOffers(locationId: string, query: string): ActiveOffer[];
+}
+
+// ─── Business types ──────────────────────────────────────────────────────────
+
+export type BusinessAccount = {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  businessType: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  status: 'pending' | 'active' | 'inactive' | 'suspended';
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string | null;
+};
+
+export type BusinessMembership = {
+  id: string;
+  businessAccountId: string;
+  userId: string;
+  role: 'owner' | 'manager' | 'staff';
+  status: 'active' | 'invited' | 'removed';
+  createdAt: string;
+};
+
+export type BusinessPlaceClaim = {
+  id: string;
+  businessAccountId: string;
+  placeId: string;
+  userId: string;
+  claimMessage: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  adminNotes: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BusinessWithMembership = BusinessAccount & {
+  membership: BusinessMembership | null;
+};
+
+export type PlaceWithClaimStatus = RestaurantCatalogItem & {
+  hasPendingClaim: boolean;
+  isLinkedToBusiness: boolean;
+};
+
+export type PlaceImage = {
+  id: string;
+  placeId: string;
+  imageUrl: string;
+  altText: string | null;
+  sortOrder: number;
+  isPrimary: boolean;
+};
+
+export type PlaceHour = {
+  dayOfWeek: string;
+  openTime: string | null;
+  closeTime: string | null;
+  isClosed: boolean;
+};
+
+export type PlaceForEditing = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  cuisine: string | null;
+  tagline: string | null;
+  priceRange: string | null;
+  hours: PlaceHour[];
+};
+
+export type CreateBusinessInput = {
+  name: string;
+  description?: string;
+  businessType?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+};
+
+export type UpdateBusinessInput = {
+  name?: string;
+  description?: string;
+  businessType?: string;
+  email?: string;
+  phone?: string;
+  website?: string;
+};
+
+export type UpdatePlaceInput = {
+  name?: string;
+  description?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  cuisine?: string;
+  tagline?: string;
+  priceRange?: string;
+  hours?: PlaceHour[];
+};
+
+export type CreatePlaceClaimInput = {
+  businessAccountId: string;
+  placeId: string;
+  claimMessage?: string;
+};
+
+// ─── Menu Management types ──────────────────────────────────────────────────
+
+export type MenuItemForEditing = {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrl: string | null;
+  sortOrder: number;
+  isAvailable: boolean;
+};
+
+export type MenuCategoryForEditing = {
+  id: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  items: MenuItemForEditing[];
+};
+
+// ─── Specials Management types ───────────────────────────────────────────────
+
+export type SpecialForEditing = {
+  id: string;
+  name: string;
+  description: string | null;
+  originalPrice: string | null;
+  price: string;
+  discountLabel: string | null;
+  availableUntil: string | null;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+export type CreateSpecialInput = {
+  name: string;
+  description?: string;
+  originalPrice?: string;
+  price: string;
+  discountLabel?: string;
+  availableUntil?: string;
+};
+
+export type UpdateSpecialInput = {
+  name?: string;
+  description?: string;
+  originalPrice?: string;
+  price?: string;
+  discountLabel?: string;
+  availableUntil?: string;
+  isActive?: boolean;
+};
+
+// ─── Reservation types ──────────────────────────────────────────────────────
+
+export type ReservationStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'rejected'
+  | 'cancelled'
+  | 'checked_in'
+  | 'completed';
+
+export type Reservation = {
+  id: string;
+  placeId: string;
+  userId: string;
+  customerName: string;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  partySize: number;
+  reservationDate: string;
+  reservationTime: string;
+  specialRequests: string | null;
+  status: ReservationStatus;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CreateReservationInput = {
+  placeId: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  partySize: number;
+  reservationDate: string;
+  reservationTime: string;
+  specialRequests?: string;
+};
+
+export type UpdateReservationInput = {
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  partySize?: number;
+  reservationDate?: string;
+  reservationTime?: string;
+  specialRequests?: string;
+  status?: ReservationStatus;
+  adminNotes?: string;
+};
+
+// ─── Repository interfaces ───────────────────────────────────────────────────
+
+export interface IBusinessRepository {
+  getMyBusinesses(): Promise<BusinessWithMembership[]>;
+  getBusinessById(businessId: string): Promise<BusinessAccount | null>;
+  createBusiness(input: CreateBusinessInput): Promise<BusinessAccount>;
+  updateBusiness(businessId: string, input: UpdateBusinessInput): Promise<BusinessAccount>;
+  getBusinessPlaces(businessId: string): Promise<RestaurantCatalogItem[]>;
+  getBusinessClaims(businessId: string): Promise<BusinessPlaceClaim[]>;
+  getMyClaims(): Promise<BusinessPlaceClaim[]>;
+  createPlaceClaim(input: CreatePlaceClaimInput): Promise<BusinessPlaceClaim>;
+  getAdminPendingClaims(): Promise<BusinessPlaceClaim[]>;
+  getAdminPendingBusinesses(): Promise<BusinessAccount[]>;
+  approveClaim(claimId: string, notes?: string): Promise<BusinessPlaceClaim>;
+  rejectClaim(claimId: string, notes: string): Promise<BusinessPlaceClaim>;
+  approveBusiness(businessId: string): Promise<BusinessAccount>;
+  isAdmin(): Promise<boolean>;
+  getPlaceForEditing(placeId: string): Promise<PlaceForEditing | null>;
+  updatePlaceDetails(placeId: string, input: UpdatePlaceInput): Promise<void>;
+  getPlaceImages(placeId: string): Promise<PlaceImage[]>;
+  uploadPlaceImage(placeId: string, uri: string, fileName: string): Promise<PlaceImage>;
+  deletePlaceImage(imageId: string): Promise<void>;
+  setPrimaryImage(imageId: string, placeId: string): Promise<void>;
+  reorderImages(images: { id: string; sortOrder: number }[]): Promise<void>;
+  getMenuCategories(placeId: string): Promise<MenuCategoryForEditing[]>;
+  createMenuCategory(placeId: string, name: string): Promise<MenuCategoryForEditing>;
+  updateMenuCategory(categoryId: string, input: { name?: string; description?: string; isActive?: boolean }): Promise<void>;
+  deleteMenuCategory(categoryId: string): Promise<void>;
+  createMenuItem(categoryId: string, input: { name: string; description?: string; price: number }): Promise<MenuItemForEditing>;
+  updateMenuItem(itemId: string, input: { name?: string; description?: string; price?: number; isAvailable?: boolean }): Promise<void>;
+  deleteMenuItem(itemId: string): Promise<void>;
+  getSpecials(placeId: string): Promise<SpecialForEditing[]>;
+  createSpecial(placeId: string, input: CreateSpecialInput): Promise<SpecialForEditing>;
+  updateSpecial(specialId: string, input: UpdateSpecialInput): Promise<void>;
+  deleteSpecial(specialId: string): Promise<void>;
+}
+
+export interface IReservationRepository {
+  getMyReservations(): Promise<Reservation[]>;
+  getPlaceReservations(placeId: string): Promise<Reservation[]>;
+  getReservationById(reservationId: string): Promise<Reservation | null>;
+  createReservation(input: CreateReservationInput): Promise<Reservation>;
+  updateReservation(reservationId: string, input: UpdateReservationInput): Promise<Reservation>;
+  cancelReservation(reservationId: string): Promise<void>;
 }

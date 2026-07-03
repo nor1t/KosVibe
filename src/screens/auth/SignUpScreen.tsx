@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Ionicons } from '@expo/vector-icons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { useForm, Controller } from 'react-hook-form';
 import { useMemo, useState } from 'react';
 import {
@@ -27,6 +28,7 @@ import type { AuthStackParamList } from '@/src/navigation/types';
 import { theme } from '@/src/theme';
 
 type Navigation = NativeStackNavigationProp<AuthStackParamList, 'SignUp'>;
+type Route = RouteProp<AuthStackParamList, 'SignUp'>;
 
 const highlights = [
   { icon: 'bookmark-outline', label: 'Saved places' },
@@ -38,11 +40,13 @@ const authMapBackground = require('../../../assets/images/pristina_midnight_blue
 
 export function SignUpScreen() {
   const navigation = useNavigation<Navigation>();
+  const route = useRoute<Route>();
   const { signUpWithPassword } = useAuth();
   const { messages } = useI18n();
   const schema = useMemo(() => createSignUpSchema(messages.auth), [messages.auth]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [isBusinessOwner, setIsBusinessOwner] = useState(route.params?.businessIntent ?? false);
   const {
     control,
     handleSubmit,
@@ -68,12 +72,14 @@ export function SignUpScreen() {
         fullName: values.fullName.trim(),
         email: values.email.trim(),
         password: values.password,
+        accountType: isBusinessOwner ? 'business' : 'consumer',
       });
 
       if (session) {
         return;
       }
 
+      // Email confirmation required — account_type is already persisted in user_metadata
       reset();
       setSuccessMessage(messages.auth.signUpSuccess);
     } catch (error) {
@@ -116,6 +122,46 @@ export function SignUpScreen() {
             ))}
           </View>
         </LinearGradient>
+
+        {/* Usage choice */}
+        <View style={styles.usageSection}>
+          <Text style={styles.usageHeading}>How will you use KosVibe?</Text>
+          <View style={styles.usageRow}>
+            <Pressable
+              style={[styles.usageCard, !isBusinessOwner && styles.usageCardActive]}
+              onPress={() => setIsBusinessOwner(false)}
+            >
+              <Ionicons
+                name="compass-outline"
+                size={24}
+                color={!isBusinessOwner ? theme.colors.primary : theme.colors.mutedText}
+              />
+              <Text style={[styles.usageCardTitle, !isBusinessOwner && styles.usageCardTitleActive]}>
+                Discover Kosovo
+              </Text>
+              <Text style={styles.usageCardSub}>
+                Explore restaurants, events, monuments, and local stories.
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={[styles.usageCard, isBusinessOwner && styles.usageCardActive]}
+              onPress={() => setIsBusinessOwner(true)}
+            >
+              <Ionicons
+                name="business-outline"
+                size={24}
+                color={isBusinessOwner ? theme.colors.primary : theme.colors.mutedText}
+              />
+              <Text style={[styles.usageCardTitle, isBusinessOwner && styles.usageCardTitleActive]}>
+                I own a restaurant or business
+              </Text>
+              <Text style={styles.usageCardSub}>
+                Manage your restaurant, menu, gallery, and reservations.
+              </Text>
+            </Pressable>
+          </View>
+        </View>
 
         <View style={styles.formShell}>
           {errorMessage ? (
@@ -383,6 +429,48 @@ const styles = StyleSheet.create({
     color: theme.colors.surface,
     fontSize: 12,
     fontWeight: '700',
+  },
+  usageSection: {
+    gap: 12,
+  },
+  usageHeading: {
+    color: theme.colors.heading,
+    fontSize: 15,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  usageRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  usageCard: {
+    flex: 1,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    gap: 8,
+  },
+  usageCardActive: {
+    borderColor: 'rgba(255,31,61,0.4)',
+    backgroundColor: 'rgba(255,31,61,0.08)',
+  },
+  usageCardTitle: {
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  usageCardTitleActive: {
+    color: theme.colors.surface,
+  },
+  usageCardSub: {
+    color: theme.colors.mutedText,
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   formShell: {
     gap: theme.spacing.lg,

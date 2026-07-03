@@ -22,6 +22,7 @@ import { HistoryScreen } from '../screens/HistoryScreen';
 import { ImportantNumbersScreen } from '../screens/ImportantNumbersScreen';
 import { MapScreen } from '../screens/MapScreen';
 import { MarketScreen } from '../screens/MarketScreen';
+import { MyReservationsScreen } from '../screens/MyReservationsScreen';
 import { ProfileEditScreen } from '../screens/ProfileEditScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
@@ -31,12 +32,12 @@ import { StorySearchScreen } from '../screens/StorySearchScreen';
 import { TavolinaScreen } from '../screens/TavolinaScreen';
 import { theme } from '../theme';
 import type {
-    HomeStackParamList,
-    MapStackParamList,
-    ProfileStackParamList,
-    RootTabParamList,
-    StoriesStackParamList,
-    TavolinaStackParamList,
+  HomeStackParamList,
+  MapStackParamList,
+  ProfileStackParamList,
+  RootTabParamList,
+  StoriesStackParamList,
+  TavolinaStackParamList,
 } from './types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
@@ -153,7 +154,9 @@ function ProfileStackNavigator() {
       <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStack.Screen name="EditProfile" component={ProfileEditScreen} />
       <ProfileStack.Screen name="FavoriteRestaurants" component={FavoriteRestaurantsScreen} />
+      <ProfileStack.Screen name="MyReservations" component={MyReservationsScreen} />
       <ProfileStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
+      <ProfileStack.Screen name="BookTable" component={BookTableScreen} />
       <ProfileStack.Screen name="Settings" component={SettingsScreen} />
       <ProfileStack.Screen name="ImportantNumbers" component={ImportantNumbersScreen} options={noHeaderOptions} />
       <ProfileStack.Screen name="History" component={HistoryScreen} options={noHeaderOptions} />

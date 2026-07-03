@@ -17,6 +17,7 @@ type SignUpParams = {
   fullName: string;
   email: string;
   password: string;
+  accountType: 'consumer' | 'business';
 };
 
 type UpdateProfileParams = {
@@ -29,6 +30,7 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   isAuthReady: boolean;
+  accountType: 'consumer' | 'business';
   signInWithPassword: (params: SignInParams) => Promise<Session | null>;
   signUpWithPassword: (params: SignUpParams) => Promise<Session | null>;
   updateProfile: (params: UpdateProfileParams) => Promise<User>;
@@ -40,6 +42,9 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+
+  const accountType: 'consumer' | 'business' =
+    (session?.user?.user_metadata?.account_type as 'consumer' | 'business') ?? 'consumer';
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -97,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     isAuthReady,
+    accountType,
     async signInWithPassword({ email, password }) {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -109,13 +115,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return data.session;
     },
-    async signUpWithPassword({ fullName, email, password }) {
+    async signUpWithPassword({ fullName, email, password, accountType: acctType }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            account_type: acctType,
           },
         },
       });
@@ -129,8 +136,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async updateProfile({ fullName, bio, avatarUrl }) {
       const safeAvatarUrl = normalizeImageUri(avatarUrl);
 
+      // Merge existing metadata to preserve account_type and any other fields
+      const existingMeta = (session?.user?.user_metadata ?? {}) as Record<string, unknown>;
+
       const { data, error } = await supabase.auth.updateUser({
         data: {
+          ...existingMeta,
           full_name: fullName.trim(),
           bio: bio?.trim() || null,
           avatar_url: safeAvatarUrl,
@@ -140,6 +151,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) {
         throw error;
       }
+
+      // Update local session so accountType stays in sync
+      setSession((prev) => {
+        if (!prev) return prev;
+        return { ...prev, user: { ...prev.user, user_metadata: data.user.user_metadata } };
+      });
 
       return data.user;
     },

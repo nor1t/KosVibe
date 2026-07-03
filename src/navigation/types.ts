@@ -1,6 +1,6 @@
 export type AuthStackParamList = {
   SignIn: undefined;
-  SignUp: undefined;
+  SignUp: { businessIntent?: boolean } | undefined;
 };
 
 export type RootTabParamList = {
@@ -64,10 +64,26 @@ export type ProfileStackParamList = {
   ProfileMain: undefined;
   EditProfile: undefined;
   FavoriteRestaurants: undefined;
+  MyReservations: undefined;
   RestaurantDetails: { restaurantId: string };
+  BookTable: { restaurantId: string };
   Settings: undefined;
   History: undefined;
   Help: undefined;
   Exchange: undefined;
   ImportantNumbers: undefined;
+};
+
+export type BusinessStackParamList = {
+  BusinessDashboard: undefined;
+  BusinessRegistration: undefined;
+  ClaimRestaurant: undefined;
+  EditRestaurant: { placeId: string };
+  GalleryManager: { placeId: string };
+  MenuManager: { placeId: string };
+  SpecialsManager: { placeId: string };
+  ReservationsManager: { placeId: string };
+  AdminApproval: undefined;
+  RestaurantDetails: { restaurantId: string };
+  BookTable: { restaurantId: string };
 };

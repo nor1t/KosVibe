@@ -1,0 +1,415 @@
+import { Ionicons } from '@expo/vector-icons';
+import type { NavigationProp, ParamListBase } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
+import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
+import { businessRepository } from '../features/business/businessRepository';
+import { theme } from '../theme';
+import type { BusinessAccount, BusinessPlaceClaim } from '../repositories/types';
+
+type AdminApprovalScreenProps = {
+  navigation: NavigationProp<ParamListBase>;
+};
+
+type TabKey = 'businesses' | 'claims';
+
+export function AdminApprovalScreen({ navigation }: AdminApprovalScreenProps) {
+  const [activeTab, setActiveTab] = useState<TabKey>('businesses');
+  const [pendingBusinesses, setPendingBusinesses] = useState<BusinessAccount[]>([]);
+  const [pendingClaims, setPendingClaims] = useState<BusinessPlaceClaim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    const [businesses, claims] = await Promise.all([
+      businessRepository.getAdminPendingBusinesses(),
+      businessRepository.getAdminPendingClaims(),
+    ]);
+    setPendingBusinesses(businesses);
+    setPendingClaims(claims);
+    setLoading(false);
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void loadData();
+    }, [loadData])
+  );
+
+  const handleApproveBusiness = async (businessId: string) => {
+    setSubmitting(businessId);
+    try {
+      await businessRepository.approveBusiness(businessId);
+      setPendingBusinesses((prev) => prev.filter((b) => b.id !== businessId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to approve.';
+      Alert.alert('Error', message);
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const handleApproveClaim = async (claimId: string) => {
+    setSubmitting(claimId);
+    try {
+      await businessRepository.approveClaim(claimId);
+      setPendingClaims((prev) => prev.filter((c) => c.id !== claimId));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to approve.';
+      Alert.alert('Error', message);
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
+  const handleRejectClaim = (claimId: string) => {
+    const performReject = async (notes: string) => {
+      setSubmitting(claimId);
+      try {
+        await businessRepository.rejectClaim(claimId, notes);
+        setPendingClaims((prev) => prev.filter((c) => c.id !== claimId));
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to reject.';
+        Alert.alert('Error', message);
+      } finally {
+        setSubmitting(null);
+      }
+    };
+
+    if (Alert.prompt) {
+      Alert.prompt(
+        'Rejection Reason',
+        'Why is this claim being rejected?',
+        (notes) => {
+          if (notes && notes.trim()) {
+            void performReject(notes.trim());
+          }
+        },
+        'plain-text',
+        ''
+      );
+    } else {
+      Alert.alert(
+        'Reject Claim',
+        'Are you sure you want to reject this claim?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reject',
+            style: 'destructive',
+            onPress: () => { void performReject('Rejected by admin.'); },
+          },
+        ]
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  const totalPending = pendingBusinesses.length + pendingClaims.length;
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.header}>
+        <Ionicons name="shield-checkmark-outline" size={40} color={theme.colors.primary} />
+        <Text style={styles.title}>Admin Approvals</Text>
+        {totalPending > 0 && (
+          <Text style={styles.subtitle}>
+            {totalPending} pending {totalPending === 1 ? 'item' : 'items'} to review
+          </Text>
+        )}
+      </View>
+
+      <View style={styles.tabRow}>
+        <Pressable
+          style={[styles.tab, activeTab === 'businesses' && styles.tabActive]}
+          onPress={() => setActiveTab('businesses')}
+        >
+          <Text style={[styles.tabText, activeTab === 'businesses' && styles.tabTextActive]}>
+            Businesses ({pendingBusinesses.length})
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tab, activeTab === 'claims' && styles.tabActive]}
+          onPress={() => setActiveTab('claims')}
+        >
+          <Text style={[styles.tabText, activeTab === 'claims' && styles.tabTextActive]}>
+            Claims ({pendingClaims.length})
+          </Text>
+        </Pressable>
+      </View>
+
+      {activeTab === 'businesses' && (
+        <View style={styles.list}>
+          {pendingBusinesses.length === 0 ? (
+            <View style={styles.emptyList}>
+              <Ionicons name="checkmark-circle-outline" size={40} color="#42D98C" />
+              <Text style={styles.emptyText}>All businesses have been reviewed.</Text>
+            </View>
+          ) : (
+            pendingBusinesses.map((b) => (
+              <View key={b.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Ionicons name="business-outline" size={22} color={theme.colors.primary} />
+                  <Text style={styles.cardName}>{b.name}</Text>
+                </View>
+                {b.description ? (
+                  <Text style={styles.cardDescription}>{b.description}</Text>
+                ) : null}
+                <View style={styles.cardMeta}>
+                  {b.email && (
+                    <View style={styles.metaItem}>
+                      <Ionicons name="mail-outline" size={14} color={theme.colors.mutedText} />
+                      <Text style={styles.metaText}>{b.email}</Text>
+                    </View>
+                  )}
+                  {b.phone && (
+                    <View style={styles.metaItem}>
+                      <Ionicons name="call-outline" size={14} color={theme.colors.mutedText} />
+                      <Text style={styles.metaText}>{b.phone}</Text>
+                    </View>
+                  )}
+                  <View style={styles.metaItem}>
+                    <Ionicons name="time-outline" size={14} color={theme.colors.mutedText} />
+                    <Text style={styles.metaText}>
+                      {new Date(b.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <Pressable
+                  style={styles.approveButton}
+                  onPress={() => handleApproveBusiness(b.id)}
+                  disabled={submitting === b.id}
+                >
+                  {submitting === b.id ? (
+                    <ActivityIndicator size="small" color={theme.colors.surface} />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-outline" size={18} color={theme.colors.surface} />
+                      <Text style={styles.approveButtonText}>Approve</Text>
+                    </>
+                  )}
+                </Pressable>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      {activeTab === 'claims' && (
+        <View style={styles.list}>
+          {pendingClaims.length === 0 ? (
+            <View style={styles.emptyList}>
+              <Ionicons name="checkmark-circle-outline" size={40} color="#42D98C" />
+              <Text style={styles.emptyText}>All claims have been reviewed.</Text>
+            </View>
+          ) : (
+            pendingClaims.map((c) => (
+              <View key={c.id} style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Ionicons name="link-outline" size={22} color={theme.colors.primary} />
+                  <Text style={styles.cardName}>Place Claim</Text>
+                </View>
+                {c.claimMessage ? (
+                  <Text style={styles.cardDescription}>&ldquo;{c.claimMessage}&rdquo;</Text>
+                ) : null}
+                <View style={styles.cardMeta}>
+                  <View style={styles.metaItem}>
+                    <Ionicons name="time-outline" size={14} color={theme.colors.mutedText} />
+                    <Text style={styles.metaText}>
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.claimActions}>
+                  <Pressable
+                    style={[styles.approveButton, styles.claimApproveButton]}
+                    onPress={() => handleApproveClaim(c.id)}
+                    disabled={submitting === c.id}
+                  >
+                    {submitting === c.id ? (
+                      <ActivityIndicator size="small" color={theme.colors.surface} />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-outline" size={16} color={theme.colors.surface} />
+                        <Text style={styles.approveButtonText}>Approve</Text>
+                      </>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    style={styles.rejectButton}
+                    onPress={() => handleRejectClaim(c.id)}
+                    disabled={submitting === c.id}
+                  >
+                    <Ionicons name="close-outline" size={16} color={theme.colors.surface} />
+                    <Text style={styles.rejectButtonText}>Reject</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    paddingHorizontal: 20,
+    paddingTop: PAGE_TOP_PADDING,
+    paddingBottom: PAGE_BOTTOM_PADDING,
+  },
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    marginTop: 25,
+    alignItems: 'center',
+    gap: 8,
+  },
+  title: {
+    color: theme.colors.heading,
+    fontSize: 26,
+    fontWeight: '900',
+  },
+  subtitle: {
+    color: theme.colors.mutedText,
+    fontSize: 14,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    marginTop: 24,
+    gap: 8,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center',
+  },
+  tabActive: {
+    backgroundColor: 'rgba(255,31,61,0.2)',
+  },
+  tabText: {
+    color: theme.colors.mutedText,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  tabTextActive: {
+    color: theme.colors.surface,
+  },
+  list: {
+    marginTop: 20,
+    gap: 12,
+  },
+  card: {
+    padding: 18,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    gap: 10,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  cardName: {
+    color: theme.colors.heading,
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  cardDescription: {
+    color: '#E2E6F4',
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: 'italic',
+  },
+  cardMeta: {
+    gap: 4,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  metaText: {
+    color: theme.colors.mutedText,
+    fontSize: 13,
+  },
+  approveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: '#42D98C',
+  },
+  approveButtonText: {
+    color: theme.colors.surface,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  claimActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  claimApproveButton: {
+    flex: 1,
+  },
+  rejectButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,31,61,0.6)',
+  },
+  rejectButtonText: {
+    color: theme.colors.surface,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  emptyList: {
+    padding: 40,
+    alignItems: 'center',
+    gap: 10,
+  },
+  emptyText: {
+    color: theme.colors.mutedText,
+    fontSize: 15,
+    textAlign: 'center',
+  },
+});

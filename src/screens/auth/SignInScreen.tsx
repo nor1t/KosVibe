@@ -207,6 +207,25 @@ export function SignInScreen() {
             <Text style={styles.footerButtonText}>{messages.auth.createAccountCta}</Text>
           </Pressable>
         </View>
+
+        <View style={styles.businessCta}>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => navigation.navigate('SignUp', { businessIntent: true })}
+            style={styles.businessButton}>
+            <Ionicons name="business-outline" size={18} color={theme.colors.secondary} />
+            <View style={styles.businessCopy}>
+              <Text style={styles.businessTitle}>Own a restaurant?</Text>
+              <Text style={styles.businessSubtitle}>
+                Register your business and manage your restaurant with KosVibe.
+              </Text>
+            </View>
+            <Ionicons name="arrow-forward" size={16} color={theme.colors.secondary} />
+          </Pressable>
+        </View>
       </KeyboardAvoidingView>
     </Screen>
   );
@@ -419,5 +438,41 @@ const styles = StyleSheet.create({
     color: theme.colors.surface,
     fontSize: 14,
     fontWeight: '800',
+  },
+  businessCta: {
+    gap: 12,
+    marginTop: 4,
+  },
+  dividerRow: {
+    alignItems: 'center',
+  },
+  dividerLine: {
+    width: '60%',
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  businessButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,179,0,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,179,0,0.12)',
+  },
+  businessCopy: {
+    flex: 1,
+  },
+  businessTitle: {
+    color: theme.colors.heading,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  businessSubtitle: {
+    marginTop: 2,
+    color: theme.colors.mutedText,
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

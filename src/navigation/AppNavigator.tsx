@@ -7,10 +7,11 @@ import { useAuth } from '../features/auth/AuthProvider';
 import { ScrollBehaviorProvider } from '../lib/scroll-behavior';
 import { navigationTheme, theme } from '../theme';
 import { AuthNavigator } from './AuthNavigator';
+import { BusinessNavigator } from './BusinessNavigator';
 import { TabsNavigator } from './TabsNavigator';
 
 export function AppNavigator() {
-  const { isAuthReady, session } = useAuth();
+  const { isAuthReady, session, accountType } = useAuth();
 
   return (
     <ErrorBoundary>
@@ -23,7 +24,13 @@ export function AppNavigator() {
             </View>
           ) : (
             <>
-              {session ? <TabsNavigator /> : <AuthNavigator />}
+              {!session ? (
+                <AuthNavigator />
+              ) : accountType === 'business' ? (
+                <BusinessNavigator />
+              ) : (
+                <TabsNavigator />
+              )}
               {session ? <ChatAssistantModal /> : null}
             </>
           )}
