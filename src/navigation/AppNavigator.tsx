@@ -6,6 +6,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useAuth } from '../features/auth/AuthProvider';
 import { ScrollBehaviorProvider } from '../lib/scroll-behavior';
 import { navigationTheme, theme } from '../theme';
+import { AdminNavigator } from './AdminNavigator';
 import { AuthNavigator } from './AuthNavigator';
 import { BusinessNavigator } from './BusinessNavigator';
 import { TabsNavigator } from './TabsNavigator';
@@ -26,6 +27,8 @@ export function AppNavigator() {
             <>
               {!session ? (
                 <AuthNavigator />
+              ) : accountType === 'super_admin' ? (
+                <AdminNavigator />
               ) : accountType === 'business' ? (
                 <BusinessNavigator />
               ) : (

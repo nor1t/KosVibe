@@ -192,7 +192,7 @@ function NotificationCard({
 }
 
 export function SettingsScreen({ navigation }: SettingsScreenProps) {
-  const { signOut } = useAuth();
+  const { signOut, accountType } = useAuth();
   const { language, setLanguage } = useI18n();
   const copy = settingsCopy[language];
   const [notificationSettings, setNotificationSettings] = useState<Record<string, boolean>>(() =>
@@ -238,41 +238,89 @@ export function SettingsScreen({ navigation }: SettingsScreenProps) {
 
   return (
     <Screen scrollable contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <SectionTitle
-          title={copy.languageTitle}
-          icon={<Ionicons name="globe-outline" size={22} color={theme.colors.danger} />}
-        />
-        <LanguageCard
-          languages={languages}
-          onSelect={handleLanguageSelect}
-          selectedLabel={copy.selectedLabel}
-        />
-      </View>
+      {accountType === 'consumer' && (
+        <>
+          <View style={styles.section}>
+            <SectionTitle
+              title={copy.languageTitle}
+              icon={<Ionicons name="globe-outline" size={22} color={theme.colors.danger} />}
+            />
+            <LanguageCard
+              languages={languages}
+              onSelect={handleLanguageSelect}
+              selectedLabel={copy.selectedLabel}
+            />
+          </View>
 
-      <View style={styles.section}>
-        <SectionTitle
-          title={copy.notificationsTitle}
-          icon={<Ionicons name="notifications-outline" size={22} color={theme.colors.danger} />}
-        />
-        <NotificationCard
-          items={notifications}
-          onToggle={(itemId) =>
-            setNotificationSettings((current) => ({
-              ...current,
-              [itemId]: !(current[itemId] ?? false),
-            }))
-          }
-        />
-      </View>
+          <View style={styles.section}>
+            <SectionTitle
+              title={copy.notificationsTitle}
+              icon={<Ionicons name="notifications-outline" size={22} color={theme.colors.danger} />}
+            />
+            <NotificationCard
+              items={notifications}
+              onToggle={(itemId) =>
+                setNotificationSettings((current) => ({
+                  ...current,
+                  [itemId]: !(current[itemId] ?? false),
+                }))
+              }
+            />
+          </View>
 
-      <View style={styles.section}>
-        <SectionTitle
-          title={copy.accountTitle}
-          icon={<Ionicons name="person-circle-outline" size={22} color={theme.colors.heading} />}
-        />
-        <OptionListCard items={copy.accountLinks} onItemPress={handleAccountPress} />
-      </View>
+          <View style={styles.section}>
+            <SectionTitle
+              title={copy.accountTitle}
+              icon={<Ionicons name="person-circle-outline" size={22} color={theme.colors.heading} />}
+            />
+            <OptionListCard items={copy.accountLinks} onItemPress={handleAccountPress} />
+          </View>
+        </>
+      )}
+
+      {accountType === 'business' && (
+        <>
+          <View style={styles.section}>
+            <SectionTitle
+              title={copy.languageTitle}
+              icon={<Ionicons name="globe-outline" size={22} color={theme.colors.danger} />}
+            />
+            <LanguageCard
+              languages={languages}
+              onSelect={handleLanguageSelect}
+              selectedLabel={copy.selectedLabel}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <SectionTitle
+              title={copy.accountTitle}
+              icon={<Ionicons name="person-circle-outline" size={22} color={theme.colors.heading} />}
+            />
+            <OptionListCard
+              items={[
+                { id: 'logout', icon: 'log-out-outline', label: 'Sign Out', tone: 'danger' as const },
+              ]}
+              onItemPress={handleAccountPress}
+            />
+          </View>
+        </>
+      )}
+
+      {accountType === 'super_admin' && (
+        <View style={styles.section}>
+          <SectionTitle
+            title={copy.accountTitle}
+            icon={<Ionicons name="person-circle-outline" size={22} color={theme.colors.heading} />}
+          />
+          <OptionListCard
+            items={[
+              { id: 'logout', icon: 'log-out-outline', label: 'Sign Out', tone: 'danger' as const },
+            ]}
+            onItemPress={handleAccountPress}
+          />
+        </View>
+      )}
 
       <View style={styles.footer}>
         <Text style={styles.footerBrand}>KOSVIBE</Text>

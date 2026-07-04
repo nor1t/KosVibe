@@ -2,19 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import type { NavigationProp, ParamListBase } from '@react-navigation/native';
 import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PAGE_BOTTOM_PADDING, PAGE_TOP_PADDING } from '../components/Screen';
 import { businessRepository } from '../features/business/businessRepository';
 import { reservationRepository } from '../features/reservations/reservationRepository';
 import { theme } from '../theme';
-import type {
-  BusinessPlaceClaim,
-  BusinessWithMembership,
-  Reservation,
-  RestaurantCatalogItem,
-} from '../repositories/types';
+import type { BusinessPlaceClaim, BusinessWithMembership, PlaceRequest, Reservation, RestaurantCatalogItem } from '../repositories/types';
+
+// ─── Types ──────────────────────────────────────────────────────────────────
 
 type PlaceWithMeta = RestaurantCatalogItem & {
   claimStatus: BusinessPlaceClaim['status'] | null;
@@ -34,168 +31,94 @@ type DashboardCard = {
   enabled: boolean;
 };
 
-type BusinessDashboardScreenProps = {
-  navigation: NavigationProp<ParamListBase>;
-};
+type BusinessDashboardScreenProps = { navigation: NavigationProp<ParamListBase> };
+
+// ─── Status configs ────────────────────────────────────────────────────────
 
 const CLAIM_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   pending: { label: 'Claim Pending', color: '#FFB300' },
   approved: { label: 'Claim Approved', color: '#42D98C' },
   rejected: { label: 'Claim Rejected', color: '#FF6138' },
 };
+const REQUEST_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Pending Review', color: '#FFB300' },
+  approved: { label: 'Approved', color: '#42D98C' },
+  rejected: { label: 'Rejected', color: '#FF6138' },
+};
+
+// ─── Component ─────────────────────────────────────────────────────────────
 
 export function BusinessDashboardScreen({ navigation }: BusinessDashboardScreenProps) {
+  const nav = navigation as NavigationProp<ParamListBase & Record<string, object | undefined>>;
+
   const [businesses, setBusinesses] = useState<BusinessWithMembership[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessWithMembership | null>(null);
   const [placesWithMeta, setPlacesWithMeta] = useState<PlaceWithMeta[]>([]);
+  const [placeRequests, setPlaceRequests] = useState<PlaceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const hasLoadedOnce = useRef(false);
 
-  const loadDashboardData = useCallback(async () => {
-    setLoading(true);
+  // ─── Data loading ──────────────────────────────────────────────────────
+
+  const loadDashboardData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     try {
       const myBusinesses = await businessRepository.getMyBusinesses();
       setBusinesses(myBusinesses);
 
-      if (myBusinesses.length === 0) {
-        return;
+      if (myBusinesses.length > 0) {
+        const first = myBusinesses[0];
+        setSelectedBusiness(first);
+
+        const [places, claims, reqs] = await Promise.all([
+          businessRepository.getBusinessPlaces(first.id),
+          businessRepository.getBusinessClaims(first.id),
+          businessRepository.getMyPlaceRequests(first.id).catch(() => [] as PlaceRequest[]),
+        ]);
+
+        const reservations = await loadReservationsForPlaces(places);
+        setPlacesWithMeta(buildPlaceMeta(places, claims, reservations));
+        setPlaceRequests(reqs);
       }
-
-      const first = myBusinesses[0];
-      setSelectedBusiness(first);
-
-      // Load places and claims in parallel
-      const [places, claims] = await Promise.all([
-        businessRepository.getBusinessPlaces(first.id),
-        businessRepository.getBusinessClaims(first.id),
-      ]);
-
-      // Load reservations for all places (passes places to avoid re-fetching)
-      const reservations = await loadReservationsForPlaces(places);
-
-      const meta = buildPlaceMeta(places, claims, reservations);
-      setPlacesWithMeta(meta);
-    } catch (_err) {
-      // RLS or network errors should not crash the dashboard
+    } catch {
       setBusinesses([]);
       setPlacesWithMeta([]);
+      setPlaceRequests([]);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
+      hasLoadedOnce.current = true;
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      void loadDashboardData();
-    }, [loadDashboardData])
-  );
+  useFocusEffect(useCallback(() => {
+    if (hasLoadedOnce.current) {
+      void loadDashboardData(true); // silent background refresh
+    } else {
+      void loadDashboardData(); // show spinner on first load
+    }
+  }, [loadDashboardData]));
 
   const selectBusiness = async (business: BusinessWithMembership) => {
     setSelectedBusiness(business);
     setLoading(true);
     try {
-      const [places, claims] = await Promise.all([
+      const [places, claims, reqs] = await Promise.all([
         businessRepository.getBusinessPlaces(business.id),
         businessRepository.getBusinessClaims(business.id),
+        businessRepository.getMyPlaceRequests(business.id).catch(() => [] as PlaceRequest[]),
       ]);
-
       const reservations = await loadReservationsForPlaces(places);
-      const meta = buildPlaceMeta(places, claims, reservations);
-      setPlacesWithMeta(meta);
-    } catch (_err) {
+      setPlacesWithMeta(buildPlaceMeta(places, claims, reservations));
+      setPlaceRequests(reqs);
+    } catch {
       setPlacesWithMeta([]);
+      setPlaceRequests([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const buildCards = (place: PlaceWithMeta, isActive: boolean): DashboardCard[] => {
-    const pendingLabel = isActive
-      ? place.pendingReservationCount > 0
-        ? `${place.pendingReservationCount} pending`
-        : '0 pending'
-      : 'Locked';
-
-    return [
-      {
-        key: 'restaurant-details',
-        title: 'Restaurant Details',
-        subtitle: `${place.name} · ${place.city}`,
-        icon: 'restaurant-outline',
-        iconColor: '#FFB300',
-        iconBg: 'rgba(255,179,0,0.16)',
-        value: isActive ? 'View' : 'Locked',
-        route: 'RestaurantDetails',
-        enabled: isActive,
-      },
-      {
-        key: 'reservations',
-        title: 'Reservations',
-        subtitle: 'View and manage bookings',
-        icon: 'calendar-outline',
-        iconColor: '#42D98C',
-        iconBg: 'rgba(66,217,140,0.16)',
-        value: pendingLabel,
-        route: 'ReservationsManager',
-        enabled: isActive,
-      },
-      {
-        key: 'edit-restaurant',
-        title: 'Edit Restaurant',
-        subtitle: 'Update info, hours, contacts',
-        icon: 'create-outline',
-        iconColor: '#5DA7FF',
-        iconBg: 'rgba(93,167,255,0.16)',
-        value: isActive ? 'Manage' : 'Locked',
-        route: 'EditRestaurant',
-        enabled: isActive,
-      },
-      {
-        key: 'gallery',
-        title: 'Gallery',
-        subtitle: 'Manage photos and hero images',
-        icon: 'images-outline',
-        iconColor: '#D66BFF',
-        iconBg: 'rgba(214,107,255,0.16)',
-        value: isActive ? 'Manage' : 'Locked',
-        route: 'GalleryManager',
-        enabled: isActive,
-      },
-      {
-        key: 'menu',
-        title: 'Menu',
-        subtitle: 'Update menu items and pricing',
-        icon: 'book-outline',
-        iconColor: '#8F7CFF',
-        iconBg: 'rgba(143,124,255,0.16)',
-        value: isActive ? 'Manage' : 'Locked',
-        route: 'MenuManager',
-        enabled: isActive,
-      },
-      {
-        key: 'specials',
-        title: 'Daily Specials',
-        subtitle: 'Set featured specials',
-        icon: 'star-outline',
-        iconColor: '#FF5EBE',
-        iconBg: 'rgba(255,94,190,0.16)',
-        value: isActive ? 'Manage' : 'Locked',
-        route: 'SpecialsManager',
-        enabled: isActive,
-      },
-    ];
-  };
-
-  const handleCardPress = (card: DashboardCard, place: RestaurantCatalogItem) => {
-    if (!card.enabled) return;
-    const nav = navigation as NavigationProp<ParamListBase & Record<string, object | undefined>>;
-    if (card.route === 'RestaurantDetails') {
-      nav.navigate('RestaurantDetails', { restaurantId: place.id });
-      return;
-    }
-    nav.navigate(card.route, { placeId: place.id });
-  };
-
-  // ─── Loading State ────────────────────────────────────────────────────────
+  // ─── Derived state ─────────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -205,315 +128,522 @@ export function BusinessDashboardScreen({ navigation }: BusinessDashboardScreenP
     );
   }
 
-  // ─── No Business Yet ──────────────────────────────────────────────────────
+  const hasBusiness = businesses.length > 0;
+  const currentBusiness = selectedBusiness;
+  const businessId = currentBusiness?.id ?? '';
 
-  if (businesses.length === 0) {
-    return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-        <LinearGradient
-          colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']}
-          style={styles.emptyCard}
-        >
-          <Ionicons name="business-outline" size={48} color={theme.colors.mutedText} />
-          <Text style={styles.emptyTitle}>No Business Yet</Text>
-          <Text style={styles.emptyText}>
-            Register your restaurant business to manage your places, menus, reservations, and more.
-          </Text>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() => navigation.navigate('BusinessRegistration' as never)}
-          >
-            <Text style={styles.primaryButtonText}>Register Business</Text>
-          </Pressable>
-        </LinearGradient>
-      </ScrollView>
-    );
-  }
+  // Managed = claim approved OR directly owned (null claim from place_request approval)
+  const managedPlaces = placesWithMeta.filter(
+    p => p.claimStatus === 'approved' || p.claimStatus === null,
+  );
+  const hasManagedPlaces = managedPlaces.length > 0;
 
-  // ─── Dashboard ────────────────────────────────────────────────────────────
+  // Claims/requests that are in flight
+  const pendingClaims = placesWithMeta.filter(
+    p => p.claimStatus !== null && p.claimStatus !== 'approved',
+  );
 
-  const isActive = selectedBusiness?.status === 'active';
-  const isOwner = selectedBusiness?.membership?.role === 'owner';
-  const statusColor =
-    selectedBusiness?.status === 'active'
-      ? '#42D98C'
-      : selectedBusiness?.status === 'pending'
-        ? '#FFB300'
-        : selectedBusiness?.status === 'suspended'
-          ? '#FF6138'
-          : theme.colors.mutedText;
+  const hasApplications = placeRequests.length > 0 || pendingClaims.length > 0;
 
-  const statusLabel =
-    selectedBusiness?.status === 'active'
-      ? 'Active'
-      : selectedBusiness?.status === 'pending'
-        ? 'Pending Approval'
-        : selectedBusiness?.status === 'suspended'
-          ? 'Suspended'
-          : selectedBusiness?.status ?? 'Unknown';
-
-  // Count places with approved claims
-  const approvedPlaces = placesWithMeta.filter((p) => p.claimStatus === 'approved').length;
-  const pendingPlaces = placesWithMeta.filter((p) => p.claimStatus === 'pending').length;
-  const totalPlaces = placesWithMeta.length;
+  // ─── Render: always one continuous scroll ──────────────────────────────
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Hero Card */}
-      <LinearGradient
-        colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']}
-        style={styles.heroCard}
-      >
-        {/* Business tabs (multiple businesses) */}
-        {businesses.length > 1 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.businessTabs}>
-            {businesses.map((b) => (
-              <Pressable
-                key={b.id}
-                style={[
-                  styles.businessTab,
-                  selectedBusiness?.id === b.id && styles.businessTabActive,
-                ]}
-                onPress={() => { void selectBusiness(b); }}
-              >
+      {/* ═══ HERO SECTION — always visible ═══ */}
+      {hasBusiness ? (
+        // ── Logged-in business hero ──
+        <LinearGradient
+          colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']}
+          style={styles.heroCard}
+        >
+          {businesses.length > 1 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.businessTabs}
+            >
+              {businesses.map(b => (
+                <Pressable
+                  key={b.id}
+                  style={[
+                    styles.businessTab,
+                    currentBusiness?.id === b.id && styles.businessTabActive,
+                  ]}
+                  onPress={() => { void selectBusiness(b); }}
+                >
+                  <Text
+                    style={[
+                      styles.businessTabText,
+                      currentBusiness?.id === b.id && styles.businessTabTextActive,
+                    ]}
+                  >
+                    {b.name}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+
+          {currentBusiness?.logoUrl ? (
+            <Image source={{ uri: currentBusiness.logoUrl }} style={styles.businessLogo} />
+          ) : (
+            <View style={styles.businessLogoPlaceholder}>
+              <Ionicons name="business" size={36} color={theme.colors.mutedText} />
+            </View>
+          )}
+
+          <Text style={styles.businessName}>{currentBusiness?.name}</Text>
+
+          <BusinessStatusBadge business={currentBusiness} />
+
+          {currentBusiness?.description ? (
+            <Text style={styles.description}>{currentBusiness.description}</Text>
+          ) : null}
+
+          <View style={styles.roleRow}>
+            <Ionicons name="shield-checkmark-outline" size={16} color={theme.colors.mutedText} />
+            <Text style={styles.roleText}>
+              {currentBusiness?.membership?.role === 'owner'
+                ? 'Owner'
+                : (currentBusiness?.membership?.role ?? 'Member')}
+            </Text>
+          </View>
+
+          {placesWithMeta.length > 0 && (
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{placesWithMeta.length}</Text>
+                <Text style={styles.statLabel}>Places</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={[styles.statValue, { color: '#42D98C' }]}>
+                  {managedPlaces.length}
+                </Text>
+                <Text style={styles.statLabel}>Approved</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
                 <Text
                   style={[
-                    styles.businessTabText,
-                    selectedBusiness?.id === b.id && styles.businessTabTextActive,
+                    styles.statValue,
+                    { color: pendingClaims.length > 0 ? '#FFB300' : theme.colors.heading },
                   ]}
                 >
-                  {b.name}
+                  {pendingClaims.length}
                 </Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        )}
+                <Text style={styles.statLabel}>Pending</Text>
+              </View>
+            </View>
+          )}
+        </LinearGradient>
+      ) : (
+        // ── Welcome hero (no business account yet) ──
+        <LinearGradient
+          colors={['rgba(255,31,61,0.24)', 'rgba(255,179,0,0.08)']}
+          style={styles.heroCard}
+        >
+          <Ionicons name="business-outline" size={56} color={theme.colors.primary} />
+          <Text style={styles.welcomeTitle}>Welcome to KosVibe Business</Text>
+          <Text style={styles.welcomeSubtitle}>
+            Create your business profile to manage places, menus, reservations,
+            and connect with customers across Kosovo.
+          </Text>
+        </LinearGradient>
+      )}
 
-        {/* Business image if available */}
-        {selectedBusiness?.logoUrl ? (
-          <Image source={{ uri: selectedBusiness.logoUrl }} style={styles.businessLogo} />
-        ) : (
-          <View style={styles.businessLogoPlaceholder}>
-            <Ionicons name="business" size={36} color={theme.colors.mutedText} />
-          </View>
-        )}
-
-        <Text style={styles.businessName}>{selectedBusiness?.name}</Text>
-
-        {/* Status badge */}
-        <View style={[styles.statusBadge, { backgroundColor: `${statusColor}20` }]}>
-          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-          <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
-        </View>
-
-        {selectedBusiness?.description ? (
-          <Text style={styles.description}>{selectedBusiness.description}</Text>
-        ) : null}
-
-        {/* Role badge */}
-        <View style={styles.roleRow}>
-          <Ionicons name="shield-checkmark-outline" size={16} color={theme.colors.mutedText} />
-          <Text style={styles.roleText}>
-            {isOwner ? 'Owner' : selectedBusiness?.membership?.role ?? 'Member'}
+      {/* ═══ BUSINESS STATUS NOTICE ═══ */}
+      {hasBusiness && currentBusiness?.status === 'pending' && (
+        <View style={styles.pendingNotice}>
+          <Ionicons name="time-outline" size={20} color="#FFB300" />
+          <Text style={styles.pendingNoticeText}>
+            Your business account is pending verification. You can still submit
+            place claims and requests in the meantime.
           </Text>
         </View>
+      )}
 
-        {/* Stats row */}
-        {totalPlaces > 0 && (
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{totalPlaces}</Text>
-              <Text style={styles.statLabel}>Places</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: '#42D98C' }]}>{approvedPlaces}</Text>
-              <Text style={styles.statLabel}>Approved</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: pendingPlaces > 0 ? '#FFB300' : theme.colors.heading }]}>
-                {pendingPlaces}
-              </Text>
-              <Text style={styles.statLabel}>Pending</Text>
-            </View>
-          </View>
-        )}
-      </LinearGradient>
-
-      {/* Claim Restaurant CTA */}
-      {isOwner && isActive && (
-        <View style={styles.actionRow}>
+      {/* ═══ STAGE 1: Create Business (no account) ═══ */}
+      {!hasBusiness && (
+        <View style={styles.stageSection}>
+          <Text style={styles.stageTitle}>Get Started</Text>
+          <Text style={styles.stageSubtitle}>
+            Register your business to unlock place management, claims, and more.
+          </Text>
           <Pressable
-            style={styles.actionButton}
-            onPress={() => navigation.navigate('ClaimRestaurant' as never)}
+            style={styles.primaryButton}
+            onPress={() => nav.navigate('BusinessRegistration')}
           >
-            <Ionicons name="link-outline" size={20} color={theme.colors.surface} />
-            <Text style={styles.actionButtonText}>Claim a Restaurant</Text>
+            <Ionicons name="add-circle-outline" size={20} color={theme.colors.surface} />
+            <Text style={styles.primaryButtonText}>Create Business</Text>
           </Pressable>
         </View>
       )}
 
-      {/* Pending approval notice */}
-      {selectedBusiness?.status === 'pending' && (
-        <View style={styles.pendingNotice}>
-          <Ionicons name="time-outline" size={20} color="#FFB300" />
-          <Text style={styles.pendingNoticeText}>
-            Your business is pending admin approval. Management features will unlock once approved.
+      {/* ═══ STAGE 2+3: Add Places (business exists) ═══ */}
+      {hasBusiness && (
+        <View style={styles.stageSection}>
+          <Text style={styles.stageTitle}>
+            {hasManagedPlaces ? 'Add Another Place' : 'Add Your First Place'}
           </Text>
+          <Text style={styles.stageSubtitle}>
+            {hasManagedPlaces
+              ? 'Expand your presence by claiming or registering more places.'
+              : 'How would you like to add your place?'}
+          </Text>
+
+          <Pressable
+            style={styles.onboardingCard}
+            onPress={() => nav.navigate('ClaimRestaurant')}
+          >
+            <View style={[styles.onboardingIcon, { backgroundColor: 'rgba(255,179,0,0.16)' }]}>
+              <Ionicons name="search-outline" size={24} color="#FFB300" />
+            </View>
+            <View style={styles.onboardingContent}>
+              <Text style={styles.onboardingCardTitle}>Claim Existing Place</Text>
+              <Text style={styles.onboardingCardSub}>
+                Already listed on KosVibe? Search and request ownership.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.mutedText} />
+          </Pressable>
+
+          <Pressable
+            style={styles.onboardingCard}
+            onPress={() => nav.navigate('NewRestaurant', { businessId })}
+          >
+            <View style={[styles.onboardingIcon, { backgroundColor: 'rgba(66,217,140,0.16)' }]}>
+              <Ionicons name="add-circle-outline" size={24} color="#42D98C" />
+            </View>
+            <View style={styles.onboardingContent}>
+              <Text style={styles.onboardingCardTitle}>Register New Place</Text>
+              <Text style={styles.onboardingCardSub}>
+                Not listed yet? Submit a new place for review.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.mutedText} />
+          </Pressable>
         </View>
       )}
 
-      {/* No Places Linked */}
-      {placesWithMeta.length === 0 ? (
-        <View style={styles.emptyPlacesSection}>
-          <Ionicons name="restaurant-outline" size={36} color={theme.colors.mutedText} />
-          <Text style={styles.emptyPlacesTitle}>No Restaurants Linked</Text>
-          <Text style={styles.emptyPlacesSubtitle}>
-            {selectedBusiness?.status === 'pending'
-              ? 'Your business must be approved before you can claim restaurants.'
-              : 'Claim a restaurant to start managing it from this dashboard.'}
-          </Text>
-        </View>
-      ) : (
-        /* Place cards */
-        placesWithMeta.map((place) => {
-          const claimCfg = place.claimStatus ? CLAIM_STATUS_CONFIG[place.claimStatus] : null;
-          const cards = buildCards(place, isActive && place.claimStatus === 'approved');
+      {/* ═══ APPLICATIONS — always visible when submitted ═══ */}
+      {hasBusiness && hasApplications && (
+        <View style={styles.applicationsSection}>
+          <Text style={styles.sectionHeading}>Applications</Text>
 
-          return (
-            <View key={place.id}>
-              {/* Place header */}
-              <View style={styles.placeHeader}>
-                <View style={styles.placeHeaderLeft}>
-                  {place.imageUrl ? (
-                    <Image source={{ uri: place.imageUrl }} style={styles.placeThumb} />
-                  ) : (
-                    <View style={styles.placeThumbPlaceholder}>
-                      <Ionicons name="restaurant-outline" size={18} color={theme.colors.mutedText} />
-                    </View>
-                  )}
-                  <View>
-                    <Text style={styles.placeName}>{place.name}</Text>
-                    <Text style={styles.placeCity}>
-                      {place.city}
-                      {place.cuisine ? ` · ${place.cuisine}` : ''}
+          {placeRequests.map(r => {
+            const cfg =
+              REQUEST_STATUS_CONFIG[r.status] ?? { label: r.status, color: theme.colors.mutedText };
+            return (
+              <View key={`req-${r.id}`} style={styles.requestCard}>
+                <View style={styles.requestHeader}>
+                  <Text style={styles.requestName}>{r.name}</Text>
+                  <View style={[styles.requestBadge, { backgroundColor: `${cfg.color}18` }]}>
+                    <View style={[styles.requestDot, { backgroundColor: cfg.color }]} />
+                    <Text style={[styles.requestBadgeText, { color: cfg.color }]}>
+                      {cfg.label}
                     </Text>
                   </View>
                 </View>
-
-                {/* Claim status badge */}
-                {claimCfg && (
-                  <View style={[styles.claimBadge, { backgroundColor: `${claimCfg.color}18` }]}>
-                    <View style={[styles.claimDot, { backgroundColor: claimCfg.color }]} />
-                    <Text style={[styles.claimText, { color: claimCfg.color }]}>{claimCfg.label}</Text>
-                  </View>
+                {r.status === 'rejected' && r.adminNotes ? (
+                  <Text style={styles.requestNotes}>Reason: {r.adminNotes}</Text>
+                ) : null}
+                <Text style={styles.requestDate}>
+                  Submitted {new Date(r.createdAt).toLocaleDateString()}
+                </Text>
+                {r.status === 'rejected' && (
+                  <Pressable
+                    style={styles.resubmitBtn}
+                    onPress={() => nav.navigate('NewRestaurant', { businessId })}
+                  >
+                    <Text style={styles.resubmitBtnText}>Edit & Resubmit</Text>
+                  </Pressable>
                 )}
               </View>
+            );
+          })}
 
-              {/* Dashboard cards grid */}
-              <View style={styles.cardGrid}>
-                {cards.map((card) => (
-                  <Pressable
-                    key={card.key}
-                    style={[
-                      styles.dashboardCard,
-                      !card.enabled && styles.dashboardCardDisabled,
-                    ]}
-                    onPress={() => handleCardPress(card, place)}
-                    disabled={!card.enabled}
-                  >
-                    <View style={[styles.cardIconWrap, { backgroundColor: card.iconBg }]}>
-                      <Ionicons
-                        name={card.icon}
-                        size={20}
-                        color={card.enabled ? card.iconColor : theme.colors.mutedText}
-                      />
-                    </View>
-                    <Text style={styles.cardTitle}>{card.title}</Text>
-                    <Text style={styles.cardSubtitle} numberOfLines={2}>
-                      {card.subtitle}
+          {pendingClaims.map(place => {
+            const cfg = CLAIM_STATUS_CONFIG[place.claimStatus!];
+            return (
+              <View key={`claim-${place.id}`} style={styles.requestCard}>
+                <View style={styles.requestHeader}>
+                  <Text style={styles.requestName}>{place.name}</Text>
+                  <View style={[styles.requestBadge, { backgroundColor: `${cfg.color}18` }]}>
+                    <View style={[styles.requestDot, { backgroundColor: cfg.color }]} />
+                    <Text style={[styles.requestBadgeText, { color: cfg.color }]}>
+                      {cfg.label}
                     </Text>
-                    <View style={styles.cardFooter}>
-                      <Text
-                        style={[
-                          styles.cardValue,
-                          !card.enabled && styles.cardValueDisabled,
-                          card.value.includes('today') && styles.cardValueHighlighted,
-                        ]}
-                      >
-                        {card.value}
-                      </Text>
-                      <Ionicons
-                        name="chevron-forward"
-                        size={14}
-                        color={card.enabled ? theme.colors.mutedText : 'rgba(160,166,196,0.3)'}
-                      />
-                    </View>
+                  </View>
+                </View>
+                <Text style={styles.requestDate}>
+                  {place.city}
+                  {place.cuisine ? ` · ${place.cuisine}` : ''}
+                </Text>
+                {place.claimStatus === 'rejected' && (
+                  <Pressable
+                    style={styles.resubmitBtn}
+                    onPress={() => nav.navigate('ClaimRestaurant')}
+                  >
+                    <Text style={styles.resubmitBtnText}>Resubmit Claim</Text>
                   </Pressable>
-                ))}
+                )}
               </View>
-            </View>
-          );
-        })
+            );
+          })}
+        </View>
       )}
+
+      {/* ═══ MY PLACES — shown when managed places exist ═══ */}
+      {hasBusiness && hasManagedPlaces && (
+        <View style={styles.placesSection}>
+          <Text style={styles.sectionHeading}>My Places</Text>
+
+          {managedPlaces.map(place => {
+            const pendingLabel =
+              place.pendingReservationCount > 0
+                ? `${place.pendingReservationCount} pending`
+                : '0 pending';
+            const cards: DashboardCard[] = [
+              {
+                key: 'details',
+                title: 'Details',
+                subtitle: `${place.name} · ${place.city}`,
+                icon: 'eye-outline',
+                iconColor: '#FFB300',
+                iconBg: 'rgba(255,179,0,0.16)',
+                value: 'View',
+                route: 'RestaurantDetails',
+                enabled: true,
+              },
+              {
+                key: 'reservations',
+                title: 'Reservations',
+                subtitle: 'Manage bookings',
+                icon: 'calendar-outline',
+                iconColor: '#42D98C',
+                iconBg: 'rgba(66,217,140,0.16)',
+                value: pendingLabel,
+                route: 'ReservationsManager',
+                enabled: true,
+              },
+              {
+                key: 'edit',
+                title: 'Edit',
+                subtitle: 'Info, hours, contacts',
+                icon: 'create-outline',
+                iconColor: '#5DA7FF',
+                iconBg: 'rgba(93,167,255,0.16)',
+                value: 'Manage',
+                route: 'EditRestaurant',
+                enabled: true,
+              },
+              {
+                key: 'gallery',
+                title: 'Gallery',
+                subtitle: 'Manage photos',
+                icon: 'images-outline',
+                iconColor: '#D66BFF',
+                iconBg: 'rgba(214,107,255,0.16)',
+                value: 'Manage',
+                route: 'GalleryManager',
+                enabled: true,
+              },
+              {
+                key: 'menu',
+                title: 'Menu',
+                subtitle: 'Items & pricing',
+                icon: 'book-outline',
+                iconColor: '#8F7CFF',
+                iconBg: 'rgba(143,124,255,0.16)',
+                value: 'Manage',
+                route: 'MenuManager',
+                enabled: true,
+              },
+              {
+                key: 'specials',
+                title: 'Specials',
+                subtitle: 'Daily specials',
+                icon: 'star-outline',
+                iconColor: '#FF5EBE',
+                iconBg: 'rgba(255,94,190,0.16)',
+                value: 'Manage',
+                route: 'SpecialsManager',
+                enabled: true,
+              },
+            ];
+
+            return (
+              <View key={place.id}>
+                <View style={styles.placeHeader}>
+                  <View style={styles.placeHeaderLeft}>
+                    {place.imageUrl ? (
+                      <Image source={{ uri: place.imageUrl }} style={styles.placeThumb} />
+                    ) : (
+                      <View style={styles.placeThumbPlaceholder}>
+                        <Ionicons
+                          name="business-outline"
+                          size={18}
+                          color={theme.colors.mutedText}
+                        />
+                      </View>
+                    )}
+                    <View>
+                      <Text style={styles.placeName}>{place.name}</Text>
+                      <Text style={styles.placeCity}>
+                        {place.city}
+                        {place.cuisine ? ` · ${place.cuisine}` : ''}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.cardGrid}>
+                  {cards.map(card => (
+                    <Pressable
+                      key={card.key}
+                      style={styles.dashboardCard}
+                      onPress={() =>
+                        nav.navigate(
+                          card.route,
+                          card.route === 'RestaurantDetails'
+                            ? { restaurantId: place.id }
+                            : { placeId: place.id },
+                        )
+                      }
+                    >
+                      <View
+                        style={[styles.cardIconWrap, { backgroundColor: card.iconBg }]}
+                      >
+                        <Ionicons name={card.icon} size={20} color={card.iconColor} />
+                      </View>
+                      <Text style={styles.cardTitle}>{card.title}</Text>
+                      <Text style={styles.cardSubtitle} numberOfLines={2}>
+                        {card.subtitle}
+                      </Text>
+                      <View style={styles.cardFooter}>
+                        <Text
+                          style={[
+                            styles.cardValue,
+                            card.value.includes('pending') && styles.cardValueHighlighted,
+                          ]}
+                        >
+                          {card.value}
+                        </Text>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={14}
+                          color={theme.colors.mutedText}
+                        />
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* ═══ SETTINGS ═══ */}
+      {hasBusiness && (
+        <Pressable
+          style={styles.settingsRow}
+          onPress={() => nav.navigate('Settings')}
+        >
+          <Ionicons name="settings-outline" size={18} color={theme.colors.mutedText} />
+          <Text style={styles.settingsText}>Settings</Text>
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.mutedText} />
+        </Pressable>
+      )}
+
+      {/* ═══ SUPPORT — always visible ═══ */}
+      <View style={styles.contactSection}>
+        <Text style={styles.contactHeading}>Need Help?</Text>
+        <Text style={styles.contactText}>partnerships@kosvibe.com</Text>
+        <Text style={styles.contactText}>+383 44 000 000</Text>
+      </View>
     </ScrollView>
   );
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────
+
+function BusinessStatusBadge({ business }: { business: BusinessWithMembership | null }) {
+  if (!business) return null;
+  const status = business.status;
+  const color =
+    status === 'active'
+      ? '#42D98C'
+      : status === 'pending'
+        ? '#FFB300'
+        : status === 'inactive' || status === 'suspended'
+          ? '#FF6138'
+          : theme.colors.mutedText;
+  const label =
+    status === 'active'
+      ? 'Active'
+      : status === 'pending'
+        ? 'Pending Approval'
+        : status === 'inactive'
+          ? 'Rejected'
+          : status === 'suspended'
+            ? 'Suspended'
+            : status ?? 'Unknown';
+
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: `${color}20` }]}>
+      <View style={[styles.statusDot, { backgroundColor: color }]} />
+      <Text style={[styles.statusText, { color }]}>{label}</Text>
+    </View>
+  );
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
 
 function buildPlaceMeta(
   places: RestaurantCatalogItem[],
   claims: BusinessPlaceClaim[],
   reservations: Reservation[],
 ): PlaceWithMeta[] {
-  // Build claim lookup: placeId → most recent claim status
   const claimByPlace = new Map<string, BusinessPlaceClaim['status']>();
-  for (const claim of claims) {
-    if (!claimByPlace.has(claim.placeId)) {
-      claimByPlace.set(claim.placeId, claim.status);
-    }
+  for (const c of claims) {
+    if (!claimByPlace.has(c.placeId)) claimByPlace.set(c.placeId, c.status);
   }
-
-  // Build reservation counts per place
-  const today = new Date().toISOString().split('T')[0];
-  const todayCountByPlace = new Map<string, number>();
-  const pendingCountByPlace = new Map<string, number>();
+  const today = new Date().toISOString().split('T')[0]!;
+  const tc = new Map<string, number>();
+  const pc = new Map<string, number>();
   for (const r of reservations) {
     if (r.reservationDate === today && r.status !== 'cancelled' && r.status !== 'rejected') {
-      todayCountByPlace.set(r.placeId, (todayCountByPlace.get(r.placeId) ?? 0) + 1);
+      tc.set(r.placeId, (tc.get(r.placeId) ?? 0) + 1);
     }
     if (r.status === 'pending') {
-      pendingCountByPlace.set(r.placeId, (pendingCountByPlace.get(r.placeId) ?? 0) + 1);
+      pc.set(r.placeId, (pc.get(r.placeId) ?? 0) + 1);
     }
   }
-
-  return places.map((p) => ({
+  return places.map(p => ({
     ...p,
     claimStatus: claimByPlace.get(p.id) ?? null,
-    todayReservationCount: todayCountByPlace.get(p.id) ?? 0,
-    pendingReservationCount: pendingCountByPlace.get(p.id) ?? 0,
+    todayReservationCount: tc.get(p.id) ?? 0,
+    pendingReservationCount: pc.get(p.id) ?? 0,
   }));
 }
 
-async function loadReservationsForPlaces(places: RestaurantCatalogItem[]): Promise<Reservation[]> {
-  if (places.length === 0) return [];
-
-  // Fetch reservations for all places in parallel
+async function loadReservationsForPlaces(
+  places: RestaurantCatalogItem[],
+): Promise<Reservation[]> {
+  if (!places.length) return [];
   const results = await Promise.all(
-    places.map((p) => reservationRepository.getPlaceReservations(p.id).catch(() => [] as Reservation[]))
+    places.map(p =>
+      reservationRepository.getPlaceReservations(p.id).catch(() => [] as Reservation[]),
+    ),
   );
   return results.flat();
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
+// ─── Styles ────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   content: {
     paddingHorizontal: 20,
     paddingTop: PAGE_TOP_PADDING,
@@ -526,7 +656,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
 
-  // ─── Hero Card ─────────────────────────────────────────────────
+  // ── Hero ──
 
   heroCard: {
     marginTop: 25,
@@ -536,10 +666,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
   },
-  businessTabs: {
-    marginBottom: 16,
-    maxHeight: 40,
+  welcomeTitle: {
+    color: theme.colors.heading,
+    fontSize: 26,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: 14,
   },
+  welcomeSubtitle: {
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 21,
+    maxWidth: 300,
+    marginTop: 10,
+  },
+  businessTabs: { marginBottom: 16, maxHeight: 40 },
   businessTab: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -547,23 +689,10 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: 'rgba(255,255,255,0.06)',
   },
-  businessTabActive: {
-    backgroundColor: 'rgba(255,31,61,0.3)',
-  },
-  businessTabText: {
-    color: theme.colors.mutedText,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  businessTabTextActive: {
-    color: theme.colors.surface,
-  },
-  businessLogo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    marginBottom: 12,
-  },
+  businessTabActive: { backgroundColor: 'rgba(255,31,61,0.3)' },
+  businessTabText: { color: theme.colors.mutedText, fontSize: 13, fontWeight: '600' },
+  businessTabTextActive: { color: theme.colors.surface },
+  businessLogo: { width: 72, height: 72, borderRadius: 36, marginBottom: 12 },
   businessLogoPlaceholder: {
     width: 72,
     height: 72,
@@ -573,12 +702,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  businessName: {
-    color: theme.colors.heading,
-    fontSize: 28,
-    fontWeight: '900',
-    textAlign: 'center',
-  },
+  businessName: { color: theme.colors.heading, fontSize: 28, fontWeight: '900', textAlign: 'center' },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -588,11 +712,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 12,
   },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
+  statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusText: {
     fontSize: 12,
     fontWeight: '700',
@@ -607,20 +727,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 290,
   },
-  roleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 12,
-  },
-  roleText: {
-    color: theme.colors.mutedText,
-    fontSize: 13,
-    textTransform: 'capitalize',
-  },
-
-  // ─── Stats Row ─────────────────────────────────────────────────
-
+  roleRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 },
+  roleText: { color: theme.colors.mutedText, fontSize: 13, textTransform: 'capitalize' },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -630,50 +738,10 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(255,255,255,0.06)',
     width: '100%',
   },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statValue: {
-    color: theme.colors.heading,
-    fontSize: 22,
-    fontWeight: '900',
-  },
-  statLabel: {
-    color: theme.colors.mutedText,
-    fontSize: 11,
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-
-  // ─── Actions ───────────────────────────────────────────────────
-
-  actionRow: {
-    marginTop: 16,
-    gap: 10,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 14,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  actionButtonText: {
-    color: theme.colors.surface,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-
-  // ─── Pending Notice ────────────────────────────────────────────
+  statItem: { flex: 1, alignItems: 'center' },
+  statValue: { color: theme.colors.heading, fontSize: 22, fontWeight: '900' },
+  statLabel: { color: theme.colors.mutedText, fontSize: 11, marginTop: 2 },
+  statDivider: { width: 1, height: 30, backgroundColor: 'rgba(255,255,255,0.08)' },
 
   pendingNotice: {
     marginTop: 16,
@@ -686,28 +754,115 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  pendingNoticeText: {
-    color: '#F0C06B',
-    fontSize: 13,
-    lineHeight: 19,
-    flex: 1,
+  pendingNoticeText: { color: '#F0C06B', fontSize: 13, lineHeight: 19, flex: 1 },
+
+  // ── Stages ──
+
+  stageSection: { marginTop: 28, gap: 14 },
+  stageTitle: { color: theme.colors.heading, fontSize: 22, fontWeight: '900', textAlign: 'center' },
+  stageSubtitle: {
+    color: theme.colors.mutedText,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 4,
   },
 
-  // ─── Place Header ──────────────────────────────────────────────
+  // ── Primary CTA ──
 
+  primaryButton: {
+    marginTop: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 18,
+    backgroundColor: theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  primaryButtonText: { color: theme.colors.surface, fontSize: 16, fontWeight: '800' },
+
+  // ── Onboarding cards ──
+
+  onboardingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 18,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  onboardingIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  onboardingContent: { flex: 1 },
+  onboardingCardTitle: { color: theme.colors.heading, fontSize: 15, fontWeight: '800' },
+  onboardingCardSub: { color: '#A0A6C4', fontSize: 12, lineHeight: 17, marginTop: 4 },
+
+  // ── Applications ──
+
+  applicationsSection: { marginTop: 28 },
+  sectionHeading: {
+    color: theme.colors.heading,
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 14,
+    marginTop: 12,
+  },
+  requestCard: {
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginTop: 8,
+    gap: 6,
+  },
+  requestHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  requestName: { color: theme.colors.heading, fontSize: 15, fontWeight: '700' },
+  requestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  requestDot: { width: 6, height: 6, borderRadius: 3 },
+  requestBadgeText: { fontSize: 11, fontWeight: '700' },
+  requestNotes: { color: '#FFB5A1', fontSize: 12, fontStyle: 'italic' },
+  requestDate: { color: theme.colors.mutedText, fontSize: 11 },
+  resubmitBtn: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,31,61,0.2)',
+  },
+  resubmitBtnText: { color: theme.colors.heading, fontSize: 12, fontWeight: '700' },
+
+  // ── My Places ──
+
+  placesSection: { marginTop: 28 },
   placeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 28,
+    marginTop: 20,
     marginBottom: 14,
   },
-  placeHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    flex: 1,
-  },
+  placeHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   placeThumb: {
     width: 48,
     height: 48,
@@ -722,41 +877,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  placeName: {
-    color: theme.colors.heading,
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  placeCity: {
-    color: theme.colors.mutedText,
-    fontSize: 12,
-    marginTop: 2,
-  },
-  claimBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  claimDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  claimText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-
-  // ─── Dashboard Cards ───────────────────────────────────────────
-
-  cardGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
+  placeName: { color: theme.colors.heading, fontSize: 18, fontWeight: '800' },
+  placeCity: { color: theme.colors.mutedText, fontSize: 12, marginTop: 2 },
+  cardGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   dashboardCard: {
     width: '47%',
     padding: 16,
@@ -767,11 +890,6 @@ const styles = StyleSheet.create({
     gap: 8,
     minHeight: 140,
   },
-  dashboardCardDisabled: {
-    borderStyle: 'dashed',
-    borderColor: 'rgba(255,255,255,0.06)',
-    opacity: 0.6,
-  },
   cardIconWrap: {
     width: 38,
     height: 38,
@@ -779,94 +897,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: {
-    color: theme.colors.heading,
-    fontSize: 13,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  cardSubtitle: {
-    color: '#A0A6C4',
-    fontSize: 11,
-    lineHeight: 15,
-    flex: 1,
-  },
+  cardTitle: { color: theme.colors.heading, fontSize: 13, fontWeight: '800', marginTop: 2 },
+  cardSubtitle: { color: '#A0A6C4', fontSize: 11, lineHeight: 15, flex: 1 },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 4,
   },
-  cardValue: {
-    color: theme.colors.heading,
-    fontSize: 13,
-    fontWeight: '700',
+  cardValue: { color: theme.colors.heading, fontSize: 13, fontWeight: '700' },
+  cardValueHighlighted: { color: '#42D98C', fontSize: 12, fontWeight: '800' },
+
+  // ── Settings ──
+
+  settingsRow: {
+    marginTop: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
-  cardValueDisabled: {
+  settingsText: {
     color: theme.colors.mutedText,
-    fontSize: 12,
-  },
-  cardValueHighlighted: {
-    color: '#42D98C',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
   },
 
-  // ─── Empty States ──────────────────────────────────────────────
+  // ── Support ──
 
-  emptyPlacesSection: {
-    marginTop: 40,
-    padding: 30,
-    borderRadius: 24,
+  contactSection: {
+    marginTop: 28,
+    padding: 18,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
     alignItems: 'center',
-    gap: 10,
+    gap: 4,
   },
-  emptyPlacesTitle: {
+  contactHeading: {
     color: theme.colors.heading,
-    fontSize: 20,
-    fontWeight: '900',
-  },
-  emptyPlacesSubtitle: {
-    color: theme.colors.mutedText,
     fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    maxWidth: 280,
+    fontWeight: '700',
+    marginBottom: 6,
   },
-  emptyCard: {
-    marginTop: 25,
-    padding: 40,
-    borderRadius: 30,
-    alignItems: 'center',
-    gap: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  emptyTitle: {
-    color: theme.colors.heading,
-    fontSize: 24,
-    fontWeight: '900',
-  },
-  emptyText: {
-    color: theme.colors.mutedText,
-    fontSize: 15,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 300,
-  },
-  primaryButton: {
-    marginTop: 10,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 16,
-    backgroundColor: theme.colors.primary,
-  },
-  primaryButtonText: {
-    color: theme.colors.surface,
-    fontSize: 15,
-    fontWeight: '800',
-  },
+  contactText: { color: '#A0A6C4', fontSize: 13 },
 });

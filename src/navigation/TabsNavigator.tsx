@@ -13,7 +13,9 @@ import { nativeCopy } from '../i18n/nativeCopy';
 import { ActivityDashboardScreen } from '../screens/ActivityDashboardScreen';
 import { BookTableScreen } from '../screens/BookTableScreen';
 import { CategoryScreen } from '../screens/CategoryScreen';
+import { CreateMarketListingScreen } from '../screens/CreateMarketListingScreen';
 import { CreateStoryScreen } from '../screens/CreateStoryScreen';
+import { EditMarketListingScreen } from '../screens/EditMarketListingScreen';
 import { ExchangeScreen } from '../screens/ExchangeScreen';
 import { FavoriteRestaurantsScreen } from '../screens/FavoriteRestaurantsScreen';
 import { StoriesScreen } from '../screens/FavoritesScreen';
@@ -21,7 +23,9 @@ import { HelpScreen } from '../screens/HelpScreen';
 import { HistoryScreen } from '../screens/HistoryScreen';
 import { ImportantNumbersScreen } from '../screens/ImportantNumbersScreen';
 import { MapScreen } from '../screens/MapScreen';
+import { MarketListingDetailScreen } from '../screens/MarketListingDetailScreen';
 import { MarketScreen } from '../screens/MarketScreen';
+import { MyMarketListingsScreen } from '../screens/MyMarketListingsScreen';
 import { MyReservationsScreen } from '../screens/MyReservationsScreen';
 import { ProfileEditScreen } from '../screens/ProfileEditScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
@@ -88,6 +92,10 @@ function HomeStackNavigator() {
     <HomeStack.Navigator screenOptions={stackScreenOptions}>
       <HomeStack.Screen name="HomeMain" component={ActivityDashboardScreen} />
       <HomeStack.Screen name="Market" component={MarketScreen} />
+      <HomeStack.Screen name="MarketListingDetail" component={MarketListingDetailScreen} />
+      <HomeStack.Screen name="CreateMarketListing" component={CreateMarketListingScreen} />
+      <HomeStack.Screen name="EditMarketListing" component={EditMarketListingScreen} />
+      <HomeStack.Screen name="MyMarketListings" component={MyMarketListingsScreen} />
       <HomeStack.Screen name="Category" component={CategoryScreen} />
       <HomeStack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <HomeStack.Screen name="BookTable" component={BookTableScreen} />

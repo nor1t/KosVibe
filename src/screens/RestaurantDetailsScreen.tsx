@@ -11,6 +11,8 @@ import { nativeCopy } from '../i18n/nativeCopy';
 import { useRestaurantCatalog } from '../lib/restaurant-catalog';
 import { openDirectionsToPlace } from '../lib/maps';
 import { favoritesRepository } from '../repositories/favoritesRepository';
+import { restaurantsRepository } from '../repositories/restaurantsRepository';
+import type { Restaurant } from '../repositories/types';
 import { theme } from '../theme';
 
 type RestaurantDetailsRoute = RouteProp<
@@ -27,7 +29,24 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
   const { language } = useI18n();
   const copy = nativeCopy[language].restaurantDetails;
   const { getRestaurantById, loading } = useRestaurantCatalog();
-  const restaurant = getRestaurantById(route.params.restaurantId);
+  const [restaurant, setRestaurant] = useState<Restaurant | undefined>(() =>
+    getRestaurantById(route.params.restaurantId)
+  );
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  useEffect(() => {
+    if (restaurant) return;
+    let active = true;
+    setDetailLoading(true);
+    // If the cache is empty (e.g. after the business edited), load from the server
+    restaurantsRepository.getByIdAsync(route.params.restaurantId).then((fresh) => {
+      if (active && fresh) setRestaurant(fresh);
+      if (active) setDetailLoading(false);
+    }).catch(() => {
+      if (active) setDetailLoading(false);
+    });
+    return () => { active = false; };
+  }, [route.params.restaurantId, restaurant]);
   const { user } = useAuth();
   const [saved, setSaved] = useState(false);
   const [savingFavorite, setSavingFavorite] = useState(false);
@@ -62,7 +81,7 @@ export function RestaurantDetailsScreen({ navigation, route }: RestaurantDetails
     setSavingFavorite(false);
   };
 
-  if (!restaurant && loading) {
+  if (!restaurant && (loading || detailLoading)) {
     return (
       <View style={[styles.container, styles.loadingState]}>
         <ActivityIndicator color={theme.colors.secondary} />

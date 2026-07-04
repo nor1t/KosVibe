@@ -154,11 +154,11 @@ export function EditRestaurantScreen({ navigation, route }: EditRestaurantScreen
         hours,
       });
 
+      // Refresh cache: clear stale data, then immediately re-fetch fresh detail
       restaurantsRepository.clearPlaceCache(placeId);
+      await restaurantsRepository.getByIdAsync(placeId);
 
-      Alert.alert('Saved', 'Restaurant details updated successfully.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      navigation.goBack();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save.';
       Alert.alert('Error', message);

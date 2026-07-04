@@ -14,6 +14,10 @@ export type RootTabParamList = {
 export type HomeStackParamList = {
   HomeMain: undefined;
   Market: undefined;
+  MarketListingDetail: { listingId: string };
+  CreateMarketListing: undefined;
+  EditMarketListing: { listingId: string };
+  MyMarketListings: undefined;
   Category: { category: 'Restaurants' | 'Hiking' | 'Party' | 'Culture' | 'Study' };
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
@@ -77,6 +81,7 @@ export type ProfileStackParamList = {
 export type BusinessStackParamList = {
   BusinessDashboard: undefined;
   BusinessRegistration: undefined;
+  NewRestaurant: { businessId: string };
   ClaimRestaurant: undefined;
   EditRestaurant: { placeId: string };
   GalleryManager: { placeId: string };
@@ -86,4 +91,11 @@ export type BusinessStackParamList = {
   AdminApproval: undefined;
   RestaurantDetails: { restaurantId: string };
   BookTable: { restaurantId: string };
+  Settings: undefined;
+};
+
+export type AdminStackParamList = {
+  AdminDashboard: undefined;
+  RestaurantDetails: { restaurantId: string };
+  Settings: undefined;
 };

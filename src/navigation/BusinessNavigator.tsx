@@ -10,22 +10,23 @@ import { ClaimRestaurantScreen } from '../screens/ClaimRestaurantScreen';
 import { EditRestaurantScreen } from '../screens/EditRestaurantScreen';
 import { GalleryManagerScreen } from '../screens/GalleryManagerScreen';
 import { MenuManagerScreen } from '../screens/MenuManagerScreen';
+import { NewRestaurantScreen } from '../screens/NewRestaurantScreen';
 import { ReservationsManager } from '../screens/ReservationsManager';
 import { RestaurantDetailsScreen } from '../screens/RestaurantDetailsScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
 import { SpecialsManagerScreen } from '../screens/SpecialsManagerScreen';
 import { theme } from '../theme';
 import type { BusinessStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<BusinessStackParamList>();
+const noHeaderOptions = { headerShown: false };
 
 const stackScreenOptions = ({ navigation }: { navigation: NavigationProp<ParamListBase> }) => ({
   headerShown: true,
   headerTransparent: true,
   headerShadowVisible: false,
   header: () => <StickyAppHeader navigation={navigation} />,
-  contentStyle: {
-    backgroundColor: theme.colors.background,
-  },
+  contentStyle: { backgroundColor: theme.colors.background },
 });
 
 export function BusinessNavigator() {
@@ -33,6 +34,7 @@ export function BusinessNavigator() {
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="BusinessDashboard" component={BusinessDashboardScreen} />
       <Stack.Screen name="BusinessRegistration" component={BusinessRegistrationScreen} />
+      <Stack.Screen name="NewRestaurant" component={NewRestaurantScreen} />
       <Stack.Screen name="ClaimRestaurant" component={ClaimRestaurantScreen} />
       <Stack.Screen name="EditRestaurant" component={EditRestaurantScreen} />
       <Stack.Screen name="GalleryManager" component={GalleryManagerScreen} />
@@ -40,9 +42,9 @@ export function BusinessNavigator() {
       <Stack.Screen name="SpecialsManager" component={SpecialsManagerScreen} />
       <Stack.Screen name="ReservationsManager" component={ReservationsManager} />
       <Stack.Screen name="AdminApproval" component={AdminApprovalScreen} />
-      {/* Shared presentation screens */}
       <Stack.Screen name="RestaurantDetails" component={RestaurantDetailsScreen} />
       <Stack.Screen name="BookTable" component={BookTableScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} options={noHeaderOptions} />
     </Stack.Navigator>
   );
 }

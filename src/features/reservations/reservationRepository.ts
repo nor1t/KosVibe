@@ -28,9 +28,13 @@ function mapReservation(row: Record<string, unknown>): Reservation {
 export class ReservationRepository implements IReservationRepository {
 
   async getMyReservations(): Promise<Reservation[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
     const { data, error } = await supabase
       .from('reservations')
       .select('*')
+      .eq('user_id', user.id)
       .is('deleted_at', null)
       .order('reservation_date', { ascending: true })
       .order('reservation_time', { ascending: true });
@@ -65,10 +69,14 @@ export class ReservationRepository implements IReservationRepository {
   }
 
   async createReservation(input: CreateReservationInput): Promise<Reservation> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('You must be logged in to create a reservation.');
+
     const { data, error } = await supabase
       .from('reservations')
       .insert({
         place_id: input.placeId,
+        user_id: user.id,
         customer_name: input.customerName,
         customer_email: input.customerEmail ?? null,
         customer_phone: input.customerPhone ?? null,
